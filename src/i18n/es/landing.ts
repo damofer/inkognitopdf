@@ -26,6 +26,14 @@ export const landing = {
   "landing.heroArt":
     "Ilustración: un PDF que se edita y se firma dentro del navegador, con un candado que indica que no sale del dispositivo.",
 
+  "landing.promoTitle": "Míralo en 20 segundos",
+  "landing.promoVideo":
+    "Vídeo sin sonido, con textos en inglés: un editor de PDF «gratis» que cobra al descargar, y la alternativa, InkognitoPDF, para editar, firmar, escanear, unir, comprimir y proteger PDF gratis, sin cuenta, de código abierto y sin que los archivos salgan del dispositivo.",
+  "landing.promoPoster":
+    "Fotograma del vídeo: el logotipo de InkognitoPDF, inkognitopdf.com y «Edit · Sign · Scan · Merge · Compress — right in your browser».",
+  "landing.promoPause": "Pausar el vídeo",
+  "landing.promoPlay": "Reproducir el vídeo",
+
   "landing.privacyTitle": "Tus documentos nunca salen de tu dispositivo",
   "landing.privacyLead":
     "Casi todos los editores de PDF en línea suben tus archivos a sus servidores para procesarlos. InkognitoPDF hace todo el trabajo en tu navegador: abrir, editar, reconocer texto y firmar.",

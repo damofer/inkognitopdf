@@ -413,6 +413,85 @@ p {
   width: 100%;
 }
 
+/* Promo video (square, local, loaded when in view) */
+
+.promo {
+  padding: 8px 0 56px;
+}
+.promo-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+.promo-title {
+  margin: 0;
+  font-size: 1.35rem;
+  text-align: center;
+}
+.promo-media {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 24px 48px -24px rgb(0 0 0 / 0.6);
+}
+.promo-poster img,
+.promo-video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.promo-video {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.promo-media[data-state="playing"] .promo-video {
+  opacity: 1;
+}
+.promo-toggle {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(27 30 37 / 0.78);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+}
+.promo-video[hidden],
+.promo-toggle[hidden] {
+  display: none;
+}
+.promo-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+.promo-toggle[data-state="playing"] .icon-play,
+.promo-toggle[data-state="paused"] .icon-pause {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .promo-video {
+    transition: none;
+  }
+}
+
 @media (max-width: 559px) {
   .actions .button {
     flex: 1 1 100%;

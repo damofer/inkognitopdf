@@ -28,6 +28,14 @@ export const landing: typeof es = {
   "landing.heroArt":
     "Illustration: a PDF being edited and signed inside the browser, with a lock showing it never leaves the device.",
 
+  "landing.promoTitle": "See it in 20 seconds",
+  "landing.promoVideo":
+    "Silent video: a “free” PDF editor that charges when you download, and the alternative, InkognitoPDF, to edit, sign, scan, merge, compress and protect PDFs for free, with no account, open source, and without files leaving the device.",
+  "landing.promoPoster":
+    "A frame of the video: the InkognitoPDF logo, inkognitopdf.com and “Edit · Sign · Scan · Merge · Compress — right in your browser”.",
+  "landing.promoPause": "Pause the video",
+  "landing.promoPlay": "Play the video",
+
   "landing.privacyTitle": "Your documents never leave your device",
   "landing.privacyLead":
     "Most online PDF editors upload your files to their servers to process them. InkognitoPDF does all the work in your browser: opening, editing, recognizing text and signing.",

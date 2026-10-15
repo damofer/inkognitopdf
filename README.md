@@ -6,6 +6,12 @@
 </p>
 
 <p align="center">
+  <a href="https://inkognitopdf.com">
+    <img src="docs/images/promo.gif" width="480" alt="InkognitoPDF in 20 seconds: a “free” PDF editor that charges when you download, and InkognitoPDF, which edits, signs, scans, merges, compresses and protects PDFs for free, with no account and without files leaving your device." />
+  </a>
+</p>
+
+<p align="center">
   <b>English</b> · <a href="README.es.md">Español</a>
 </p>
 

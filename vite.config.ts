@@ -87,7 +87,8 @@ export default defineConfig({
         // The open fonts for edited text (7 MB) and the OCR engine and data
         // (~16 MB) are cached on first use. The link-preview images are only
         // for crawlers.
-        globIgnores: ["fonts/**", "tesseract/**", "brand/og-*"],
+        // The promo video and its poster are only for the landing page.
+        globIgnores: ["fonts/**", "tesseract/**", "brand/og-*", "promo/**"],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         skipWaiting: true,
         clientsClaim: true,

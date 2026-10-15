@@ -511,6 +511,54 @@
         </div>
       </section>
 
+      <section class="promo" aria-labelledby="promo-title">
+        <div class="wrap promo-wrap">
+          <h2
+            id="promo-title"
+            class="promo-title"
+            data-i18n="landing.promoTitle"
+          ></h2>
+          <figure class="promo-media" data-promo>
+            <picture class="promo-poster">
+              <source srcset="/promo/promo-poster-720.webp" type="image/webp" />
+              <img
+                src="/promo/promo-poster-720.jpg"
+                width="720"
+                height="720"
+                loading="lazy"
+                decoding="async"
+                alt=""
+                data-i18n-attr="alt:landing.promoPoster"
+              />
+            </picture>
+            <video
+              class="promo-video"
+              width="720"
+              height="720"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="none"
+              disablepictureinpicture
+              data-i18n-attr="aria-label:landing.promoVideo"
+            >
+              <source data-src="/promo/promo-720.webm" type="video/webm" />
+              <source data-src="/promo/promo-720.mp4" type="video/mp4" />
+            </video>
+            <button type="button" class="promo-toggle" data-promo-toggle hidden>
+              <svg class="icon-pause" aria-hidden="true" viewBox="0 0 20 20">
+                <rect x="5" y="4" width="3.5" height="12" rx="1" />
+                <rect x="11.5" y="4" width="3.5" height="12" rx="1" />
+              </svg>
+              <svg class="icon-play" aria-hidden="true" viewBox="0 0 20 20">
+                <path d="M6 4.5v11l9.5-5.5z" />
+              </svg>
+            </button>
+          </figure>
+        </div>
+      </section>
+
       <section
         id="privacy"
         class="section privacy"
