@@ -25,9 +25,9 @@ export const landing = {
   "landing.badgeOpen": "Open source · Apache-2.0",
 
   "landing.promoVideo":
-    "Vídeo sin sonido, con textos en inglés: un editor de PDF «gratis» que cobra al descargar, y la alternativa, InkognitoPDF, para editar, firmar, escanear, unir, comprimir y proteger PDF gratis, sin cuenta, de código abierto y sin que los archivos salgan del dispositivo.",
+    "Vídeo sin sonido: un editor de PDF «gratis» que cobra al descargar, y la alternativa, InkognitoPDF, para editar, firmar, escanear, unir, comprimir y proteger PDF gratis, sin cuenta, de código abierto y sin que los archivos salgan del dispositivo.",
   "landing.promoPoster":
-    "Fotograma del vídeo: el logotipo de InkognitoPDF, inkognitopdf.com y «Edit · Sign · Scan · Merge · Compress — right in your browser».",
+    "Fotograma del vídeo: el logotipo de InkognitoPDF, inkognitopdf.com y «Edita · Firma · Escanea · Une · Comprime, desde tu navegador».",
   "landing.promoPause": "Pausar el vídeo",
   "landing.promoPlay": "Reproducir el vídeo",
 

@@ -70,15 +70,6 @@
     <link rel="icon" href="/brand/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
     <meta name="theme-color" content="#23272F" />
-    <!-- The promo video's poster is the hero's largest image: fetched with the
-         page instead of after the stylesheet and scripts. -->
-    <link
-      rel="preload"
-      as="image"
-      href="/promo/promo-poster-720.webp"
-      type="image/webp"
-      fetchpriority="high"
-    />
     <script>
       // Runs before the first paint. An installed app made when it lived at
       // "/" opens straight in the app; and when the visitor's language is
@@ -109,6 +100,19 @@
           document.documentElement.classList.add("i18n-pending");
           document.documentElement.lang = lang;
         }
+        // The promo video's poster, in that language, is the hero's largest
+        // image: fetched with the page instead of after the scripts (promo.ts
+        // shows it; same files as its PROMO_FILES).
+        var poster = document.createElement("link");
+        poster.rel = "preload";
+        poster.setAttribute("as", "image");
+        poster.type = "image/webp";
+        poster.href =
+          lang === "es"
+            ? "/promo/promo-poster-720-es.webp"
+            : "/promo/promo-poster-720.webp";
+        poster.setAttribute("fetchpriority", "high");
+        document.head.appendChild(poster);
       })();
     </script>
   </head>
@@ -227,9 +231,10 @@
 
           <figure class="promo-media" data-promo>
             <picture class="promo-poster">
-              <source srcset="/promo/promo-poster-720.webp" type="image/webp" />
+              <!-- The files of the page's language: set by the script below
+                   and, on a language switch, by promo.ts. -->
+              <source type="image/webp" />
               <img
-                src="/promo/promo-poster-720.jpg"
                 width="720"
                 height="720"
                 fetchpriority="high"
@@ -238,6 +243,18 @@
                 data-i18n-attr="alt:landing.promoPoster"
               />
             </picture>
+            <script>
+              // Set while the page is parsed, so that the poster paints with
+              // the text instead of after the scripts (same files as
+              // PROMO_FILES in promo.ts and the preload in the head).
+              (function (picture) {
+                var es = document.documentElement.lang === "es" ? "-es" : "";
+                picture.querySelector("source").srcset =
+                  "/promo/promo-poster-720" + es + ".webp";
+                picture.querySelector("img").src =
+                  "/promo/promo-poster-720" + es + ".jpg";
+              })(document.currentScript.previousElementSibling);
+            </script>
             <video
               class="promo-video"
               width="720"
@@ -250,8 +267,8 @@
               disablepictureinpicture
               data-i18n-attr="aria-label:landing.promoVideo"
             >
-              <source data-src="/promo/promo-720.webm" type="video/webm" />
-              <source data-src="/promo/promo-720.mp4" type="video/mp4" />
+              <source type="video/webm" />
+              <source type="video/mp4" />
             </video>
             <button type="button" class="promo-toggle" data-promo-toggle hidden>
               <svg class="icon-pause" aria-hidden="true" viewBox="0 0 20 20">

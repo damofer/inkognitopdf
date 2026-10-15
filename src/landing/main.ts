@@ -11,8 +11,10 @@ import {
 import { getLang, setLang, t, type Lang, type MessageKey } from "../i18n/core";
 import { attrPairs } from "./prerender";
 import { donationOrder } from "../support/donations";
-import { labelPromo, setupPromo } from "./promo";
+import { labelPromo, setupPromo, type Promo } from "./promo";
 import "./landing.css";
+
+let promo: Promo | null = null;
 
 function apply() {
   const lang = getLang();
@@ -24,6 +26,7 @@ function apply() {
   for (const button of document.querySelectorAll<HTMLElement>("[data-lang]"))
     button.setAttribute("aria-pressed", String(button.dataset.lang === lang));
   orderDonations(lang);
+  promo?.setLang(lang);
   labelPromo();
   showConsent();
   document.documentElement.classList.remove("i18n-pending");
@@ -99,5 +102,5 @@ for (const button of document.querySelectorAll<HTMLElement>("[data-lang]"))
     apply();
   });
 
-setupPromo();
+promo = setupPromo();
 apply();

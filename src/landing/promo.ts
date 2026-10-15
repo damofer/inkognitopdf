@@ -1,17 +1,34 @@
-// Landing page: the promo video in the hero. Its poster shows at once; the
-// video itself (the sources wait in data-src) is fetched only after the page
-// has loaded and once it is in view, so it never slows the first load and a
-// phone that does not scroll to it never fetches it. It plays muted in a loop,
+// Landing page: the promo video in the hero, in the page's language. Its
+// poster shows at once; the video itself is fetched only after the page has
+// loaded and once it is in view, so it never slows the first load and a phone
+// that does not scroll to it never fetches it. Switching the language swaps
+// the poster and, if the video was already fetched, the video too; the other
+// language's files are never fetched before that. It plays muted in a loop,
 // and with "reduce motion" only the poster is shown. Everything is served by
 // the site itself, and the service worker does not precache it.
-import { t } from "../i18n/core";
+import { getLang, t, type Lang } from "../i18n/core";
+
+/** The files of a language: the English ones carry no suffix. */
+const promoFiles = (suffix: string) => ({
+  webp: `/promo/promo-poster-720${suffix}.webp`,
+  jpg: `/promo/promo-poster-720${suffix}.jpg`,
+  webm: `/promo/promo-720${suffix}.webm`,
+  mp4: `/promo/promo-720${suffix}.mp4`,
+});
+
+/** The files of each language. index.html preloads and sets the same
+    posters. */
+export const PROMO_FILES: Record<Lang, ReturnType<typeof promoFiles>> = {
+  en: promoFiles(""),
+  es: promoFiles("-es"),
+};
 
 export interface PromoOptions {
   /** The visitor asked the system to reduce motion. */
   reducedMotion: boolean;
   /** Calls `ready` once the page has finished loading. */
   whenLoaded: (ready: () => void) => void;
-  /** Calls `show` once the element is (nearly) in view. */
+  /** Calls `show` once the element is in view. */
   whenVisible: (element: Element, show: () => void) => void;
 }
 
@@ -37,6 +54,11 @@ export const browserPromoOptions = (): PromoOptions => ({
   },
 });
 
+export interface Promo {
+  /** Shows the video of `lang` (after a switch of the page's language). */
+  setLang(lang: Lang): void;
+}
+
 /** Labels of the pause / play button in the current language. */
 export function labelPromo(root: ParentNode = document) {
   const video = root.querySelector<HTMLVideoElement>("[data-promo] video");
@@ -53,28 +75,51 @@ export function labelPromo(root: ParentNode = document) {
 export function setupPromo(
   root: ParentNode = document,
   options: PromoOptions = browserPromoOptions(),
-) {
+  lang: Lang = getLang(),
+): Promo | null {
   const figure = root.querySelector<HTMLElement>("[data-promo]");
   const video = figure?.querySelector("video");
   const button = figure?.querySelector<HTMLButtonElement>(
     "[data-promo-toggle]",
   );
-  if (!figure || !video || !button) return;
+  const posterSource =
+    figure?.querySelector<HTMLSourceElement>("picture source");
+  const posterImg = figure?.querySelector<HTMLImageElement>("picture img");
+  if (!figure || !video || !button || !posterSource || !posterImg) return null;
+  const webm = video.querySelector<HTMLSourceElement>(
+    'source[type="video/webm"]',
+  )!;
+  const mp4 = video.querySelector<HTMLSourceElement>(
+    'source[type="video/mp4"]',
+  )!;
+  // Played from here, so that a video the visitor paused stays paused when
+  // the language changes.
+  video.removeAttribute("autoplay");
+  let shown = false;
+
+  const showPoster = () => {
+    posterSource.srcset = PROMO_FILES[lang].webp;
+    posterImg.src = PROMO_FILES[lang].jpg;
+  };
+  const loadVideo = () => {
+    webm.src = PROMO_FILES[lang].webm;
+    mp4.src = PROMO_FILES[lang].mp4;
+    video.load();
+  };
+  const play = () => void video.play().catch(() => labelPromo(root));
+
+  showPoster();
   if (options.reducedMotion) {
     // Only the poster: the video is never loaded.
-    video.removeAttribute("autoplay");
     video.hidden = true;
     figure.dataset.state = "poster";
-    return;
+    return { setLang: (next) => ((lang = next), showPoster()) };
   }
   options.whenLoaded(() =>
     options.whenVisible(figure, () => {
-      for (const source of video.querySelectorAll<HTMLSourceElement>(
-        "source[data-src]",
-      ))
-        source.src = source.dataset.src!;
-      video.load();
-      void video.play().catch(() => labelPromo(root));
+      shown = true;
+      loadVideo();
+      play();
     }),
   );
   video.addEventListener("playing", () => {
@@ -84,7 +129,21 @@ export function setupPromo(
   });
   video.addEventListener("pause", () => labelPromo(root));
   button.addEventListener("click", () => {
-    if (video.paused) void video.play();
+    if (video.paused) play();
     else video.pause();
   });
+  return {
+    setLang(next) {
+      if (next === lang) return;
+      lang = next;
+      showPoster();
+      if (!shown) return;
+      // The poster of the new language until its video plays.
+      const playing = !video.paused;
+      figure.dataset.state = "switching";
+      loadVideo();
+      if (playing) play();
+      labelPromo(root);
+    },
+  };
 }
