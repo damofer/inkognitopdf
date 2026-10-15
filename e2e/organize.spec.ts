@@ -77,11 +77,14 @@ test("insert a PDF at the end, undo it, drag a page down", async ({ page }) => {
   await (await chooser).setFiles(fixture("simple-text.pdf"));
   await expect(page.getByText("Se añadió 1 página al final.")).toBeVisible();
   await expect(thumbnails(page)).toHaveCount(3);
+  // Thumbnails out of view are drawn when they scroll in.
+  await thumbnails(page).nth(2).scrollIntoViewIfNeeded();
   await expect(thumbnails(page).nth(2)).toHaveAttribute(
     "data-rendered",
     "true",
   );
   await page.screenshot({ path: `${DIR}/insertar-escritorio.png` });
+  await thumbnails(page).nth(0).scrollIntoViewIfNeeded();
 
   // One undoable step.
   await page.keyboard.press("Control+z");

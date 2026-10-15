@@ -1,14 +1,14 @@
 import type { ImageCodec } from "../engine/redact";
 
 /** A 2D canvas of the given size (off screen when the browser has it). */
-function canvas2d(width: number, height: number) {
+function canvas2d(width: number, height: number, quality = 0.92) {
   if (typeof OffscreenCanvas !== "undefined") {
     const canvas = new OffscreenCanvas(width, height);
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("2d");
     return {
       ctx,
-      toJpeg: () => canvas.convertToBlob({ type: "image/jpeg", quality: 0.92 }),
+      toJpeg: () => canvas.convertToBlob({ type: "image/jpeg", quality }),
     };
   }
   const canvas = document.createElement("canvas");
@@ -23,7 +23,7 @@ function canvas2d(width: number, height: number) {
         canvas.toBlob(
           (blob) => (blob ? resolve(blob) : reject(new Error("jpeg"))),
           "image/jpeg",
-          0.92,
+          quality,
         ),
       ),
   };
@@ -55,8 +55,8 @@ export const browserImageCodec: ImageCodec = {
       bitmap.close();
     }
   },
-  async encodeJpeg(rgba, width, height) {
-    const { ctx, toJpeg } = canvas2d(width, height);
+  async encodeJpeg(rgba, width, height, quality) {
+    const { ctx, toJpeg } = canvas2d(width, height, quality);
     ctx.putImageData(
       new ImageData(rgba as Uint8ClampedArray<ArrayBuffer>, width, height),
       0,

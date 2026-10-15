@@ -326,14 +326,17 @@
     box-shadow: 0 -8px 24px rgb(0 0 0 / 0.15);
   }
 
-  /* Insert and split are in the Edit sheet. */
+  /* Insert, split, compress and password are in the Edit sheet. */
   .thumbnails-header {
     display: none;
   }
 
   .split-modes label,
-  .split-panel input,
-  .split-panel button {
+  .compress-levels label,
+  .split-panel .toolbar-check,
+  .split-panel input:not([type="checkbox"], [type="radio"]),
+  .split-panel button,
+  .password-prompt input {
     min-height: 44px;
   }
 

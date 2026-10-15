@@ -1106,6 +1106,74 @@ button[aria-pressed="true"] {
   opacity: 0.75;
 }
 
+.compress-levels {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 8px 8px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+}
+
+.compress-levels label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.compress-levels label.checked {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.compress-levels label span {
+  display: grid;
+  gap: 2px;
+}
+
+.compress-levels small,
+.protect-note {
+  opacity: 0.8;
+}
+
+.compress-result {
+  font-weight: 600;
+}
+
+.split-panel p {
+  margin: 0;
+}
+
+.protect-form {
+  display: grid;
+  gap: 8px;
+}
+
+.protect-active {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.thumbnails-header button.protected::before,
+.sheet-item.protected .sheet-icon::after {
+  content: "●" / "";
+  color: var(--accent);
+  font-size: 0.7em;
+  margin-right: 4px;
+}
+
+.password-field {
+  display: grid;
+  gap: 4px;
+}
+
 .split-panel input[aria-invalid="true"] {
   outline: 2px solid #c92a2a;
 }

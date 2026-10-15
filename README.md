@@ -26,7 +26,7 @@
 
 ## Privacy promise
 
-- **Your files never leave your device.** Opening, editing, OCR, signing, redacting, merging and saving all happen in the browser. There is no server that receives documents, signatures or certificates.
+- **Your files never leave your device.** Opening, editing, OCR, signing, redacting, merging, compressing, encrypting and saving all happen in the browser. There is no server that receives documents, signatures or certificates.
 - **Works offline.** It is an installable PWA; the OCR models and fonts are cached the first time they are used.
 - **No accounts and no ads.**
 - **Usage measurement is optional.** Anonymous usage counts (Google Analytics through Firebase) are sent only if the visitor accepts them, and they never include file names, text or any content: see the closed list of events in [`src/analytics/events.ts`](src/analytics/events.ts). Without consent, the app makes no request to Google.
@@ -44,10 +44,10 @@
 | **Edit scanned text** | Replace a recognized line inside the scanned image, matching the paper and the ink.                                                                                                                                      |
 | **Secure redaction**  | Mark areas or search for words or patterns, then really remove the text, images, annotations and metadata underneath.                                                                                                    |
 | **Merge and split**   | Open several PDFs as one, insert PDFs, reorder pages by dragging, split by ranges or every N pages, or extract pages (ZIP for several files).                                                                            |
+| **Compress**          | Make files smaller: images are scaled down to what their page needs and encoded again, with three levels and the size before and after.                                                                                  |
+| **Passwords**         | Open protected PDFs (RC4 and AES, up to AES-256) and save with an AES-256 password; optional print and copy restrictions, which the app explains are only advisory.                                                      |
 | **Pages**             | Rotate, delete, insert blank pages and start from a blank document.                                                                                                                                                      |
 | **Languages**         | English and Spanish, on desktop and on phones.                                                                                                                                                                           |
-
-Coming next: compress PDFs and add or remove passwords.
 
 ## Screenshots
 

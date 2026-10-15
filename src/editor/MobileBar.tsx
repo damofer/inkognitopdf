@@ -63,6 +63,13 @@ interface MobileBarProps {
   onInsertPdf?: (() => void) | null;
   splitOpen?: boolean;
   onToggleSplit?: () => void;
+  /** Compress and password panels (spec 014). */
+  compressOpen?: boolean;
+  onToggleCompress?: () => void;
+  protectOpen?: boolean;
+  /** The document will be saved with a password. */
+  protectActive?: boolean;
+  onToggleProtect?: () => void;
 }
 
 export function MobileBar({
@@ -79,6 +86,11 @@ export function MobileBar({
   onInsertPdf = null,
   splitOpen = false,
   onToggleSplit,
+  compressOpen = false,
+  onToggleCompress,
+  protectOpen = false,
+  protectActive = false,
+  onToggleProtect,
 }: MobileBarProps) {
   const t = useT();
   const [sheet, setSheet] = useState<Category | null>(null);
@@ -195,6 +207,38 @@ export function MobileBar({
                         ✂
                       </span>
                       <span>{t("organize.split")}</span>
+                    </button>
+                  )}
+                  {onToggleCompress && (
+                    <button
+                      type="button"
+                      className="sheet-item"
+                      aria-pressed={compressOpen}
+                      onClick={() => {
+                        setSheet(null);
+                        onToggleCompress();
+                      }}
+                    >
+                      <span className="sheet-icon" aria-hidden="true">
+                        ⇲
+                      </span>
+                      <span>{t("compress.button")}</span>
+                    </button>
+                  )}
+                  {onToggleProtect && (
+                    <button
+                      type="button"
+                      className={`sheet-item${protectActive ? " protected" : ""}`}
+                      aria-pressed={protectOpen}
+                      onClick={() => {
+                        setSheet(null);
+                        onToggleProtect();
+                      }}
+                    >
+                      <span className="sheet-icon" aria-hidden="true">
+                        ⚿
+                      </span>
+                      <span>{t("protect.button")}</span>
                     </button>
                   )}
                 </>

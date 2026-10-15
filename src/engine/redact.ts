@@ -62,11 +62,12 @@ export interface ImageCodec {
   decodeJpeg(
     bytes: Uint8Array,
   ): Promise<{ width: number; height: number; data: Uint8ClampedArray }>;
-  /** RGBA pixels to a JPEG. */
+  /** RGBA pixels to a JPEG; quality from 0 to 1 (0.92 by default). */
   encodeJpeg(
     rgba: Uint8ClampedArray,
     width: number,
     height: number,
+    quality?: number,
   ): Promise<Uint8Array>;
 }
 
@@ -649,7 +650,7 @@ function rectOf(doc: PDFDocument, obj: PDFObject | undefined): Rect | null {
   ]);
 }
 
-function listOf(doc: PDFDocument, obj: PDFObject | undefined): string[] {
+export function listOf(doc: PDFDocument, obj: PDFObject | undefined): string[] {
   const v = obj === undefined ? undefined : doc.context.lookup(obj);
   if (v instanceof PDFName) return [v.decodeText()];
   if (v instanceof PDFArray)
@@ -753,7 +754,7 @@ interface Predictor {
 }
 
 /** Predictor parameters of the last filter (Flate or LZW), when it has one. */
-function parmsOf(
+export function parmsOf(
   doc: PDFDocument,
   dict: PDFDict,
   filters: number,

@@ -56,6 +56,11 @@ import { Toast } from "../Toast";
 import { MobileBar } from "./MobileBar";
 import { RedactOptions } from "./RedactOptions";
 import { SplitPanel, type SplitMode } from "./SplitPanel";
+import { CompressPanel, type CompressOutcome } from "../protect/CompressPanel";
+import { ProtectPanel } from "../protect/ProtectPanel";
+import type { CompressLevel } from "../engine/compress";
+import type { Protection } from "../engine/pdfCrypto";
+import { unlock, type AskPassword } from "../storage/unlock";
 
 interface EditorViewProps {
   file: PdfFile | null;
@@ -70,7 +75,16 @@ interface EditorViewProps {
    * PDFs, spec 013) and returns them loaded.
    */
   onReplaceBase?: (file: PdfFile) => Promise<PDFDocumentProxy>;
+  /** Password the file was opened with (spec 014): saving keeps it. */
+  password?: string | null;
+  /** The file only restricted permissions and opened without them. */
+  restricted?: boolean;
+  /** Asks for the password of encrypted PDFs being inserted. */
+  askPassword?: AskPassword;
 }
+
+/** Panels of the pages column (specs 013 and 014): one open at a time. */
+type PagesPanel = "split" | "compress" | "protect";
 
 const FONTS: { value: FontFamily; label: string }[] = [
   { value: "Helvetica", label: "Helvetica" },
@@ -310,6 +324,9 @@ export function EditorView({
   incoming,
   onScan,
   onReplaceBase,
+  password = null,
+  restricted = false,
+  askPassword = async () => null,
 }: EditorViewProps) {
   const t = useT();
   const editor = useEditor(initial);
@@ -450,7 +467,13 @@ export function EditorView({
       if (i.kind === "signField") (out[i.signerId] ??= []).push(i.field);
     return out;
   }, [state.items]);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(() =>
+    password !== null
+      ? t("protect.opened")
+      : restricted
+        ? t("protect.permissionsOnly")
+        : null,
+  );
   const [tool, setTool] = useState<Tool>("select");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [textStyle, setTextStyle] = useState<TextStyle>(DEFAULT_TEXT_STYLE);
@@ -782,7 +805,12 @@ export function EditorView({
     setInserting(true);
     setNotice(null);
     try {
-      const others = await Promise.all(chosen.map(openPdfFile));
+      const others: PdfFile[] = [];
+      for (const one of chosen) {
+        const opened = await unlock(await openPdfFile(one), askPassword);
+        if (opened.password !== null) track("unlock_pdf");
+        others.push(opened.file);
+      }
       const { appendPdfs } = await import("../engine/organize");
       const { bytes, added } = await appendPdfs(
         file?.copyBytes() ?? new Uint8Array(),
@@ -831,8 +859,24 @@ export function EditorView({
   };
   const chooseInsert = () => insertInputRef.current?.click();
 
-  const [splitOpen, setSplitOpen] = useState(false);
+  const [panel, setPanel] = useState<PagesPanel | null>(null);
+  const togglePanel = (which: PagesPanel) =>
+    setPanel((open) => (open === which ? null : which));
+  const closePanel = () => setPanel(null);
+  const splitOpen = panel === "split";
   const [splitting, setSplitting] = useState(false);
+  // Spec 014: the password the saved file gets, if any.
+  const [protection, setProtection] = useState<Protection | null>(() =>
+    password !== null ? { password, allowPrint: true, allowCopy: true } : null,
+  );
+  /** The saved bytes, encrypted when the document has a password. */
+  const protect = async (bytes: Uint8Array) => {
+    if (!protection) return bytes;
+    const { encryptPdf } = await import("../engine/pdfCrypto");
+    return encryptPdf(bytes, protection);
+  };
+  const [compressing, setCompressing] = useState(false);
+  const [compressed, setCompressed] = useState<CompressOutcome | null>(null);
   const baseName = (file?.name ?? t("editor.defaultBaseName")).replace(
     /\.pdf$/i,
     "",
@@ -851,7 +895,9 @@ export function EditorView({
       const { bytes, warnings } = await buildPdf(file, state, {
         flattenForms: flattenForms && hasForm,
       });
-      const parts = await splitPdf(bytes, groups);
+      const parts = await Promise.all(
+        (await splitPdf(bytes, groups)).map(protect),
+      );
       const taken = new Set<string>();
       const named = parts.map((part, i) => {
         const stem = `${baseName} (${t("organize.pagesSuffix", describeGroup(groups[i]!))})`;
@@ -892,6 +938,51 @@ export function EditorView({
     }
   };
 
+  /** The document as it would be saved, compressed (spec 014). */
+  const compressDocument = async (level: CompressLevel) => {
+    setCompressing(true);
+    setCompressed(null);
+    setNotice(null);
+    try {
+      const [
+        { buildPdf, downloadFile },
+        { compressPdf },
+        { browserImageCodec },
+      ] = await Promise.all([
+        import("./save"),
+        import("../engine/compress"),
+        import("./imageCodec"),
+      ]);
+      const built = await buildPdf(file, state, {
+        flattenForms: flattenForms && hasForm,
+      });
+      const result = await compressPdf(built.bytes, level, browserImageCodec);
+      const bytes = await protect(result.bytes);
+      const before = file?.size ?? result.before;
+      setCompressed({ before, after: bytes.length });
+      track("compress_pdf", {
+        preset: level,
+        pages: pagesBucket(state.pages.length),
+      });
+      if (bytes.length >= before) return;
+      downloadFile(
+        bytes,
+        `${baseName} (${t("compress.suffix")}).pdf`,
+        "application/pdf",
+      );
+      if (built.warnings.length > 0) setNotice(built.warnings.join(" "));
+    } catch (cause) {
+      setNotice(
+        t(
+          "compress.failed",
+          cause instanceof Error ? cause.message : String(cause),
+        ),
+      );
+    } finally {
+      setCompressing(false);
+    }
+  };
+
   const save = async (overwrite = false) => {
     // CA12: rewriting the file breaks its digital signatures.
     if (signatures.length > 0 && !overwrite) {
@@ -907,7 +998,7 @@ export function EditorView({
       const { bytes, warnings } = await buildPdf(file, state, {
         flattenForms: flattenForms && hasForm,
       });
-      downloadPdf(bytes, editedFileName(file?.name ?? null));
+      downloadPdf(await protect(bytes), editedFileName(file?.name ?? null));
       trackSave();
       if (warnings.length === 0) setToast(t("editor.saved"));
       else setNotice([t("editor.saved"), ...warnings].join(" "));
@@ -929,6 +1020,11 @@ export function EditorView({
     identity: Identity | null,
     { audit }: { audit: boolean },
   ) => {
+    // Spec 014: a later password would break the signature.
+    if (protection && mode === "digital" && identity) {
+      setNotice(t("protect.signBlocked"));
+      return;
+    }
     setSigning(true);
     setNotice(null);
     try {
@@ -992,7 +1088,7 @@ export function EditorView({
             loadFont,
           );
         }
-        downloadPdf(bytes, signedFileName(file?.name ?? null));
+        downloadPdf(await protect(bytes), signedFileName(file?.name ?? null));
         trackSave();
         if (warnings.length === 0) setToast(t("editor.savedVisual"));
         else setNotice([t("editor.savedVisual"), ...warnings].join(" "));
@@ -1055,6 +1151,10 @@ export function EditorView({
 
   /** Saves the document prepared for several signers (spec 004, HU6). */
   const preparePlanFile = async (withAudit: boolean) => {
+    if (protection) {
+      setNotice(t("protect.signBlocked"));
+      return;
+    }
     setSigning(true);
     setNotice(null);
     try {
@@ -1133,6 +1233,10 @@ export function EditorView({
     identity: StoredIdentity | null,
   ) => {
     if (!filePlan) return;
+    if (protection) {
+      setNotice(t("protect.signBlocked"));
+      return;
+    }
     setSigning(true);
     setNotice(null);
     try {
@@ -1495,9 +1599,26 @@ export function EditorView({
         type="button"
         title={t("organize.splitHint")}
         aria-pressed={splitOpen}
-        onClick={() => setSplitOpen((o) => !o)}
+        onClick={() => togglePanel("split")}
       >
         {t("organize.split")}
+      </button>
+      <button
+        type="button"
+        title={t("compress.hint")}
+        aria-pressed={panel === "compress"}
+        onClick={() => togglePanel("compress")}
+      >
+        {t("compress.button")}
+      </button>
+      <button
+        type="button"
+        title={t("protect.hint")}
+        className={protection ? "protected" : undefined}
+        aria-pressed={panel === "protect"}
+        onClick={() => togglePanel("protect")}
+      >
+        {t("protect.button")}
       </button>
       <small>{t("organize.dragHint")}</small>
     </div>
@@ -2004,7 +2125,29 @@ export function EditorView({
           baseName={baseName}
           busy={splitting}
           onSplit={(groups, mode) => void splitDocument(groups, mode)}
-          onClose={() => setSplitOpen(false)}
+          onClose={closePanel}
+        />
+      )}
+      {panel === "compress" && (
+        <CompressPanel
+          fileSize={file?.size ?? null}
+          busy={compressing}
+          outcome={compressed}
+          onRun={(level) => void compressDocument(level)}
+          onClose={closePanel}
+        />
+      )}
+      {panel === "protect" && (
+        <ProtectPanel
+          protection={protection}
+          onSet={(p) => {
+            setProtection(p);
+            track("protect_pdf", {
+              restricted: p.allowPrint && p.allowCopy ? "no" : "yes",
+            });
+          }}
+          onRemove={() => setProtection(null)}
+          onClose={closePanel}
         />
       )}
       {selectedField && (
@@ -2069,7 +2212,12 @@ export function EditorView({
           formOptions={flattenCheck || undefined}
           onInsertPdf={onReplaceBase ? chooseInsert : null}
           splitOpen={splitOpen}
-          onToggleSplit={() => setSplitOpen((o) => !o)}
+          onToggleSplit={() => togglePanel("split")}
+          compressOpen={panel === "compress"}
+          onToggleCompress={() => togglePanel("compress")}
+          protectOpen={panel === "protect"}
+          protectActive={protection !== null}
+          onToggleProtect={() => togglePanel("protect")}
         />
       )}
     </>

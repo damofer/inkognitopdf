@@ -1,4 +1,5 @@
 // Shared helpers for engine tests: fixtures, pdf.js inspection and qpdf.
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
@@ -11,6 +12,7 @@ import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { initialState, type EditorState } from "../src/model/document";
 import { normalizeRotation } from "../src/model/geometry";
 import type { EngineDeps } from "../src/engine/applyEdits";
+import type { ImageCodec } from "../src/engine/redact";
 
 /** Bundled open fonts, read from their npm packages (as the copy script does). */
 export function bundledFontPath(family: string, variant: string): string {
@@ -167,3 +169,25 @@ export async function fileContains(bytes: Uint8Array, secret: string) {
     return needles.some((n) => lower.includes(n));
   });
 }
+
+/** JPEG through @napi-rs/canvas, as the browser does with a canvas. */
+export const testCodec: ImageCodec = {
+  async decodeJpeg(bytes) {
+    const image = await loadImage(Buffer.from(bytes));
+    const canvas = createCanvas(image.width, image.height);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0);
+    const data = ctx.getImageData(0, 0, image.width, image.height).data;
+    return { width: image.width, height: image.height, data };
+  },
+  async encodeJpeg(rgba, width, height, quality = 0.92) {
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+    const image = ctx.createImageData(width, height);
+    image.data.set(rgba);
+    ctx.putImageData(image, 0, 0);
+    return new Uint8Array(
+      await canvas.encode("jpeg", Math.round(quality * 100)),
+    );
+  },
+};

@@ -13,6 +13,10 @@ const VALUES = {
   size: SIZES,
   files: FILES,
   split: ["ranges", "every", "selection"],
+  /** Compression preset (spec 014). */
+  preset: ["high", "balanced", "small"],
+  /** Whether print or copy were restricted (spec 014), never the password. */
+  restricted: ["yes", "no"],
   /** Donation link followed: only its amount tier. */
   tier: ["10000", "20000", "50000", "other", "kofi"],
   lang: ["es", "en"],
@@ -40,6 +44,9 @@ const EVENTS = {
   redact: [],
   merge_pdf: ["files", "pages"],
   split_pdf: ["split", "pages"],
+  compress_pdf: ["preset", "pages"],
+  protect_pdf: ["restricted"],
+  unlock_pdf: [],
   add_image: [],
   create_field: [],
   fill_form: [],

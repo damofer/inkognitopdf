@@ -21,6 +21,8 @@ import { createPdfFile, openPdfFile, type PdfFile } from "./storage/pdfFile";
 import { loadDocument, type PDFDocumentProxy } from "./viewer/pdfjs";
 import { useMobile } from "./useMobile";
 import { SupportPanel } from "./support/SupportPanel";
+import { PasswordPrompt } from "./protect/PasswordPrompt";
+import { unlock, type AskPassword } from "./storage/unlock";
 
 type State =
   | { status: "empty" }
@@ -31,6 +33,10 @@ type State =
       doc: PDFDocumentProxy | null;
       initial: EditorState;
       openId: number;
+      /** Password the file was opened with (spec 014), kept to save it. */
+      password: string | null;
+      /** The file only restricted permissions and opened without them. */
+      restricted: boolean;
     }
   | { status: "error"; message: string };
 
@@ -68,6 +74,27 @@ export function App() {
     items: Item[];
   } | null>(null);
 
+  // Spec 014: the password of an encrypted file, asked for while opening.
+  const [asking, setAsking] = useState<{
+    fileName: string;
+    wrong: boolean;
+    answer: (password: string | null) => void;
+  } | null>(null);
+  const askPassword: AskPassword = useCallback(
+    (fileName, wrong) =>
+      new Promise((resolve) =>
+        setAsking({
+          fileName,
+          wrong,
+          answer: (password) => {
+            setAsking(null);
+            resolve(password);
+          },
+        }),
+      ),
+    [],
+  );
+
   /** Opens one file, or several merged into one in that order (spec 013). */
   const open = useCallback(
     async (files: File[]) => {
@@ -82,9 +109,16 @@ export function App() {
       });
       try {
         performance.mark("pdfcraft:open-start");
-        let pdf = await openPdfFile(file);
+        const first = await unlock(await openPdfFile(file), askPassword);
+        let pdf = first.file;
+        if (first.password !== null) track("unlock_pdf");
         if (files.length > 1) {
-          const others = await Promise.all(files.slice(1).map(openPdfFile));
+          const others = [];
+          for (const other of files.slice(1)) {
+            const opened = await unlock(await openPdfFile(other), askPassword);
+            if (opened.password !== null) track("unlock_pdf");
+            others.push(opened.file);
+          }
           const { appendPdfs } = await import("./engine/organize");
           const { bytes } = await appendPdfs(
             pdf.copyBytes(),
@@ -109,6 +143,8 @@ export function App() {
           doc,
           initial,
           openId: nextOpenId++,
+          password: first.password,
+          restricted: first.restricted,
         });
       } catch (cause) {
         setState({
@@ -117,7 +153,7 @@ export function App() {
         });
       }
     },
-    [t],
+    [t, askPassword],
   );
 
   /** The open document gets new bytes; its edits and history stay (spec 013). */
@@ -136,6 +172,8 @@ export function App() {
       doc: null,
       initial: { pages, items },
       openId: nextOpenId++,
+      password: null,
+      restricted: false,
     });
   };
 
@@ -159,6 +197,8 @@ export function App() {
         items: [],
       },
       openId: nextOpenId++,
+      password: null,
+      restricted: false,
     });
   };
 
@@ -332,6 +372,9 @@ export function App() {
             incoming={incoming}
             onScan={() => setScanning(true)}
             onReplaceBase={replaceBase}
+            password={state.password}
+            restricted={state.restricted}
+            askPassword={askPassword}
           />
         )}
         {scanning && (
@@ -352,6 +395,14 @@ export function App() {
         )}
       </main>
       {supportOpen && <SupportPanel onClose={closeSupport} />}
+      {asking && (
+        <PasswordPrompt
+          key={`${asking.fileName}:${asking.wrong}`}
+          fileName={asking.fileName}
+          wrong={asking.wrong}
+          onAnswer={asking.answer}
+        />
+      )}
       <ConsentNotice />
     </div>
   );

@@ -9,6 +9,7 @@ import { mobile } from "./mobile";
 import { ocr } from "./ocr";
 import { organize } from "./organize";
 import { privacy } from "./privacy";
+import { protect } from "./protect";
 import { redact } from "./redact";
 import { scan } from "./scan";
 import { sign } from "./sign";
@@ -27,6 +28,7 @@ export const es = {
   ...ocr,
   ...organize,
   ...privacy,
+  ...protect,
   ...redact,
   ...scan,
   ...sign,

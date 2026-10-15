@@ -1,5 +1,5 @@
 // Spec 012: secure redaction removes the content from the file, never just covers it.
-import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { createCanvas } from "@napi-rs/canvas";
 import {
   PDFArray,
   PDFDict,
@@ -15,7 +15,7 @@ import {
 } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { applyEdits } from "../src/engine/applyEdits";
-import { clearBits, unpredict, type ImageCodec } from "../src/engine/redact";
+import { clearBits, unpredict } from "../src/engine/redact";
 import {
   type EditorState,
   type Item,
@@ -28,31 +28,13 @@ import {
   qpdfCheck,
   qpdfPath,
   stateFor,
+  testCodec as codec,
   testDeps,
 } from "./helpers";
 import { renderPage } from "./renderHelpers";
 
 const SECRET = "4711-0815";
 
-/** JPEG through @napi-rs/canvas, as the browser does with a canvas. */
-const codec: ImageCodec = {
-  async decodeJpeg(bytes) {
-    const image = await loadImage(Buffer.from(bytes));
-    const canvas = createCanvas(image.width, image.height);
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(image, 0, 0);
-    const data = ctx.getImageData(0, 0, image.width, image.height).data;
-    return { width: image.width, height: image.height, data };
-  },
-  async encodeJpeg(rgba, width, height) {
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext("2d");
-    const image = ctx.createImageData(width, height);
-    image.data.set(rgba);
-    ctx.putImageData(image, 0, 0);
-    return new Uint8Array(await canvas.encode("jpeg", 92));
-  },
-};
 const deps = { ...testDeps, images: codec };
 
 let nextId = 1;

@@ -26,7 +26,7 @@
 
 ## Compromiso de privacidad
 
-- **Tus archivos nunca salen de tu dispositivo.** Abrir, editar, reconocer texto, firmar, borrar, unir y guardar ocurre en el navegador. No hay ningún servidor que reciba documentos, firmas ni certificados.
+- **Tus archivos nunca salen de tu dispositivo.** Abrir, editar, reconocer texto, firmar, borrar, unir, comprimir, cifrar y guardar ocurre en el navegador. No hay ningún servidor que reciba documentos, firmas ni certificados.
 - **Funciona sin conexión.** Es una PWA que se puede instalar; los modelos de OCR y las fuentes se guardan la primera vez que se usan.
 - **Sin cuentas ni anuncios.**
 - **La medición de uso es opcional.** Solo si el visitante la acepta se envían conteos anónimos de uso (Google Analytics a través de Firebase), y nunca incluyen nombres de archivo, texto ni contenido: la lista cerrada de eventos está en [`src/analytics/events.ts`](src/analytics/events.ts). Sin aceptarla, la app no hace ninguna petición a Google.
@@ -44,10 +44,10 @@
 | **Editar texto escaneado** | Reemplaza una línea reconocida dentro de la imagen escaneada, igualando el papel y la tinta.                                                                                                                                |
 | **Borrado seguro**         | Marca zonas o busca palabras o patrones y elimina de verdad el texto, las imágenes, las anotaciones y los metadatos que hay debajo.                                                                                         |
 | **Unir y dividir**         | Abre varios PDFs como uno, inserta PDFs, ordena las páginas arrastrándolas, divide por rangos o cada N páginas o extrae páginas (ZIP si salen varios archivos).                                                             |
+| **Comprimir**              | Reduce el tamaño: las imágenes se ajustan a lo que su página necesita y se codifican de nuevo, con tres niveles y el tamaño antes y después.                                                                                |
+| **Contraseñas**            | Abre PDFs protegidos (RC4 y AES, hasta AES-256) y guarda con contraseña AES-256; restricciones opcionales de imprimir y copiar, que la app explica que son solo orientativas.                                               |
 | **Páginas**                | Gira, elimina, inserta páginas en blanco y empieza desde un documento en blanco.                                                                                                                                            |
 | **Idiomas**                | Español e inglés, en el ordenador y en el teléfono.                                                                                                                                                                         |
-
-Próximamente: comprimir PDFs y poner o quitar contraseñas.
 
 ## Capturas
 
