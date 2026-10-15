@@ -1,0 +1,145 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/logo-dark.svg" />
+    <img src="public/brand/logo-light.svg" alt="InkognitoPDF" height="56" />
+  </picture>
+</p>
+
+<p align="center">
+  <b>English</b> · <a href="README.es.md">Español</a>
+</p>
+
+<p align="center">
+  <b>Edit, scan and sign PDFs without them ever leaving your device.</b><br />
+  A free, private PDF editor and document scanner that runs entirely in your browser.
+</p>
+
+<p align="center">
+  <a href="https://inkognitopdf.web.app/app/"><b>Open the app →</b></a>
+  ·
+  <a href="https://inkognitopdf.web.app/">Website</a>
+  ·
+  <a href="LICENSE">Apache-2.0</a>
+</p>
+
+![The editor with a form open](docs/images/editor-en.png)
+
+## Privacy promise
+
+- **Your files never leave your device.** Opening, editing, OCR, signing, redacting, merging and saving all happen in the browser. There is no server that receives documents, signatures or certificates.
+- **Works offline.** It is an installable PWA; the OCR models and fonts are cached the first time they are used.
+- **No accounts and no ads.**
+- **Usage measurement is optional.** Anonymous usage counts (Google Analytics through Firebase) are sent only if the visitor accepts them, and they never include file names, text or any content: see the closed list of events in [`src/analytics/events.ts`](src/analytics/events.ts). Without consent, the app makes no request to Google.
+
+## Features
+
+|                       |                                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Edit text**         | Change the text already in the PDF, keeping its font, size, color and weight. Add text, images and whiteout.                                                                                                             |
+| **Annotate**          | Highlight, underline, strike out, notes, free text, drawing, lines, arrows, rectangles and ellipses, saved as standard annotations.                                                                                      |
+| **Forms**             | Fill in AcroForm fields, create new ones of six types, and flatten the form.                                                                                                                                             |
+| **Sign**              | Drawn, typed or photographed signatures; digital **PAdES** signatures with a certificate created on the device or imported from a `.p12`; several signers in order, with an optional audit page; signature verification. |
+| **Scan**              | Photograph paper with the phone: page detection, perspective correction and a clean black-and-white "photocopy" filter.                                                                                                  |
+| **OCR**               | Recognize the text of scans in English and Spanish (Tesseract.js) so it can be searched, selected and copied.                                                                                                            |
+| **Edit scanned text** | Replace a recognized line inside the scanned image, matching the paper and the ink.                                                                                                                                      |
+| **Secure redaction**  | Mark areas or search for words or patterns, then really remove the text, images, annotations and metadata underneath.                                                                                                    |
+| **Merge and split**   | Open several PDFs as one, insert PDFs, reorder pages by dragging, split by ranges or every N pages, or extract pages (ZIP for several files).                                                                            |
+| **Pages**             | Rotate, delete, insert blank pages and start from a blank document.                                                                                                                                                      |
+| **Languages**         | English and Spanish, on desktop and on phones.                                                                                                                                                                           |
+
+Coming next: compress PDFs and add or remove passwords.
+
+## Screenshots
+
+| Sign                                      | Secure redaction                              | Split                                    |
+| ----------------------------------------- | --------------------------------------------- | ---------------------------------------- |
+| ![Signing panel](docs/images/sign-en.png) | ![Redaction marks](docs/images/redact-en.png) | ![Split panel](docs/images/split-en.png) |
+
+| Phone                                      | Annotate on a phone                                                | Scanner                                                        |
+| ------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------- |
+| ![Phone editor](docs/images/mobile-en.png) | ![Annotation tools on a phone](docs/images/mobile-annotate-en.png) | ![Scanner filter step](docs/screenshots/scan/390-3-filtro.png) |
+
+All pictures use synthetic sample documents. They are regenerated with `npm run build` and `node scripts/readme-images.mjs`.
+
+## Quick start
+
+Requirements: **Node.js 24** or newer.
+
+```bash
+npm install          # dependencies, installed locally
+npm run dev          # development server
+npm test             # unit tests (Vitest)
+npm run test:e2e     # end-to-end tests (Playwright; builds first)
+npm run build        # production build with the offline service worker, in dist/
+```
+
+Other scripts: `npm run lint`, `npm run typecheck`, `npm run format:check`, and `npm run fixtures` to regenerate the synthetic test PDFs.
+
+The end-to-end tests use the Chrome installed on the machine. When `openssl` and `qpdf` are available, the tests also check signatures and files with them.
+
+### Deploying
+
+The build in `dist/` is a static site: the landing page at `/` and the app at `/app/`. [`firebase.json`](firebase.json) has the Firebase Hosting configuration (rewrites and cache headers). To deploy your own copy, create a Firebase project, put its id in `.firebaserc` and run `npx firebase-tools deploy --only hosting`. No secret is needed to build or deploy. The web configuration in `src/analytics/firebase.ts` identifies the public web app and is not a secret.
+
+## Project structure
+
+```
+index.html        landing page (texts from src/i18n, written in by the build)
+app/index.html    the app
+src/
+  landing/        landing page script and styles
+  editor/         editor UI: tools, panels, saving, split panel
+  engine/         writing PDFs with pdf-lib: text edits, fonts, forms, redaction, merge and split
+  model/          document state, operations and undo history
+  viewer/         rendering with pdf.js: pages, text layer, thumbnails, zoom
+  scan/           scanner: page detection, perspective, black-and-white filter (Web Worker)
+  ocr/            OCR with Tesseract.js and the selectable text layer
+  sign/           signatures: drawing, PAdES, verification, several signers
+  storage/        opening files (the original is never modified), ZIP
+  analytics/      consent and the closed list of usage events
+  support/        donation links
+  i18n/           Spanish (reference) and English texts
+tests/            unit tests and synthetic fixtures
+e2e/              end-to-end tests (Playwright)
+scripts/          asset copying, fixtures, icons, screenshots
+public/brand/     logo and icons
+```
+
+## Tech stack
+
+| Component                                                                               | License          | Used for                              |
+| --------------------------------------------------------------------------------------- | ---------------- | ------------------------------------- |
+| [React](https://react.dev)                                                              | MIT              | Interface                             |
+| [pdf.js](https://github.com/mozilla/pdf.js) (`pdfjs-dist`)                              | Apache-2.0       | Rendering, text layer                 |
+| [pdf-lib](https://github.com/Hopding/pdf-lib) and `@pdf-lib/fontkit`                    | MIT              | Writing PDFs                          |
+| [Tesseract.js](https://github.com/naptha/tesseract.js) and its English and Spanish data | Apache-2.0       | OCR in the browser                    |
+| [PKI.js](https://github.com/PeculiarVentures/PKI.js), asn1js                            | BSD-3-Clause     | CMS, X.509 and PKCS#12 for signatures |
+| Arimo, Tinos, Cousine, Carlito, Caladea, Dancing Script, Great Vibes, Caveat            | OFL-1.1          | Substitute and handwriting fonts      |
+| Firebase Analytics (optional, with consent)                                             | Apache-2.0       | Anonymous usage counts                |
+| Vite, Vitest, Playwright, TypeScript, ESLint, Prettier                                  | MIT / Apache-2.0 | Build and tests                       |
+
+Full list and notes: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+## Contributing
+
+Issues and pull requests are welcome. A few rules keep the project what it is:
+
+- **Everything stays on the device.** No feature may send documents or their content to a server.
+- **Clean-room code.** Write your own code; do not copy code, assets or text from proprietary PDF products.
+- **Open licenses only.** New dependencies must be compatible with Apache-2.0 (no GPL or AGPL).
+- **Both languages.** Every visible text goes in `src/i18n/es` and `src/i18n/en`.
+- **Phones too.** Controls work with touch and are at least 44 px tall.
+- **Tests stay green.** Run `npm test`, `npm run test:e2e`, `npm run lint` and `npm run format:check` before opening a pull request. Test documents must be synthetic: never real personal files.
+
+## License
+
+Copyright 2026 David Mogollon. Licensed under the [Apache License 2.0](LICENSE). See also [`NOTICE`](NOTICE).
+
+## Support the project
+
+InkognitoPDF is free. If it is useful to you, you can support its development:
+
+- **[Ko-fi](https://ko-fi.com/damofer)** (US dollars)
+- **From Colombia, Mercado Pago** (Colombian pesos): [$10.000](https://mpago.li/1Kyib9Q) · [$20.000](https://mpago.li/1sVMAt1) · [$50.000](https://mpago.li/2s9ot7Z) · [other amount](https://link.mercadopago.com.co/damofer)
+
+Thank you!

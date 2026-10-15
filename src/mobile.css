@@ -1,0 +1,772 @@
+/* Header actions: in a row on wide screens, in the overflow menu on phones
+   (spec 007). */
+.header-actions {
+  display: contents;
+}
+
+.app-header > .file-name {
+  order: 2;
+}
+
+.header-actions > .lang-switch {
+  order: 3;
+}
+
+.menu-button,
+.menu-backdrop,
+.mobile-bar {
+  display: none;
+}
+
+.start {
+  margin: auto;
+  display: grid;
+  gap: 20px;
+  justify-items: center;
+  padding: 16px;
+}
+
+.start .hint {
+  margin: 0;
+  max-width: 34em;
+}
+
+/* Phone layout (spec 007). The width matches MOBILE_QUERY in useMobile.ts. */
+@media (max-width: 760px) {
+  .app {
+    height: 100dvh;
+  }
+
+  /* Touch targets of at least 44 px in every bar, menu and panel. */
+  .app-header :is(button, .open-button, select),
+  .viewer-toolbar :is(button, select, input),
+  .mobile-options :is(button, select, input, .toolbar-check),
+  .mobile-sheet :is(button, .toolbar-check),
+  .dialog :is(button, .toolbar-check),
+  .notice button,
+  .start button,
+  .field-panel :is(button, input, select),
+  .thumbnails button,
+  .sign-panel :is(button, select, input:not([type="checkbox"], [type="radio"])),
+  .ocr-panel :is(button, select, input:not([type="checkbox"], [type="radio"])),
+  .scan-view :is(button, select, .open-button) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Compact top bar: mark, file name, overflow menu. */
+  .app-header {
+    position: relative;
+    gap: 8px;
+    min-height: 56px;
+    padding: 6px 4px 6px 12px;
+  }
+
+  .app-header > .file-name {
+    order: 0;
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .menu-button {
+    display: grid;
+    place-items: center;
+    flex: none;
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .menu-button svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  .header-actions {
+    display: none;
+  }
+
+  .header-actions.open {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 8px;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: min(280px, calc(100vw - 16px));
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.25);
+  }
+
+  .header-actions.open > :is(button, .open-button) {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    text-align: left;
+  }
+
+  .header-actions.open > .build-id {
+    order: 4;
+    padding: 4px 6px 0;
+  }
+
+  .header-actions.open > .lang-switch {
+    margin: 4px 0 0;
+    align-self: stretch;
+  }
+
+  .header-actions.open > .lang-switch button {
+    flex: 1;
+  }
+
+  .menu-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+  }
+
+  /* Start screen. */
+  .start-actions {
+    display: grid;
+    gap: 10px;
+    width: min(320px, 100%);
+  }
+
+  .start-actions button {
+    min-height: 52px;
+    font-size: 1.05rem;
+    border-radius: 12px;
+  }
+
+  /* Collapsed help: one line; a tap shows all of it. */
+  .tool-hint {
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+
+  .tool-hint.collapsed {
+    position: relative;
+    padding-right: 32px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tool-hint.collapsed::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    margin-top: -6px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  /* One compact row: undo, redo, save · zoom. */
+  .viewer-toolbar {
+    flex-wrap: nowrap;
+    gap: 2px;
+    padding: 4px 6px;
+  }
+
+  .viewer-toolbar button {
+    padding: 0 6px;
+  }
+
+  .viewer-toolbar .toolbar-group {
+    gap: 2px;
+    padding-right: 0;
+    margin-right: 0;
+    border-right: 0;
+  }
+
+  .viewer-toolbar .toolbar-group:last-of-type {
+    margin-left: auto;
+  }
+
+  .viewer-toolbar button.primary {
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+
+  .zoom-value {
+    min-width: 2.9em;
+    font-size: 0.85rem;
+  }
+
+  .fit-button,
+  .page-indicator {
+    display: none;
+  }
+
+  /* Options of the current tool: one row that scrolls sideways by itself. */
+  .mobile-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    overflow-x: auto;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+
+  .mobile-options .toolbar-group {
+    flex: none;
+    gap: 6px;
+    padding-right: 8px;
+    margin-right: 0;
+  }
+
+  .mobile-options .toolbar-group:last-child {
+    border-right: 0;
+  }
+
+  /* Secure redaction (spec 012): the search gets a full row. */
+  .mobile-options:has(.redact-options) {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .mobile-options .redact-options {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .mobile-options .redact-search {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mobile-options .redact-search input[type="search"] {
+    flex: 1 1 100%;
+    width: auto;
+    min-width: 0;
+    min-height: 44px;
+  }
+
+  /* The label is the touch target; the box keeps its usual size. */
+  .mobile-options .redact-options .toolbar-check input {
+    min-width: 0;
+    min-height: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-options .redact-apply {
+    margin-left: auto;
+  }
+
+  .mobile-options input[type="color"] {
+    width: 44px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: none;
+  }
+
+  .mobile-options input[type="number"] {
+    width: 4em;
+    font: inherit;
+  }
+
+  .mobile-options select {
+    font: inherit;
+  }
+
+  /* Pages fill the width; pinch to zoom (Viewer.tsx). */
+  .pages {
+    padding: 8px;
+    touch-action: pan-x pan-y;
+    overscroll-behavior: contain;
+  }
+
+  .pages-inner {
+    gap: 8px;
+  }
+
+  /* Thumbnails: hidden, or a strip over the bottom bar. */
+  .thumbnails {
+    display: none;
+  }
+
+  .viewer.thumbs-open .thumbnails {
+    display: flex;
+    flex-direction: row;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    z-index: 40;
+    width: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px;
+    border-right: 0;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.15);
+  }
+
+  /* Insert and split are in the Edit sheet. */
+  .thumbnails-header {
+    display: none;
+  }
+
+  .split-modes label,
+  .split-panel input,
+  .split-panel button {
+    min-height: 44px;
+  }
+
+  .split-pages {
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  }
+
+  .viewer.thumbs-open .thumbnail {
+    flex: none;
+    width: 156px;
+  }
+
+  .viewer.thumbs-open .thumbnail canvas {
+    width: 84px;
+  }
+
+  .viewer.thumbs-open .page-actions button {
+    padding: 0;
+  }
+
+  /* Bottom bar with the tool categories. */
+  .mobile-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    flex: none;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .mobile-bar button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 56px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.1;
+  }
+
+  .mobile-bar button span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-bar svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .mobile-bar button.active,
+  .mobile-bar button[aria-expanded="true"],
+  .mobile-bar button[aria-pressed="true"] {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  }
+
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgb(0 0 0 / 0.35);
+  }
+
+  .mobile-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    z-index: 60;
+    max-height: 70dvh;
+    overflow-y: auto;
+    padding: 8px 12px 14px;
+    border-radius: 18px 18px 0 0;
+    background: var(--surface);
+    box-shadow: 0 -12px 32px rgb(0 0 0 / 0.25);
+  }
+
+  .mobile-sheet header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-sheet h2 {
+    margin: 0;
+    padding-left: 4px;
+    font-size: 1rem;
+  }
+
+  .mobile-sheet header button {
+    border: 0;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .sheet-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 76px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .sheet-icon {
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  .sheet-options {
+    margin-top: 12px;
+  }
+
+  .sheet-options .toolbar-group {
+    border-right: 0;
+  }
+
+  /* Panels become sheets from the bottom edge. */
+  .sign-panel,
+  .ocr-panel,
+  .split-panel {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    z-index: 65;
+    width: auto;
+    max-height: 88dvh;
+    overflow-y: auto;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+    border-width: 1px 0 0;
+    box-shadow: 0 -12px 32px rgb(0 0 0 / 0.3);
+  }
+
+  .notice {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding: 6px 12px;
+  }
+
+  /* One row: short text, the action and close (spec 009). */
+  .notice.compact {
+    flex-wrap: nowrap;
+  }
+
+  .notice.compact button {
+    white-space: nowrap;
+  }
+
+  .notice.compact > span {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .field-panel {
+    padding: 6px 12px;
+  }
+
+  .toast {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  /* Scanner (spec 009): one screen per step, the next action at the bottom. */
+  .scan-mobile {
+    height: 100dvh;
+  }
+
+  .scan-top {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 56px;
+    padding: calc(4px + env(safe-area-inset-top)) 4px 4px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scan-top .scan-icon {
+    border: 0;
+    background: transparent;
+  }
+
+  .scan-heading {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+  }
+
+  .scan-heading span {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .scan-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+  }
+
+  .scan-svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .scan-main {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .scan-mobile .crop-editor img,
+  .scan-mobile .scan-result {
+    max-width: none;
+    max-height: none;
+  }
+
+  .scan-float {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    z-index: 5;
+    margin: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .scan-float.error {
+    color: #c0392b;
+  }
+
+  .scan-empty {
+    display: grid;
+    gap: 12px;
+    width: min(320px, 100%);
+    text-align: center;
+  }
+
+  .scan-empty .hint {
+    margin: 0 0 8px;
+  }
+
+  .scan-empty button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 56px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+  }
+
+  .scan-bottom {
+    flex: none;
+    display: grid;
+    gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .scan-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .scan-row > button {
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .scan-row > button:not(.scan-icon) {
+    padding: 0 16px;
+  }
+
+  .scan-row .grow {
+    flex: 1;
+  }
+
+  .scan-page-tools {
+    justify-content: center;
+  }
+
+  .scan-modes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 3px;
+    border-radius: 12px;
+    background: var(--bg);
+  }
+
+  .scan-modes button {
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .scan-modes button[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  }
+
+  .scan-mobile .scan-strip {
+    gap: 8px;
+    padding: 0;
+    border-top: 0;
+    background: none;
+  }
+
+  .scan-mobile .scan-strip li {
+    flex: none;
+  }
+
+  .scan-mobile .scan-thumb {
+    display: grid;
+    place-items: center;
+    min-width: 48px;
+    height: 64px;
+    padding: 2px;
+  }
+
+  .scan-mobile .scan-thumb img {
+    height: 56px;
+    max-width: 64px;
+    object-fit: contain;
+  }
+
+  .scan-add {
+    width: 48px;
+    border-style: dashed;
+  }
+
+  .mobile-sheet.scan-settings {
+    bottom: 0;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .scan-settings label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 52px;
+    padding: 0 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scan-settings .scan-check {
+    flex-direction: row-reverse;
+  }
+
+  .scan-settings input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+
+  .scan-settings select {
+    min-height: 44px;
+    font: inherit;
+  }
+
+  .scan-settings .hint {
+    margin: 10px 4px 0;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Above the bottom bar of the editor (spec 007), full width. */
+  .consent {
+    left: 8px;
+    right: 8px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    max-width: none;
+  }
+
+  .consent-actions button {
+    flex: 1;
+    min-height: 44px;
+  }
+}

@@ -1,0 +1,23 @@
+node_modules/
+dist/
+dev-dist/
+coverage/
+playwright-report/
+test-results/
+*.log
+public/pdfjs/
+public/fonts/
+public/tesseract/
+firebase-debug.log
+.firebase/
+
+# Never commit secrets or local material.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*adminsdk*.json
+tests/real-pdfs/

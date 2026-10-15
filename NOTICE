@@ -1,0 +1,16 @@
+InkognitoPDF
+Copyright 2026 David Mogollon
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes third-party software under their own licenses, listed in
+THIRD_PARTY_NOTICES.md, among them:
+
+- Mozilla pdf.js (Apache License 2.0)
+- pdf-lib and fontkit (MIT License)
+- Tesseract.js, tesseract.js-core and Tesseract OCR data (Apache License 2.0)
+- PKI.js and asn1js (BSD 3-Clause License)
+- React (MIT License)
+- Firebase JavaScript SDK (Apache License 2.0), loaded only with consent
+- Fonts Arimo, Tinos, Cousine, Carlito, Caladea, Dancing Script, Great Vibes
+  and Caveat (SIL Open Font License 1.1)

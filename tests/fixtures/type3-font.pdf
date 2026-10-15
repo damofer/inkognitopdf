@@ -1,0 +1,141 @@
+%PDF-1.7
+%ÅÅÅÅ
+
+1 0 obj
+<<
+/Type /Pages
+/Kids [ 4 0 R ]
+/Count 1
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+>>
+endobj
+
+3 0 obj
+<<
+/Producer <FEFF00700064006600630072006100660074002000660069007800740075007200650073>
+/ModDate (D:20260101000000Z)
+/Creator <FEFF00700064006600630072006100660074002000660069007800740075007200650073>
+/CreationDate (D:20260101000000Z)
+/Title <FEFF004600750065006E00740065002000540079007000650033>
+>>
+endobj
+
+4 0 obj
+<<
+/Type /Page
+/Parent 1 0 R
+/Resources <<
+/Font <<
+/T3-7098480789 9 0 R
+/F1-9742682568 8 0 R
+>>
+/XObject <<
+>>
+/ExtGState <<
+>>
+>>
+/MediaBox [ 0 0 595.28 841.89 ]
+/Annots [ ]
+/Contents 10 0 R
+>>
+endobj
+
+5 0 obj
+<<
+/Length 37
+>>
+stream
+600 0 0 0 500 700 d1 0 0 500 700 re f
+endstream
+endobj
+
+6 0 obj
+<<
+/Length 56
+>>
+stream
+600 0 0 0 500 700 d1 0 0 500 300 re f 0 400 500 300 re f
+endstream
+endobj
+
+7 0 obj
+<<
+/Length 73
+>>
+stream
+600 0 0 0 500 700 d1 0 0 100 700 re f 0 0 500 100 re f 0 600 500 100 re f
+endstream
+endobj
+
+8 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+>>
+endobj
+
+9 0 obj
+<<
+/Type /Font
+/Subtype /Type3
+/FontBBox [ 0 0 600 700 ]
+/FontMatrix [ 0.001 0 0 0.001 0 0 ]
+/FirstChar 65
+/LastChar 67
+/Widths [ 600 600 600 ]
+/Encoding <<
+/Type /Encoding
+/Differences [ 65 /A /B /C ]
+>>
+/CharProcs <<
+/A 5 0 R
+/B 6 0 R
+/C 7 0 R
+>>
+/Resources <<
+>>
+>>
+endobj
+
+10 0 obj
+<<
+/Length 110
+>>
+stream
+BT /T3-7098480789 24 Tf 56 700 Td (ABCCBA) Tj ET
+BT /F1-9742682568 12 Tf 56 660 Td (Texto normal debajo) Tj ET
+endstream
+endobj
+
+xref
+0 11
+0000000000 65535 f 
+0000000016 00000 n 
+0000000076 00000 n 
+0000000126 00000 n 
+0000000442 00000 n 
+0000000654 00000 n 
+0000000742 00000 n 
+0000000849 00000 n 
+0000000973 00000 n 
+0000001071 00000 n 
+0000001356 00000 n 
+
+trailer
+<<
+/Size 11
+/Root 2 0 R
+/Info 3 0 R
+>>
+
+startxref
+1519
+%%EOF

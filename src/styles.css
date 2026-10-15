@@ -1,0 +1,1819 @@
+/* Open fonts (SIL OFL 1.1) for previews of edited text; the same files complete
+   missing glyphs in the saved PDF. Served from public/fonts, loaded on use. */
+@font-face {
+  font-family: "Arimo";
+  src: url("/fonts/Arimo-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Arimo";
+  src: url("/fonts/Arimo-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Arimo";
+  src: url("/fonts/Arimo-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Arimo";
+  src: url("/fonts/Arimo-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tinos";
+  src: url("/fonts/Tinos-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tinos";
+  src: url("/fonts/Tinos-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tinos";
+  src: url("/fonts/Tinos-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tinos";
+  src: url("/fonts/Tinos-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cousine";
+  src: url("/fonts/Cousine-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cousine";
+  src: url("/fonts/Cousine-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cousine";
+  src: url("/fonts/Cousine-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cousine";
+  src: url("/fonts/Cousine-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Caladea";
+  src: url("/fonts/Caladea-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Caladea";
+  src: url("/fonts/Caladea-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Caladea";
+  src: url("/fonts/Caladea-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Caladea";
+  src: url("/fonts/Caladea-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --text: #1d2330;
+  --muted: #5d6576;
+  --accent: #1f7a5c;
+  --border: #d6d9e0;
+  --page-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+  color-scheme: light dark;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #181b21;
+    --surface: #23272f;
+    --text: #e8eaee;
+    --muted: #a3a9b6;
+    --accent: #4cc39a;
+    --border: #3a3f4a;
+    --page-shadow: 0 1px 4px rgb(0 0 0 / 0.6);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+button,
+.open-button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled),
+.open-button:hover {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: var(--accent);
+}
+
+.toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+  margin-right: 4px;
+  border-right: 1px solid var(--border);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-bottom: 1px solid var(--border);
+}
+
+.notice button {
+  margin-left: auto;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+.brand a {
+  display: block;
+  border-radius: 4px;
+}
+
+.brand img {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
+.open-button input {
+  display: none;
+}
+
+.file-name {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hint,
+.error {
+  margin: auto;
+  padding: 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.viewer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.viewer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.zoom-value {
+  min-width: 4.5em;
+  text-align: center;
+}
+
+.page-indicator {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.viewer-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.thumbnails {
+  width: 160px;
+  flex: none;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-right: 1px solid var(--border);
+}
+
+.thumbnail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.thumbnail.active {
+  border-color: var(--accent);
+}
+
+.thumbnail-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.thumbnail canvas {
+  width: 120px;
+  height: auto;
+  background: #fff;
+  box-shadow: var(--page-shadow);
+}
+
+/* Reordering by dragging (spec 013). */
+.thumbnail {
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.thumbnails.dragging,
+.thumbnails.dragging * {
+  cursor: grabbing;
+}
+
+.thumbnail.dragged {
+  opacity: 0.45;
+}
+
+.thumbnail.drop-before {
+  box-shadow: 0 -3px 0 var(--accent);
+}
+
+.thumbnail.drop-after {
+  box-shadow: 0 3px 0 var(--accent);
+}
+
+.thumbnails-header {
+  display: grid;
+  gap: 6px;
+}
+
+.thumbnails-header small {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+}
+
+.page-actions button {
+  padding: 0 6px;
+  font-size: 0.85rem;
+}
+
+.pages {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* As wide as the widest page, so a zoomed page can be scrolled to both of
+   its edges; narrower pages are centered by their auto margins. */
+.pages-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.page {
+  position: relative;
+  flex: none;
+  margin-inline: auto;
+  background: #fff;
+  box-shadow: var(--page-shadow);
+}
+
+.page-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.annotationLayer,
+.editLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.page-error {
+  position: absolute;
+  inset: auto 8px 8px;
+  margin: 0;
+  color: #c0392b;
+}
+
+.tool-hint {
+  margin: 0;
+  padding: 4px 16px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.tool-hint.warning {
+  color: #8a5300;
+  background: color-mix(in srgb, #f0b429 18%, var(--surface));
+}
+
+@media (prefers-color-scheme: dark) {
+  .tool-hint.warning {
+    color: #f6d58c;
+  }
+}
+
+.tools button {
+  min-width: 2.1em;
+}
+
+.viewer-toolbar input[type="number"] {
+  width: 4.5em;
+  font: inherit;
+}
+
+.viewer-toolbar input[type="color"] {
+  width: 2.2em;
+  height: 1.8em;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: none;
+}
+
+.viewer-toolbar select {
+  font: inherit;
+}
+
+/* Edit overlay: passes events through to the text layer unless a tool needs them. */
+.edit-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.edit-overlay.interactive {
+  pointer-events: auto;
+}
+
+/* Tools that act on a tap: a finger dragging scrolls the page. */
+.edit-overlay.tap-tool {
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.tool-text .edit-overlay,
+.tool-editText .edit-overlay {
+  cursor: text;
+}
+
+.tool-image .edit-overlay {
+  cursor: copy;
+}
+
+.tool-whiteout .edit-overlay,
+.tool-redact .edit-overlay,
+.tool-ink .edit-overlay,
+.tool-line .edit-overlay,
+.tool-square .edit-overlay,
+.tool-circle .edit-overlay {
+  cursor: crosshair;
+}
+
+.edit-shapes {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.shape-highlight rect {
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+}
+
+.item {
+  position: absolute;
+  pointer-events: none;
+}
+
+.edit-overlay.tool-select .item,
+.edit-overlay.tool-text .item-text {
+  pointer-events: auto;
+}
+
+.edit-overlay.tool-select .item {
+  cursor: move;
+}
+
+.edit-overlay.tool-text .item-text {
+  cursor: text;
+}
+
+.item-text {
+  white-space: pre;
+  user-select: none;
+}
+
+.item-whiteout,
+/* Hit area of an edited text; the edit itself is shown by .page-edited. */
+.item-textEdit {
+  background: transparent;
+}
+
+.page-edited {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.item-textEdit-text {
+  position: absolute;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.item.selected {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.resize-handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 2px;
+  cursor: nwse-resize;
+}
+
+.text-draft {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 1px dashed var(--accent);
+  background: rgb(255 255 255 / 0.6);
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
+  pointer-events: auto;
+}
+
+/* Forms and annotations (spec 005). */
+.toolbar-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.form-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/*
+ * Without focus a control is transparent: the page render shows the field as
+ * it will be saved. With focus it shows its text in the field's style.
+ */
+.form-control {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--field-color, #000);
+  font-family: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+  appearance: none;
+}
+
+.form-text {
+  cursor: text;
+  resize: none;
+  overflow: hidden;
+}
+
+.form-control:hover {
+  background: rgb(26 115 232 / 0.1);
+  outline: 1px solid rgb(26 115 232 / 0.5);
+}
+
+.form-control:focus,
+.form-control:focus-visible {
+  background: #fff;
+  color: var(--field-color, #000);
+  outline: 2px solid var(--accent);
+}
+
+.form-button:focus,
+.form-button:focus-visible {
+  background: rgb(26 115 232 / 0.1);
+}
+
+.form-control option {
+  color: #000;
+}
+
+/* A list shows its options in place: hidden until focused, like the text. */
+.form-list:not(:focus) option {
+  color: transparent;
+  background: transparent;
+}
+
+.form-control:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.edit-overlay.tool-select .item-existing,
+.edit-overlay.tool-formField .item-formField {
+  pointer-events: auto;
+  cursor: move;
+}
+
+.item-existing:hover {
+  outline: 1px dashed var(--accent);
+  outline-offset: 1px;
+}
+
+.item-note {
+  border: 1px solid rgb(0 0 0 / 0.4);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.item-note::after {
+  content: "";
+  position: absolute;
+  inset: 25% 20%;
+  border-top: 1.5px solid rgb(0 0 0 / 0.55);
+  border-bottom: 1.5px solid rgb(0 0 0 / 0.55);
+}
+
+.item-freeText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  padding: 2px;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.annot-draft {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  padding: 2px;
+  box-sizing: border-box;
+  border: 0;
+  outline: 1px dashed var(--accent);
+  background: rgb(255 255 255 / 0.85);
+  resize: none;
+  pointer-events: auto;
+}
+
+.annot-draft-note {
+  background: #fffbe0;
+  border: 1px solid #c9b400;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+  font:
+    13px/1.3 system-ui,
+    sans-serif;
+  color: #000;
+}
+
+.item-formField {
+  border: 1.5px dashed var(--accent);
+  background: rgb(26 115 232 / 0.08);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.form-field-label {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  padding: 0 3px;
+  font-size: 10px;
+  line-height: 1.3;
+  color: #fff;
+  background: var(--accent);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.field-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+  padding: 6px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.field-panel label:not(.toolbar-check) {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.field-panel input[aria-invalid="true"] {
+  outline: 2px solid #d93025;
+}
+
+.build-id {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Scanner (spec 002). */
+.scan-view {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.scan-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.scan-spacer {
+  flex: 1;
+}
+
+.scan-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.scan-status {
+  margin: 0;
+  padding: 6px 16px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-bottom: 1px solid var(--border);
+}
+
+.scan-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+  padding: 16px;
+}
+
+.scan-stage {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.scan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.scan-result {
+  max-width: 100%;
+  max-height: calc(100vh - 260px);
+  background: #fff;
+  box-shadow: var(--page-shadow);
+}
+
+.crop-editor {
+  position: relative;
+  touch-action: none;
+  user-select: none;
+}
+
+.crop-editor img {
+  display: block;
+  max-width: min(100%, 1100px);
+  max-height: calc(100vh - 280px);
+}
+
+.crop-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.crop-quad {
+  fill: color-mix(in srgb, var(--accent) 15%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.crop-quad.invalid {
+  fill: rgb(192 57 43 / 0.15);
+  stroke: #c0392b;
+}
+
+.crop-hit {
+  fill: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.crop-handle {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 3;
+  pointer-events: none;
+}
+
+.crop-lens {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  box-shadow: var(--page-shadow);
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.scan-strip {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  overflow-x: auto;
+  list-style: none;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.scan-strip li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.scan-strip li[aria-current="true"] .scan-thumb {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.scan-thumb {
+  padding: 2px;
+}
+
+.scan-thumb img {
+  display: block;
+  height: 72px;
+}
+
+.scan-thumb-actions button {
+  padding: 0 6px;
+}
+
+.scan-actions [role="group"] {
+  display: inline-flex;
+  gap: 4px;
+}
+
+/* OCR (spec 003). */
+.ocr-low {
+  position: absolute;
+  pointer-events: none;
+  background: rgb(255 170 0 / 0.25);
+  outline: 1px dashed rgb(220 120 0 / 0.8);
+}
+
+.ocr-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: min(340px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  display: grid;
+  gap: 8px;
+}
+
+.ocr-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ocr-panel h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ocr-panel fieldset {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+}
+
+.ocr-panel fieldset input[type="text"] {
+  width: 7em;
+  margin-left: 6px;
+}
+
+.ocr-panel input[aria-invalid="true"] {
+  outline: 2px solid #c92a2a;
+}
+
+.ocr-lang select {
+  margin-left: 8px;
+}
+
+.ocr-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ocr-status {
+  min-height: 1.3em;
+  margin: 0;
+}
+
+.ocr-note {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+/* Split and extract (spec 013). */
+.split-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  display: grid;
+  gap: 10px;
+}
+
+.split-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.split-panel h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.split-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.split-modes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.split-modes label.checked {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.split-modes input {
+  margin: 0;
+}
+
+.split-field {
+  display: grid;
+  gap: 4px;
+}
+
+.split-field small {
+  opacity: 0.75;
+}
+
+.split-panel input[aria-invalid="true"] {
+  outline: 2px solid #c92a2a;
+}
+
+.split-pick {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+}
+
+.split-pick-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.split-pages {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.split-pages button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.split-preview p,
+.split-preview ul {
+  margin: 0;
+}
+
+.split-preview ul {
+  padding-left: 18px;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.split-error {
+  color: #c92a2a;
+}
+
+/* Signing (spec 004). */
+@font-face {
+  font-family: "Dancing Script";
+  src: url("/fonts/DancingScript-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Great Vibes";
+  src: url("/fonts/GreatVibes-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Caveat";
+  src: url("/fonts/Caveat-Regular.ttf") format("truetype");
+}
+
+.sign-panel {
+  position: fixed;
+  right: 16px;
+  top: 96px;
+  z-index: 30;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  display: grid;
+  gap: 10px;
+}
+
+.sign-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sign-panel h2,
+.sign-panel h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.sign-slots {
+  display: grid;
+  gap: 8px;
+}
+
+.sign-slot {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.sign-slot-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.sign-slot-art {
+  height: 56px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.sign-slot-art > * {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto !important;
+}
+
+.sign-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.sign-check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sign-pad {
+  display: grid;
+  gap: 8px;
+}
+
+.sign-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.sign-tabs [aria-selected="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.sign-colors {
+  display: flex;
+  gap: 6px;
+}
+
+.sign-colors button {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+}
+
+.sign-colors [aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sign-canvas {
+  width: 100%;
+  aspect-ratio: 480 / 180;
+  background: #fff;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.sign-styles {
+  display: grid;
+  gap: 4px;
+}
+
+.sign-styles label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.sign-styles span {
+  font-size: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sign-image-preview {
+  height: 80px;
+  background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 16px 16px;
+}
+
+.sign-image-preview img {
+  object-fit: contain;
+}
+
+.sign-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.item-signature {
+  outline: 1px dashed transparent;
+}
+
+.item-signature.selected,
+.item-signature:hover {
+  outline-color: var(--accent);
+}
+
+.sign-save {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.sign-sub {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.sign-warning {
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #fff4e5;
+  color: #8a4b00;
+  font-size: 0.85rem;
+}
+
+.notice.warning {
+  background: #fff4e5;
+  color: #8a4b00;
+}
+
+.sig-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sig-report {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 4px solid;
+  background: var(--bg);
+  font-size: 0.9rem;
+}
+
+.sig-ok {
+  border-color: #2b8a3e;
+}
+
+.sig-warn {
+  border-color: #e8a400;
+}
+
+.sig-bad {
+  border-color: #c92a2a;
+}
+
+.sig-report dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 4px 0 0;
+}
+
+.sig-report dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sig-fingerprint {
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+/* Several signers (spec 004, HU6). */
+.sign-plan {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.sign-plan[open] > summary {
+  margin-bottom: 6px;
+}
+
+.sign-plan summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.plan-signers,
+.plan-status {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-signer {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.plan-signer input[type="text"],
+.plan-signer input[type="email"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-order {
+  width: 3.5em;
+}
+
+.plan-badge {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.plan-badge.done {
+  background: #e6f4ea;
+  color: #1e6b34;
+}
+
+.plan-badge.turn {
+  background: #e8f0fe;
+  color: #1a4fa0;
+}
+
+.item-signField {
+  border: 1.5px dashed var(--accent);
+  background: rgb(26 115 232 / 0.08);
+  overflow: hidden;
+}
+
+.item-signField.selected {
+  background: rgb(26 115 232 / 0.18);
+}
+
+.sign-field-label {
+  display: block;
+  padding: 1px 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--accent);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.plan-field {
+  position: absolute;
+  border: 2px solid #f29900;
+  background: rgb(242 153 0 / 0.15);
+  color: #8a4b00;
+  font-size: 11px;
+  padding: 1px 4px;
+  pointer-events: none;
+  animation: plan-field-pulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes plan-field-pulse {
+  to {
+    background: rgb(242 153 0 / 0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-field {
+    animation: none;
+  }
+}
+
+/* Recognized text over a scanned page: selectable, invisible (spec 003). */
+.ocr-text {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  line-height: 1;
+  /* The whole page: drags between words keep extending the selection. */
+  pointer-events: auto;
+  cursor: text;
+  color: transparent;
+}
+
+.ocr-text span {
+  position: absolute;
+  white-space: pre;
+  color: transparent;
+  font-family: "Arimo", sans-serif;
+  transform-origin: 0 0;
+  cursor: text;
+  pointer-events: auto;
+  user-select: text;
+}
+
+.ocr-text ::selection {
+  background: rgb(0 100 255 / 0.3);
+}
+
+.ocr-text br {
+  user-select: text;
+}
+
+/* ES / EN switch (spec 006). */
+.lang-switch {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lang-switch button {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.lang-switch button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--surface);
+}
+
+/* Short confirmation that goes away by itself (spec 009). */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 200;
+  max-width: calc(100vw - 32px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.9rem;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: toast-in 0.2s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+/* Text of a scanned image (spec 010): the paper color over the old line. */
+.image-edit-cover {
+  position: absolute;
+  pointer-events: none;
+}
+
+.draft-note {
+  position: absolute;
+  z-index: 3;
+  max-width: 320px;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.2);
+  pointer-events: none;
+}
+
+/* Cancel and Accept for the text being typed, on phones (spec 010). */
+.draft-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 120;
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 0.15);
+}
+
+.draft-bar button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+/* Spec 011: the usage measurement question, small and out of the way. */
+.consent {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 25;
+  display: grid;
+  gap: 8px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+}
+
+.consent p {
+  margin: 0;
+}
+
+.consent a {
+  color: var(--accent);
+}
+
+.consent-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Secure redaction (spec 012) */
+
+.item-redaction {
+  border: 2px dashed #d32f2f;
+  background: rgb(211 47 47 / 0.12);
+}
+
+.item-redaction.applied {
+  border: none;
+  background: #000;
+}
+
+.redact-options {
+  flex-wrap: wrap;
+}
+
+.redact-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.redact-search input[type="search"] {
+  width: 14em;
+  min-height: 30px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.redact-status {
+  font-size: 0.85rem;
+  color: var(--muted, #555);
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.dialog {
+  display: grid;
+  gap: 12px;
+  width: min(460px, 100%);
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.3);
+}
+
+.dialog h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.dialog p {
+  margin: 0 0 8px;
+}
+
+.dialog .toolbar-check {
+  align-items: flex-start;
+  gap: 8px;
+  white-space: normal;
+}
+
+.dialog .toolbar-check input {
+  margin-top: 3px;
+}
+
+.dialog-warning {
+  font-weight: 600;
+  color: #b3261e;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+button.danger {
+  background: #b3261e;
+  border-color: #b3261e;
+  color: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dialog-warning {
+    color: #ff8a80;
+  }
+}
+
+/* Donations ("Apoyar"). */
+.support-panel {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.support-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.support-group {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.support-group h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.support-panel .support-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted, #555);
+}
+
+.support-amounts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.support-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.support-link:hover,
+.support-link:focus-visible {
+  border-color: var(--accent);
+}
+
+.support-kofi {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}

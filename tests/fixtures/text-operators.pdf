@@ -1,0 +1,88 @@
+%PDF-1.7
+%ÅÅÅÅ
+
+1 0 obj
+<<
+/Type /Pages
+/Kids [ 5 0 R ]
+/Count 1
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+>>
+endobj
+
+3 0 obj
+<<
+/Producer <FEFF00700064006600630072006100660074002000660069007800740075007200650073>
+/ModDate (D:20260101000000Z)
+/Creator <FEFF00700064006600630072006100660074002000660069007800740075007200650073>
+/CreationDate (D:20260101000000Z)
+/Title <FEFF004F00700065007200610064006F00720065007300200064006500200074006500780074006F>
+>>
+endobj
+
+4 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+>>
+endobj
+
+5 0 obj
+<<
+/Type /Page
+/Parent 1 0 R
+/Resources <<
+/Font <<
+/F1-7098480789 4 0 R
+>>
+/XObject <<
+>>
+/ExtGState <<
+>>
+>>
+/MediaBox [ 0 0 595.28 841.89 ]
+/Annots [ ]
+/Contents 6 0 R
+>>
+endobj
+
+6 0 obj
+<<
+/Length 352
+>>
+stream
+BT /F1-7098480789 12 Tf 56 760 Td (Texto ) Tj (dividido) Tj ( en partes) Tj ET
+BT /F1-7098480789 12 Tf 14 TL 56 720 Td (Primera linea) Tj (Segunda linea) ' (Tercera linea) ' ET
+q 2 0 0 2 0 0 cm BT /F1-7098480789 9 Tf 0.7071 0.7071 -0.7071 0.7071 100 200 Tm (Texto girado) Tj ET Q
+BT 0.8 0 0 rg /F1-7098480789 12 Tf 56 600 Td 3 Tc (Espaciado rojo) Tj ET
+endstream
+endobj
+
+xref
+0 7
+0000000000 65535 f 
+0000000016 00000 n 
+0000000076 00000 n 
+0000000126 00000 n 
+0000000470 00000 n 
+0000000568 00000 n 
+0000000758 00000 n 
+
+trailer
+<<
+/Size 7
+/Root 2 0 R
+/Info 3 0 R
+>>
+
+startxref
+1162
+%%EOF

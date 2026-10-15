@@ -1,0 +1,1315 @@
+<!doctype html>
+<!-- Landing page (spec 008). Texts come from src/i18n (landing.* keys): the
+     build writes the English ones into this file, and src/landing/main.ts
+     switches them to the visitor's language. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="landing.title"></title>
+    <meta
+      name="description"
+      content="Editor de PDF gratis y open source: edita texto, escanea a blanco y negro, reconoce texto (OCR) y firma con PAdES. Tus documentos nunca salen de tu dispositivo."
+    />
+    <link rel="canonical" href="https://inkognitopdf.web.app/" />
+    <!-- Link previews (WhatsApp, Telegram, X, Facebook, LinkedIn): read from
+         this static HTML, since crawlers do not run scripts. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="InkognitoPDF" />
+    <meta
+      property="og:title"
+      content="InkognitoPDF: edita, firma y escanea PDF sin subirlos"
+    />
+    <meta
+      property="og:description"
+      content="Editor de PDF gratis y open source: edita texto, escanea a blanco y negro, reconoce texto (OCR) y firma con PAdES. Tus documentos nunca salen de tu dispositivo."
+    />
+    <meta property="og:url" content="https://inkognitopdf.web.app/" />
+    <meta
+      property="og:image"
+      content="https://inkognitopdf.web.app/brand/og-image.png"
+    />
+    <meta
+      property="og:image:secure_url"
+      content="https://inkognitopdf.web.app/brand/og-image.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Logo de InkognitoPDF: Edita, firma y escanea PDF sin subirlos"
+    />
+    <meta
+      property="og:image"
+      content="https://inkognitopdf.web.app/brand/og-image-square.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="600" />
+    <meta property="og:image:height" content="600" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="InkognitoPDF: edita, firma y escanea PDF sin subirlos"
+    />
+    <meta
+      name="twitter:description"
+      content="Editor de PDF gratis y open source: edita texto, escanea a blanco y negro, reconoce texto (OCR) y firma con PAdES. Tus documentos nunca salen de tu dispositivo."
+    />
+    <meta
+      name="twitter:image"
+      content="https://inkognitopdf.web.app/brand/og-image.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Logo de InkognitoPDF: Edita, firma y escanea PDF sin subirlos"
+    />
+    <link rel="icon" href="/brand/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/brand/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
+    <meta name="theme-color" content="#23272F" />
+    <script>
+      // Runs before the first paint. An installed app made when it lived at
+      // "/" opens straight in the app; and when the visitor's language is
+      // not the one written in the page, the page stays hidden until
+      // main.ts has switched it (landing.css shows it anyway after 1.5 s).
+      // Same rule as detectLang() in src/i18n/core.ts.
+      (function () {
+        if (matchMedia("(display-mode: standalone)").matches) {
+          location.replace("/app/");
+          return;
+        }
+        var lang = null;
+        try {
+          lang = localStorage.getItem("inkognitopdf.lang");
+        } catch (e) {}
+        if (lang !== "es" && lang !== "en") {
+          lang = "en";
+          var list = navigator.languages || [];
+          for (var i = 0; i < list.length; i++) {
+            var primary = list[i].toLowerCase().split("-")[0];
+            if (primary === "es" || primary === "en") {
+              lang = primary;
+              break;
+            }
+          }
+        }
+        if (lang !== document.documentElement.lang) {
+          document.documentElement.classList.add("i18n-pending");
+          document.documentElement.lang = lang;
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main" data-i18n="landing.skip"></a>
+
+    <header class="site-header">
+      <div class="wrap header-row">
+        <a class="logo" href="/" data-i18n-attr="aria-label:landing.home">
+          <img
+            src="/brand/logo-dark.svg"
+            alt="InkognitoPDF"
+            width="145"
+            height="32"
+          />
+        </a>
+        <nav class="nav" data-i18n-attr="aria-label:landing.nav">
+          <a href="#privacy" data-i18n="landing.navPrivacy"></a>
+          <a href="#features" data-i18n="landing.navFeatures"></a>
+          <a href="#open-source" data-i18n="landing.navOpenSource"></a>
+          <a href="#support" data-i18n="landing.navSupport"></a>
+          <a href="#faq" data-i18n="landing.navFaq"></a>
+        </nav>
+        <div
+          class="lang-switch"
+          role="group"
+          data-i18n-attr="aria-label:lang.label"
+        >
+          <button
+            type="button"
+            lang="es"
+            data-lang="es"
+            aria-pressed="false"
+            data-i18n-attr="aria-label:lang.es"
+          >
+            ES
+          </button>
+          <button
+            type="button"
+            lang="en"
+            data-lang="en"
+            aria-pressed="false"
+            data-i18n-attr="aria-label:lang.en"
+          >
+            EN
+          </button>
+        </div>
+        <a
+          class="button button-small"
+          href="/app/"
+          data-i18n="landing.openApp"
+        ></a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero">
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="landing.heroEyebrow"></p>
+            <h1 data-i18n="landing.heroTitle"></h1>
+            <p class="lead" data-i18n="landing.heroLead"></p>
+            <div class="actions">
+              <a class="button button-large" href="/app/">
+                <span data-i18n="landing.heroCta"></span>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  width="20"
+                  height="20"
+                >
+                  <path
+                    d="M4 10h11m-4-4 4 4-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </a>
+              <a
+                class="button button-ghost"
+                href="#features"
+                data-i18n="landing.heroSecondary"
+              ></a>
+            </div>
+            <p class="note" data-i18n="landing.heroNote"></p>
+            <ul class="badges">
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20">
+                  <rect x="4" y="9" width="12" height="8" rx="2" />
+                  <path d="M7 9V6.5a3 3 0 0 1 6 0V9" fill="none" />
+                </svg>
+                <span data-i18n="landing.badgeLocal"></span>
+              </li>
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20">
+                  <path
+                    d="M3 8a10 10 0 0 1 14 0M6 11a6 6 0 0 1 8 0"
+                    fill="none"
+                  />
+                  <circle cx="10" cy="14.5" r="1.5" />
+                  <path d="M3 3l14 14" fill="none" />
+                </svg>
+                <span data-i18n="landing.badgeOffline"></span>
+              </li>
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20">
+                  <path d="M7 6 3 10l4 4M13 6l4 4-4 4" fill="none" />
+                </svg>
+                <span data-i18n="landing.badgeOpen"></span>
+              </li>
+            </ul>
+          </div>
+
+          <figure class="hero-art">
+            <svg
+              role="img"
+              data-i18n-attr="aria-label:landing.heroArt"
+              viewBox="0 0 520 440"
+            >
+              <defs>
+                <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#5ED3A9" />
+                  <stop offset="1" stop-color="#2FA884" />
+                </linearGradient>
+                <filter id="lift" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow
+                    dx="0"
+                    dy="18"
+                    stdDeviation="18"
+                    flood-color="#000"
+                    flood-opacity="0.35"
+                  />
+                </filter>
+              </defs>
+              <!-- Browser window -->
+              <g filter="url(#lift)">
+                <rect
+                  x="20"
+                  y="30"
+                  width="440"
+                  height="370"
+                  rx="18"
+                  fill="#2b303a"
+                />
+                <rect
+                  x="20"
+                  y="30"
+                  width="440"
+                  height="44"
+                  rx="18"
+                  fill="#323845"
+                />
+                <rect x="20" y="56" width="440" height="18" fill="#323845" />
+                <circle cx="46" cy="52" r="6" fill="#ff6b6b" />
+                <circle cx="66" cy="52" r="6" fill="#ffd166" />
+                <circle cx="86" cy="52" r="6" fill="#5ED3A9" />
+                <rect
+                  x="112"
+                  y="42"
+                  width="220"
+                  height="20"
+                  rx="10"
+                  fill="#23272F"
+                />
+                <path d="M126 49.5h7v7h-7z" fill="#5ED3A9" />
+                <rect
+                  x="140"
+                  y="49"
+                  width="90"
+                  height="6"
+                  rx="3"
+                  fill="#5d6576"
+                />
+                <!-- Thumbnails -->
+                <rect
+                  x="38"
+                  y="92"
+                  width="62"
+                  height="80"
+                  rx="6"
+                  fill="#f4f5f7"
+                  stroke="#5ED3A9"
+                  stroke-width="3"
+                />
+                <rect
+                  x="38"
+                  y="184"
+                  width="62"
+                  height="80"
+                  rx="6"
+                  fill="#d6d9e0"
+                />
+                <rect
+                  x="38"
+                  y="276"
+                  width="62"
+                  height="80"
+                  rx="6"
+                  fill="#d6d9e0"
+                />
+                <!-- Page -->
+                <rect
+                  x="118"
+                  y="92"
+                  width="322"
+                  height="290"
+                  rx="8"
+                  fill="#ffffff"
+                />
+                <rect
+                  x="144"
+                  y="118"
+                  width="150"
+                  height="12"
+                  rx="4"
+                  fill="#23272F"
+                />
+                <rect
+                  x="144"
+                  y="146"
+                  width="268"
+                  height="7"
+                  rx="3.5"
+                  fill="#c4c8d1"
+                />
+                <rect
+                  x="144"
+                  y="162"
+                  width="250"
+                  height="7"
+                  rx="3.5"
+                  fill="#c4c8d1"
+                />
+                <!-- Line being edited -->
+                <rect
+                  x="140"
+                  y="175"
+                  width="190"
+                  height="17"
+                  rx="3"
+                  fill="#5ED3A9"
+                  opacity="0.35"
+                />
+                <rect
+                  x="144"
+                  y="180"
+                  width="180"
+                  height="7"
+                  rx="3.5"
+                  fill="#1f7a5c"
+                />
+                <rect
+                  x="331"
+                  y="173"
+                  width="3"
+                  height="21"
+                  rx="1.5"
+                  fill="#1f7a5c"
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="1;0;1"
+                    dur="1.2s"
+                    repeatCount="indefinite"
+                  />
+                </rect>
+                <rect
+                  x="144"
+                  y="202"
+                  width="262"
+                  height="7"
+                  rx="3.5"
+                  fill="#c4c8d1"
+                />
+                <rect
+                  x="144"
+                  y="218"
+                  width="214"
+                  height="7"
+                  rx="3.5"
+                  fill="#c4c8d1"
+                />
+                <!-- Highlighted line -->
+                <rect
+                  x="140"
+                  y="230"
+                  width="130"
+                  height="15"
+                  rx="3"
+                  fill="#ffd166"
+                  opacity="0.6"
+                />
+                <rect
+                  x="144"
+                  y="234"
+                  width="122"
+                  height="7"
+                  rx="3.5"
+                  fill="#c4c8d1"
+                />
+                <rect
+                  x="276"
+                  y="234"
+                  width="110"
+                  height="7"
+                  rx="3.5"
+                  fill="#c4c8d1"
+                />
+                <!-- Form field -->
+                <rect
+                  x="144"
+                  y="262"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  fill="none"
+                  stroke="#1f7a5c"
+                  stroke-width="2"
+                />
+                <path
+                  d="M147.5 270l3.5 3.5 6-7"
+                  fill="none"
+                  stroke="#1f7a5c"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect
+                  x="168"
+                  y="266"
+                  width="120"
+                  height="7"
+                  rx="3.5"
+                  fill="#c4c8d1"
+                />
+                <!-- Signature -->
+                <path
+                  d="M152 344c14-30 24-36 22-14s-8 26 4 6 18-26 18-6 10 4 20-6 8 14 22 2 14-8 22-4"
+                  fill="none"
+                  stroke="#23272F"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect x="144" y="354" width="150" height="2" fill="#9aa0ac" />
+                <rect
+                  x="320"
+                  y="318"
+                  width="96"
+                  height="40"
+                  rx="8"
+                  fill="#eaf7f1"
+                  stroke="#2FA884"
+                  stroke-width="2"
+                />
+                <path
+                  d="M334 338l7 7 13-14"
+                  fill="none"
+                  stroke="#2FA884"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect
+                  x="362"
+                  y="330"
+                  width="42"
+                  height="6"
+                  rx="3"
+                  fill="#2FA884"
+                />
+                <rect
+                  x="362"
+                  y="342"
+                  width="30"
+                  height="6"
+                  rx="3"
+                  fill="#8fd9bd"
+                />
+              </g>
+              <!-- Lock badge: everything stays on the device -->
+              <g transform="translate(400 14)">
+                <circle cx="52" cy="52" r="52" fill="url(#mint)" />
+                <circle
+                  cx="52"
+                  cy="52"
+                  r="52"
+                  fill="none"
+                  stroke="#181b21"
+                  stroke-width="6"
+                />
+                <g transform="translate(22 20) scale(0.94)">
+                  <path
+                    d="M23 4 H41 A2.5 2.5 0 0 1 43.5 6.5 V10.5 A2.5 2.5 0 0 1 41 13 H23 A2.5 2.5 0 0 1 20.5 10.5 V6.5 A2.5 2.5 0 0 1 23 4 Z"
+                    fill="#0E1714"
+                  />
+                  <path
+                    d="M21 16.5 H43 C50.5 23 52.5 31 48 38 L32 61 L16 38 C11.5 31 13.5 23 21 16.5 Z M32 23.5 A5.6 5.6 0 0 1 34.6 34.1 L36 41.5 H28 L29.4 34.1 A5.6 5.6 0 0 1 32 23.5 Z M31.2 41 H32.8 V58.5 H31.2 Z"
+                    fill="#0E1714"
+                    fill-rule="evenodd"
+                  />
+                </g>
+              </g>
+            </svg>
+          </figure>
+        </div>
+      </section>
+
+      <section
+        id="privacy"
+        class="section privacy"
+        aria-labelledby="privacy-title"
+      >
+        <div class="wrap privacy-grid">
+          <div>
+            <h2 id="privacy-title" data-i18n="landing.privacyTitle"></h2>
+            <p class="section-lead" data-i18n="landing.privacyLead"></p>
+            <ul class="points">
+              <li>
+                <span class="point-icon" aria-hidden="true"
+                  ><svg viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="12" rx="2" />
+                    <path d="M8 20h8M12 16v4" /></svg
+                ></span>
+                <div>
+                  <h3 data-i18n="landing.privacy1Title"></h3>
+                  <p data-i18n="landing.privacy1Text"></p>
+                </div>
+              </li>
+              <li>
+                <span class="point-icon" aria-hidden="true"
+                  ><svg viewBox="0 0 24 24">
+                    <path
+                      d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"
+                    />
+                    <circle cx="12" cy="19.5" r="1" />
+                    <path d="M3 3l18 18" /></svg
+                ></span>
+                <div>
+                  <h3 data-i18n="landing.privacy2Title"></h3>
+                  <p data-i18n="landing.privacy2Text"></p>
+                </div>
+              </li>
+              <li>
+                <span class="point-icon" aria-hidden="true"
+                  ><svg viewBox="0 0 24 24">
+                    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+                    <path d="M8.5 12l2.5 2.5 4.5-5" /></svg
+                ></span>
+                <div>
+                  <h3 data-i18n="landing.privacy3Title"></h3>
+                  <p data-i18n="landing.privacy3Text"></p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <figure class="diagram">
+            <svg
+              role="img"
+              data-i18n-attr="aria-label:landing.diagramAlt"
+              viewBox="0 0 400 360"
+            >
+              <!-- Cloud, cut off -->
+              <g class="d-cloud">
+                <path
+                  d="M128 92a30 30 0 0 1 57-14 24 24 0 0 1 37 21 20 20 0 0 1-4 40H130a24 24 0 0 1-2-47z"
+                />
+                <text
+                  x="176"
+                  y="128"
+                  text-anchor="middle"
+                  data-i18n="landing.diagramCloud"
+                ></text>
+              </g>
+              <path class="d-path" d="M176 150v52" />
+              <g class="d-cut" transform="translate(176 176)">
+                <circle r="15" />
+                <path d="M-6-6l12 12M6-6l-12 12" />
+              </g>
+              <text
+                class="d-never"
+                x="200"
+                y="181"
+                data-i18n="landing.diagramNever"
+              ></text>
+              <!-- Device boundary -->
+              <rect
+                class="d-device"
+                x="40"
+                y="210"
+                width="320"
+                height="130"
+                rx="18"
+              />
+              <text
+                class="d-device-label"
+                x="60"
+                y="236"
+                data-i18n="landing.diagramDevice"
+              ></text>
+              <!-- Open → edit → save, inside the device -->
+              <g transform="translate(78 252)">
+                <rect class="d-doc" width="52" height="66" rx="6" />
+                <rect
+                  class="d-line"
+                  x="10"
+                  y="14"
+                  width="32"
+                  height="5"
+                  rx="2.5"
+                />
+                <rect
+                  class="d-line"
+                  x="10"
+                  y="25"
+                  width="26"
+                  height="5"
+                  rx="2.5"
+                />
+                <rect
+                  class="d-line"
+                  x="10"
+                  y="36"
+                  width="30"
+                  height="5"
+                  rx="2.5"
+                />
+              </g>
+              <path class="d-flow" d="M142 285h40" />
+              <g transform="translate(194 252)">
+                <rect class="d-doc" width="52" height="66" rx="6" />
+                <rect
+                  class="d-mark"
+                  x="8"
+                  y="12"
+                  width="36"
+                  height="9"
+                  rx="2"
+                />
+                <rect
+                  class="d-line"
+                  x="10"
+                  y="28"
+                  width="26"
+                  height="5"
+                  rx="2.5"
+                />
+                <path
+                  class="d-sign"
+                  d="M10 52c5-10 8-12 8-5s4 6 8 0 6-3 8 0 4 2 8-2"
+                />
+              </g>
+              <path class="d-flow" d="M258 285h40" />
+              <g transform="translate(306 262)">
+                <path class="d-save" d="M2 2h30l8 8v34H2z" />
+                <rect
+                  class="d-line"
+                  x="10"
+                  y="2"
+                  width="16"
+                  height="12"
+                  rx="1"
+                />
+                <rect
+                  class="d-line"
+                  x="9"
+                  y="26"
+                  width="24"
+                  height="14"
+                  rx="2"
+                />
+              </g>
+            </svg>
+          </figure>
+        </div>
+      </section>
+
+      <section
+        id="features"
+        class="section features"
+        aria-labelledby="features-title"
+      >
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="features-title" data-i18n="landing.featuresTitle"></h2>
+            <p class="section-lead" data-i18n="landing.featuresLead"></p>
+          </div>
+          <ul class="cards">
+            <li class="card">
+              <div class="card-art" aria-hidden="true">
+                <svg viewBox="0 0 240 120">
+                  <rect
+                    class="paper"
+                    x="40"
+                    y="12"
+                    width="160"
+                    height="108"
+                    rx="6"
+                  />
+                  <rect
+                    class="line"
+                    x="58"
+                    y="30"
+                    width="110"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <rect
+                    class="sel"
+                    x="54"
+                    y="46"
+                    width="98"
+                    height="17"
+                    rx="3"
+                  />
+                  <rect
+                    class="ink"
+                    x="58"
+                    y="51"
+                    width="88"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <rect
+                    class="caret"
+                    x="154"
+                    y="44"
+                    width="3"
+                    height="21"
+                    rx="1.5"
+                  />
+                  <rect
+                    class="line"
+                    x="58"
+                    y="74"
+                    width="124"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <rect
+                    class="line"
+                    x="58"
+                    y="90"
+                    width="96"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <g class="chip" transform="translate(150 84)">
+                    <rect width="74" height="26" rx="13" />
+                    <text x="37" y="17.5" text-anchor="middle">Aa 11pt</text>
+                  </g>
+                </svg>
+              </div>
+              <h3 data-i18n="landing.fEditTitle"></h3>
+              <p data-i18n="landing.fEditText"></p>
+            </li>
+            <li class="card">
+              <div class="card-art" aria-hidden="true">
+                <svg viewBox="0 0 240 120">
+                  <g transform="rotate(-9 70 66)">
+                    <rect
+                      class="photo"
+                      x="22"
+                      y="18"
+                      width="96"
+                      height="100"
+                      rx="4"
+                    />
+                    <rect
+                      class="photo-line"
+                      x="34"
+                      y="36"
+                      width="64"
+                      height="6"
+                      rx="3"
+                    />
+                    <rect
+                      class="photo-line"
+                      x="34"
+                      y="50"
+                      width="72"
+                      height="6"
+                      rx="3"
+                    />
+                    <rect
+                      class="photo-line"
+                      x="34"
+                      y="64"
+                      width="54"
+                      height="6"
+                      rx="3"
+                    />
+                    <path
+                      class="corner"
+                      d="M22 30V18h12M118 30V18h-12M22 106v12h12M118 106v12h-12"
+                    />
+                  </g>
+                  <path class="arrow" d="M128 66h20m-7-7 7 7-7 7" />
+                  <rect
+                    class="paper"
+                    x="160"
+                    y="14"
+                    width="74"
+                    height="98"
+                    rx="3"
+                  />
+                  <rect
+                    class="bw"
+                    x="170"
+                    y="30"
+                    width="50"
+                    height="6"
+                    rx="1"
+                  />
+                  <rect
+                    class="bw"
+                    x="170"
+                    y="44"
+                    width="56"
+                    height="6"
+                    rx="1"
+                  />
+                  <rect
+                    class="bw"
+                    x="170"
+                    y="58"
+                    width="42"
+                    height="6"
+                    rx="1"
+                  />
+                  <rect
+                    class="bw"
+                    x="170"
+                    y="72"
+                    width="52"
+                    height="6"
+                    rx="1"
+                  />
+                </svg>
+              </div>
+              <h3 data-i18n="landing.fScanTitle"></h3>
+              <p data-i18n="landing.fScanText"></p>
+            </li>
+            <li class="card">
+              <div class="card-art" aria-hidden="true">
+                <svg viewBox="0 0 240 120">
+                  <rect
+                    class="paper"
+                    x="30"
+                    y="12"
+                    width="120"
+                    height="108"
+                    rx="6"
+                  />
+                  <rect
+                    class="photo-line"
+                    x="44"
+                    y="30"
+                    width="86"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <rect
+                    class="sel"
+                    x="40"
+                    y="44"
+                    width="76"
+                    height="16"
+                    rx="3"
+                  />
+                  <rect
+                    class="ink"
+                    x="44"
+                    y="48.5"
+                    width="68"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <rect
+                    class="photo-line"
+                    x="44"
+                    y="68"
+                    width="92"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <rect
+                    class="photo-line"
+                    x="44"
+                    y="84"
+                    width="70"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <g class="lens" transform="translate(150 54)">
+                    <circle r="30" />
+                    <path d="M21 21l20 20" />
+                    <text x="0" y="8" text-anchor="middle">Aa</text>
+                  </g>
+                </svg>
+              </div>
+              <h3 data-i18n="landing.fOcrTitle"></h3>
+              <p data-i18n="landing.fOcrText"></p>
+            </li>
+            <li class="card">
+              <div class="card-art" aria-hidden="true">
+                <svg viewBox="0 0 240 120">
+                  <rect
+                    class="paper"
+                    x="40"
+                    y="12"
+                    width="160"
+                    height="108"
+                    rx="6"
+                  />
+                  <path
+                    class="sig"
+                    d="M58 72c10-22 18-26 16-10s-6 19 3 4 13-19 13-4 7 3 14-4 6 10 16 1"
+                  />
+                  <rect class="line" x="56" y="82" width="70" height="2" />
+                  <g class="seal" transform="translate(152 60)">
+                    <circle r="24" />
+                    <path d="M-10 0l7 7 13-14" />
+                  </g>
+                  <g class="signer" transform="translate(58 98)">
+                    <circle r="8" />
+                    <text y="3.5" text-anchor="middle">1</text>
+                  </g>
+                  <g class="signer" transform="translate(80 98)">
+                    <circle r="8" />
+                    <text y="3.5" text-anchor="middle">2</text>
+                  </g>
+                  <g class="signer pending" transform="translate(102 98)">
+                    <circle r="8" />
+                    <text y="3.5" text-anchor="middle">3</text>
+                  </g>
+                </svg>
+              </div>
+              <h3 data-i18n="landing.fSignTitle"></h3>
+              <p data-i18n="landing.fSignText"></p>
+            </li>
+            <li class="card">
+              <div class="card-art" aria-hidden="true">
+                <svg viewBox="0 0 240 120">
+                  <rect
+                    class="paper"
+                    x="40"
+                    y="12"
+                    width="160"
+                    height="108"
+                    rx="6"
+                  />
+                  <rect
+                    class="field"
+                    x="58"
+                    y="28"
+                    width="100"
+                    height="18"
+                    rx="3"
+                  />
+                  <rect class="caret" x="64" y="32" width="2" height="10" />
+                  <rect
+                    class="box"
+                    x="58"
+                    y="56"
+                    width="14"
+                    height="14"
+                    rx="3"
+                  />
+                  <path class="check" d="M61 63l3 3 5-6" />
+                  <rect
+                    class="line"
+                    x="80"
+                    y="60"
+                    width="70"
+                    height="7"
+                    rx="3.5"
+                  />
+                  <rect
+                    class="hl"
+                    x="56"
+                    y="80"
+                    width="80"
+                    height="14"
+                    rx="2"
+                  />
+                  <rect
+                    class="line"
+                    x="60"
+                    y="84"
+                    width="72"
+                    height="6"
+                    rx="3"
+                  />
+                  <g class="note-icon" transform="translate(164 70)">
+                    <path d="M0 0h28v22H12l-8 7v-7H0z" />
+                  </g>
+                  <path class="arrow" d="M150 104l26-14m-9-1 9 1-4 8" />
+                </svg>
+              </div>
+              <h3 data-i18n="landing.fFormsTitle"></h3>
+              <p data-i18n="landing.fFormsText"></p>
+            </li>
+            <li class="card">
+              <div class="card-art" aria-hidden="true">
+                <svg viewBox="0 0 240 120">
+                  <rect
+                    class="paper"
+                    x="28"
+                    y="24"
+                    width="52"
+                    height="70"
+                    rx="4"
+                  />
+                  <rect
+                    class="paper current"
+                    x="94"
+                    y="24"
+                    width="52"
+                    height="70"
+                    rx="4"
+                    transform="rotate(-8 120 59)"
+                  />
+                  <rect
+                    class="paper"
+                    x="160"
+                    y="24"
+                    width="52"
+                    height="70"
+                    rx="4"
+                  />
+                  <rect
+                    class="line"
+                    x="38"
+                    y="36"
+                    width="30"
+                    height="5"
+                    rx="2.5"
+                  />
+                  <rect
+                    class="line"
+                    x="170"
+                    y="36"
+                    width="30"
+                    height="5"
+                    rx="2.5"
+                  />
+                  <path
+                    class="arrow"
+                    d="M106 106a26 26 0 0 0 28 0m-6-5 6 5-7 3"
+                  />
+                  <text class="pnum" x="54" y="112" text-anchor="middle">
+                    1
+                  </text>
+                  <text class="pnum" x="186" y="112" text-anchor="middle">
+                    3
+                  </text>
+                </svg>
+              </div>
+              <h3 data-i18n="landing.fPagesTitle"></h3>
+              <p data-i18n="landing.fPagesText"></p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section steps" aria-labelledby="steps-title">
+        <div class="wrap">
+          <h2
+            id="steps-title"
+            class="center"
+            data-i18n="landing.stepsTitle"
+          ></h2>
+          <ol class="step-list">
+            <li>
+              <span class="step-num" aria-hidden="true">1</span>
+              <h3 data-i18n="landing.step1Title"></h3>
+              <p data-i18n="landing.step1Text"></p>
+            </li>
+            <li>
+              <span class="step-num" aria-hidden="true">2</span>
+              <h3 data-i18n="landing.step2Title"></h3>
+              <p data-i18n="landing.step2Text"></p>
+            </li>
+            <li>
+              <span class="step-num" aria-hidden="true">3</span>
+              <h3 data-i18n="landing.step3Title"></h3>
+              <p data-i18n="landing.step3Text"></p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section
+        id="open-source"
+        class="section open-source"
+        aria-labelledby="os-title"
+      >
+        <div class="wrap os-box">
+          <img src="/brand/mark-dark.svg" alt="" width="64" height="64" />
+          <div>
+            <h2 id="os-title" data-i18n="landing.osTitle"></h2>
+            <p data-i18n="landing.osText"></p>
+            <p>
+              <a
+                class="text-link"
+                href="https://www.apache.org/licenses/LICENSE-2.0"
+                rel="noopener"
+                data-i18n="landing.osLicense"
+              ></a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="support"
+        class="section support"
+        aria-labelledby="support-title"
+      >
+        <div class="wrap narrow support-box">
+          <h2 id="support-title" class="center" data-i18n="support.title"></h2>
+          <p class="center" data-i18n="support.lead"></p>
+          <!-- Plain links, no payment script. main.ts puts them in the order
+               of the visitor's language and names the second group. -->
+          <div class="support-options" data-support-options>
+            <div
+              class="support-group"
+              data-provider="mercadoPago"
+              data-heading-first="support.mpTitle"
+              data-heading-later="support.fromColombia"
+            >
+              <h3 data-support-heading></h3>
+              <p class="support-note" data-i18n="support.mpNote"></p>
+              <div class="support-amounts">
+                <a
+                  class="support-link"
+                  href="https://mpago.li/1Kyib9Q"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-tier="10000"
+                  >$10.000 COP</a
+                >
+                <a
+                  class="support-link"
+                  href="https://mpago.li/1sVMAt1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-tier="20000"
+                  >$20.000 COP</a
+                >
+                <a
+                  class="support-link"
+                  href="https://mpago.li/2s9ot7Z"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-tier="50000"
+                  >$50.000 COP</a
+                >
+                <a
+                  class="support-link"
+                  href="https://link.mercadopago.com.co/damofer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-tier="other"
+                  data-i18n="support.other"
+                ></a>
+              </div>
+            </div>
+            <div
+              class="support-group"
+              data-provider="kofi"
+              data-heading-later="support.abroad"
+            >
+              <h3 data-support-heading></h3>
+              <a
+                class="support-link support-kofi"
+                href="https://ko-fi.com/damofer"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-tier="kofi"
+                data-i18n="support.kofi"
+              ></a>
+              <p class="support-note" data-i18n="support.kofiNote"></p>
+            </div>
+          </div>
+          <p class="center support-note" data-i18n="support.thanks"></p>
+        </div>
+      </section>
+
+      <section id="faq" class="section faq" aria-labelledby="faq-title">
+        <div class="wrap narrow">
+          <h2 id="faq-title" class="center" data-i18n="landing.faqTitle"></h2>
+          <details>
+            <summary data-i18n="landing.faq1Q"></summary>
+            <p data-i18n="landing.faq1A"></p>
+          </details>
+          <details>
+            <summary data-i18n="landing.faq2Q"></summary>
+            <p data-i18n="landing.faq2A"></p>
+          </details>
+          <details>
+            <summary data-i18n="landing.faq3Q"></summary>
+            <p data-i18n="landing.faq3A"></p>
+          </details>
+          <details>
+            <summary data-i18n="landing.faq4Q"></summary>
+            <p data-i18n="landing.faq4A"></p>
+          </details>
+          <details>
+            <summary data-i18n="landing.faq5Q"></summary>
+            <p data-i18n="landing.faq5A"></p>
+          </details>
+        </div>
+      </section>
+
+      <section
+        id="analytics"
+        class="section analytics"
+        aria-labelledby="analytics-title"
+      >
+        <div class="wrap narrow">
+          <h2 id="analytics-title" data-i18n="privacy.title"></h2>
+          <p class="section-lead" data-i18n="privacy.intro"></p>
+          <div class="analytics-grid">
+            <div>
+              <h3 data-i18n="privacy.measuredTitle"></h3>
+              <p data-i18n="privacy.measured"></p>
+            </div>
+            <div>
+              <h3 data-i18n="privacy.notMeasuredTitle"></h3>
+              <p data-i18n="privacy.notMeasured"></p>
+            </div>
+          </div>
+          <p data-i18n="privacy.optional"></p>
+          <p
+            class="analytics-state"
+            data-analytics-state
+            aria-live="polite"
+          ></p>
+          <div class="analytics-actions">
+            <button
+              type="button"
+              class="button button-ghost"
+              data-consent="denied"
+              data-i18n="privacy.deny"
+            ></button>
+            <button
+              type="button"
+              class="button button-ghost"
+              data-consent="granted"
+              data-i18n="privacy.allow"
+            ></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta" aria-labelledby="cta-title">
+        <div class="wrap center">
+          <h2 id="cta-title" data-i18n="landing.ctaTitle"></h2>
+          <p data-i18n="landing.ctaText"></p>
+          <a
+            class="button button-large"
+            href="/app/"
+            data-i18n="landing.heroCta"
+          ></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-row">
+        <img
+          src="/brand/logo-dark.svg"
+          alt="InkognitoPDF"
+          width="109"
+          height="24"
+        />
+        <p>
+          <span data-i18n="landing.footerTagline"></span>
+          <span data-i18n="landing.footerLicense"></span>
+          <a href="#analytics" data-i18n="privacy.title"></a>
+        </p>
+      </div>
+    </footer>
+
+    <section class="consent" data-consent-notice hidden>
+      <p>
+        <span data-i18n="privacy.notice"></span>
+        <a href="#analytics" data-i18n="privacy.more"></a>
+      </p>
+      <div class="consent-actions">
+        <button
+          type="button"
+          class="button button-ghost button-small"
+          data-consent="denied"
+          data-i18n="privacy.reject"
+        ></button>
+        <button
+          type="button"
+          class="button button-ghost button-small"
+          data-consent="granted"
+          data-i18n="privacy.accept"
+        ></button>
+      </div>
+    </section>
+
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

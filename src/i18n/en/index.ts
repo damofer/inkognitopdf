@@ -1,0 +1,38 @@
+// English messages. Each area file is typed against its Spanish twin, so a
+// missing key or a different argument list fails the type check.
+import type { Messages } from "../es";
+import { app } from "./app";
+import { editor } from "./editor";
+import { editLayer } from "./editLayer";
+import { engine } from "./engine";
+import { landing } from "./landing";
+import { mobile } from "./mobile";
+import { ocr } from "./ocr";
+import { organize } from "./organize";
+import { privacy } from "./privacy";
+import { redact } from "./redact";
+import { scan } from "./scan";
+import { sign } from "./sign";
+import { signEngine } from "./signEngine";
+import { support } from "./support";
+import { tools } from "./tools";
+import { viewer } from "./viewer";
+
+export const en: Messages = {
+  ...app,
+  ...editor,
+  ...editLayer,
+  ...engine,
+  ...landing,
+  ...mobile,
+  ...ocr,
+  ...organize,
+  ...privacy,
+  ...redact,
+  ...scan,
+  ...sign,
+  ...signEngine,
+  ...support,
+  ...tools,
+  ...viewer,
+};
