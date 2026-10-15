@@ -196,9 +196,8 @@ p {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgb(35 39 47 / 0.82);
-  backdrop-filter: saturate(1.4) blur(12px);
-  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  /* Opaque: the text scrolling behind must not show through. */
+  background: rgb(35 39 47);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
 }
 
@@ -1098,4 +1097,34 @@ p {
 .consent-actions .button {
   flex: 1;
   max-width: 160px;
+}
+.consent-short {
+  display: none;
+}
+@media (max-width: 559px) {
+  /* Phones: one short sentence, in a bar along the bottom edge. */
+  .consent {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-width: none;
+    gap: 8px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-width: 1px 0 0;
+    border-radius: 14px 14px 0 0;
+  }
+  .consent-long {
+    display: none;
+  }
+  .consent-short {
+    display: inline;
+  }
+  .consent-actions .button {
+    max-width: none;
+    min-height: 44px;
+  }
+  /* The end of the page stays reachable above the bar. */
+  body:has(.consent:not([hidden])) {
+    padding-bottom: 132px;
+  }
 }

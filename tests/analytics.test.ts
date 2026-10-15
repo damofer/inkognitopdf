@@ -1,5 +1,5 @@
 // Spec 011: only the closed list of events and coarse values can be sent.
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { pagesBucket, sanitize, sizeBucket } from "../src/analytics/events";
 
 describe("sanitize", () => {
@@ -83,5 +83,56 @@ describe("production hosts", () => {
       "www.inkognitopdf.com",
     ]);
     expect(PRODUCTION_HOSTS).not.toContain("localhost");
+  });
+});
+
+describe("the measurement question (asked once per browser)", () => {
+  const store = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  });
+  beforeEach(() => store.clear());
+
+  it("is asked only where the site measures, and locally", async () => {
+    const { asksConsent } = await import("../src/analytics/hosts");
+    for (const host of [
+      "inkognitopdf.com",
+      "www.inkognitopdf.com",
+      "inkognitopdf.web.app",
+      "inkognitopdf.firebaseapp.com",
+      "localhost",
+      "127.0.0.1",
+    ])
+      expect(asksConsent(host), host).toBe(true);
+    for (const host of ["copy.example.org", "inkognitopdf--preview.web.app"])
+      expect(asksConsent(host), host).toBe(false);
+  });
+
+  it("accepting or rejecting is kept under one key and not asked again", async () => {
+    for (const choice of ["granted", "denied"] as const) {
+      // Each choice in a fresh page.
+      store.clear();
+      vi.resetModules();
+      const consent = await import("../src/analytics/consent");
+      expect(consent.consentPending("inkognitopdf.com")).toBe(true);
+      consent.setConsent(choice);
+      expect(store.get(consent.CONSENT_KEY)).toBe(choice);
+      // A new page load (landing or app) reads the same key: nothing to ask.
+      vi.resetModules();
+      const reloaded = await import("../src/analytics/consent");
+      expect(reloaded.getConsent()).toBe(choice);
+      expect(reloaded.consentPending("inkognitopdf.com")).toBe(false);
+    }
+  });
+
+  it("is not shown on other hosts, unless opened from «Privacidad»", async () => {
+    const consent = await import("../src/analytics/consent");
+    expect(consent.consentPending("copy.example.org")).toBe(false);
+    consent.reopenConsent();
+    expect(consent.consentPending("copy.example.org")).toBe(true);
+    consent.closeConsent();
+    expect(consent.consentPending("copy.example.org")).toBe(false);
   });
 });

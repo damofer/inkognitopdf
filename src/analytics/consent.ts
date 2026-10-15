@@ -2,9 +2,13 @@
  * The visitor's choice about usage measurement (spec 011), remembered on this
  * device and shared by the landing and the app. No choice means no measuring.
  */
+import { asksConsent } from "./hosts";
+
 export type Consent = "granted" | "denied";
 
-const KEY = "inkognito.analytics";
+/** The one key for the choice, read by the landing and the app alike. */
+export const CONSENT_KEY = "inkognito.analytics";
+const KEY = CONSENT_KEY;
 const listeners = new Set<() => void>();
 /** The choice when local storage is blocked: it lasts until the page closes. */
 let memory: Consent | null = null;
@@ -41,6 +45,15 @@ export function onConsentChange(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
+// A choice made in another tab (the landing and the app share the key).
+try {
+  window.addEventListener("storage", (event) => {
+    if (event.key === KEY || event.key === null) notify();
+  });
+} catch {
+  // No window (tests): nothing to follow.
+}
+
 /** Shows the notice again, to change the choice. */
 export function reopenConsent() {
   reopened = true;
@@ -53,5 +66,18 @@ export function closeConsent() {
   notify();
 }
 
-/** Whether the notice is shown: no choice yet, or opened again. */
-export const consentPending = () => reopened || getConsent() === null;
+/**
+ * Whether the notice is shown: opened again from «Privacidad», or no choice
+ * yet on a host that measures (copies of the site elsewhere never ask).
+ */
+export function consentPending(hostname = currentHost()): boolean {
+  return reopened || (getConsent() === null && asksConsent(hostname));
+}
+
+function currentHost(): string {
+  try {
+    return location.hostname;
+  } catch {
+    return "";
+  }
+}

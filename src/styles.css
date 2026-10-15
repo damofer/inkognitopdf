@@ -1739,6 +1739,10 @@ button[aria-pressed="true"] {
   gap: 8px;
 }
 
+.consent-short {
+  display: none;
+}
+
 /* Secure redaction (spec 012) */
 
 .item-redaction {

@@ -5,6 +5,8 @@ export const privacy: typeof es = {
   "privacy.label": "Usage measurement",
   "privacy.notice":
     "May we count, anonymously, how many people use InkognitoPDF and which features they use? Your documents never leave your device.",
+  "privacy.noticeShort":
+    "May we count usage anonymously? Never your documents.",
   "privacy.more": "What is measured",
   "privacy.accept": "Accept",
   "privacy.reject": "Reject",

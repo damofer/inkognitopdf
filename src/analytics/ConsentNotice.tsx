@@ -8,7 +8,7 @@ import { consentPending, onConsentChange, setConsent } from "./consent";
  */
 export function ConsentNotice() {
   const t = useT();
-  const pending = useSyncExternalStore(onConsentChange, consentPending);
+  const pending = useSyncExternalStore(onConsentChange, () => consentPending());
   if (!pending) return null;
   return (
     <section
@@ -17,7 +17,8 @@ export function ConsentNotice() {
       data-testid="consent"
     >
       <p>
-        {t("privacy.notice")}{" "}
+        <span className="consent-long">{t("privacy.notice")}</span>
+        <span className="consent-short">{t("privacy.noticeShort")}</span>{" "}
         <a href="/#analytics" target="_blank" rel="noopener">
           {t("privacy.more")}
         </a>

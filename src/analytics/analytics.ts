@@ -5,13 +5,9 @@
 import { getConsent, onConsentChange } from "./consent";
 import { sanitize, type EventName, type EventParams } from "./events";
 
-/** Hosts of the production site: its domain and Firebase's own addresses. */
-export const PRODUCTION_HOSTS = [
-  "inkognitopdf.com",
-  "www.inkognitopdf.com",
-  "inkognitopdf.web.app",
-  "inkognitopdf.firebaseapp.com",
-];
+import { PRODUCTION_HOSTS } from "./hosts";
+
+export { PRODUCTION_HOSTS };
 /** Lets the end-to-end tests measure on localhost, with Google intercepted. */
 const DEBUG = "inkognito.analytics.debug";
 

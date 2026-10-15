@@ -4,6 +4,8 @@ export const privacy = {
   "privacy.label": "Medición de uso",
   "privacy.notice":
     "¿Nos dejas contar de forma anónima cuántas personas usan InkognitoPDF y qué funciones usan? Tus documentos nunca salen del dispositivo.",
+  "privacy.noticeShort":
+    "¿Medimos el uso de forma anónima? Nunca tus documentos.",
   "privacy.more": "Qué se mide",
   "privacy.accept": "Aceptar",
   "privacy.reject": "Rechazar",

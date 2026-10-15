@@ -772,4 +772,12 @@
     flex: 1;
     min-height: 44px;
   }
+
+  .consent-long {
+    display: none;
+  }
+
+  .consent-short {
+    display: inline;
+  }
 }
