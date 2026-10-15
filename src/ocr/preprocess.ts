@@ -1,10 +1,12 @@
 /**
  * Image clean-up before OCR (spec 003): the page is turned into a
- * black-and-white photocopy (spec 002 filter) and ruling lines (table grids,
+ * black-and-white photocopy (spec 002 filter, light text on dark backgrounds
+ * turned dark on white) and ruling lines (table grids,
  * underlines, frames) are removed, because Tesseract tends to drop the text of
  * a ruled table as soon as the scan is noisy or slightly skewed.
  */
-import { photocopy, rowBytes, type Bitmap } from "../scan/enhance";
+import { readableCopy } from "../scan/darkAreas";
+import { rowBytes, type Bitmap } from "../scan/enhance";
 import type { Rgba } from "../scan/image";
 
 const isInk = (b: Bitmap, x: number, y: number) =>
@@ -75,5 +77,5 @@ export function removeRules(
 
 /** The page as Tesseract should see it: black text on white, no rules. */
 export function prepareForOcr(page: Rgba): Bitmap {
-  return removeRules(photocopy(page));
+  return removeRules(readableCopy(page));
 }

@@ -2,11 +2,10 @@
  * Scan pipeline (spec 002): photo → page corners → rectified page at the
  * output resolution → enhancement mode. Pure functions, run in a worker.
  */
+import { readableCopy, readableGray } from "./darkAreas";
 import { detectPage } from "./detect";
 import {
-  grayscale,
   grayToRgba,
-  photocopy,
   bitmapToRgba,
   rotateRgba,
   type Bitmap,
@@ -107,11 +106,11 @@ export type Enhanced =
 export function enhance(page: Rgba, mode: ScanMode, quarters = 0): Enhanced {
   const image = rotateRgba(page, quarters);
   if (mode === "bw") {
-    const bitmap = photocopy(image);
+    const bitmap = readableCopy(image);
     return { mode, bitmap, image: bitmapToRgba(bitmap) };
   }
   if (mode === "gray") {
-    const g = grayscale(image);
+    const g = readableGray(image);
     return { mode, gray: g, image: grayToRgba(g) };
   }
   return { mode, image };

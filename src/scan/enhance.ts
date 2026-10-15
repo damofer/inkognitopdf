@@ -66,7 +66,15 @@ export interface PhotocopyOptions {
 
 /** Black-and-white photocopy of a rectified page. */
 export function photocopy(image: Rgba, options: PhotocopyOptions = {}): Bitmap {
-  const v = normalize(toGray(image));
+  return photocopyGray(toGray(image), options);
+}
+
+/** The photocopy of a greyscale page (OCR prepares its own grey first). */
+export function photocopyGray(
+  source: Gray,
+  options: PhotocopyOptions = {},
+): Bitmap {
+  const v = normalize(source);
   const { width: w, height: h } = v;
   const table = integral(v);
   const half = Math.max(
