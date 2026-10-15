@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
 const root = join(import.meta.dirname, "..");
-const SITE = "https://inkognitopdf.web.app";
+const SITE = "https://inkognitopdf.com";
 
 /** Contents of every <meta property|name="key"> of an HTML file. */
 function metas(html: string): Map<string, string[]> {

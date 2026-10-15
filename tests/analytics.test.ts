@@ -72,3 +72,16 @@ describe("buckets", () => {
     ]);
   });
 });
+
+describe("production hosts", () => {
+  it("measure on the domain, www and Firebase's addresses only", async () => {
+    const { PRODUCTION_HOSTS } = await import("../src/analytics/analytics");
+    expect([...PRODUCTION_HOSTS].sort()).toEqual([
+      "inkognitopdf.com",
+      "inkognitopdf.firebaseapp.com",
+      "inkognitopdf.web.app",
+      "www.inkognitopdf.com",
+    ]);
+    expect(PRODUCTION_HOSTS).not.toContain("localhost");
+  });
+});

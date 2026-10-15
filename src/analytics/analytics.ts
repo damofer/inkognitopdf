@@ -5,13 +5,19 @@
 import { getConsent, onConsentChange } from "./consent";
 import { sanitize, type EventName, type EventParams } from "./events";
 
-const PRODUCTION = ["inkognitopdf.web.app", "inkognitopdf.firebaseapp.com"];
+/** Hosts of the production site: its domain and Firebase's own addresses. */
+export const PRODUCTION_HOSTS = [
+  "inkognitopdf.com",
+  "www.inkognitopdf.com",
+  "inkognitopdf.web.app",
+  "inkognitopdf.firebaseapp.com",
+];
 /** Lets the end-to-end tests measure on localhost, with Google intercepted. */
 const DEBUG = "inkognito.analytics.debug";
 
 function enabled(): boolean {
   if (getConsent() !== "granted") return false;
-  if (PRODUCTION.includes(location.hostname)) return true;
+  if (PRODUCTION_HOSTS.includes(location.hostname)) return true;
   try {
     return localStorage.getItem(DEBUG) === "1";
   } catch {

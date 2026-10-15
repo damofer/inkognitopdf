@@ -15,9 +15,9 @@
 </p>
 
 <p align="center">
-  <a href="https://inkognitopdf.web.app/app/"><b>Open the app →</b></a>
+  <a href="https://inkognitopdf.com/app/"><b>Open the app →</b></a>
   ·
-  <a href="https://inkognitopdf.web.app/">Website</a>
+  <a href="https://inkognitopdf.com/">Website</a>
   ·
   <a href="LICENSE">Apache-2.0</a>
 </p>
