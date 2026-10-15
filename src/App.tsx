@@ -5,7 +5,7 @@ import {
   useState,
   type DragEvent,
 } from "react";
-import { BRAND } from "./brand";
+import { BRAND, SOURCE_URL } from "./brand";
 import { ConsentNotice } from "./analytics/ConsentNotice";
 import { track, watchConsent } from "./analytics/analytics";
 import { filesBucket, pagesBucket, sizeBucket } from "./analytics/events";
@@ -221,7 +221,7 @@ export function App() {
           id="app-menu"
           className={`header-actions${menuOpen ? " open" : ""}`}
           onClick={(e) => {
-            if ((e.target as HTMLElement).closest("button, input"))
+            if ((e.target as HTMLElement).closest("button, input, a"))
               setMenuOpen(false);
           }}
         >
@@ -262,6 +262,15 @@ export function App() {
           >
             {t("support.button")}
           </button>
+          <a
+            className="source-link"
+            href={SOURCE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={t("app.sourceCodeHint")}
+          >
+            {t("app.sourceCode")}
+          </a>
         </div>
         <button
           type="button"

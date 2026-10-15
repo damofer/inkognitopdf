@@ -83,6 +83,7 @@ export const landing: typeof es = {
   "landing.osText":
     "InkognitoPDF is released under the Apache-2.0 license and built on open, auditable projects such as pdf.js, pdf-lib and Tesseract.js. Anyone can check how it works.",
   "landing.osLicense": "Read the Apache-2.0 license",
+  "landing.osCode": "View the source code on GitHub",
 
   "landing.faqTitle": "Frequently asked questions",
   "landing.faq1Q": "Is it free?",
@@ -104,5 +105,6 @@ export const landing: typeof es = {
   "landing.ctaTitle": "Your next PDF, without uploading it anywhere.",
   "landing.ctaText": "Open it now: no sign-up needed.",
   "landing.footerLicense": "Open source under the Apache-2.0 license.",
+  "landing.footerCode": "Source code on GitHub",
   "landing.footerTagline": "Made so your documents stay yours.",
 };

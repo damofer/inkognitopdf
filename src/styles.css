@@ -267,6 +267,22 @@ button[aria-pressed="true"] {
   width: auto;
 }
 
+.header-actions .source-link {
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  text-decoration: none;
+}
+
+.header-actions .source-link:hover {
+  border-color: var(--accent);
+}
+
 .open-button input {
   display: none;
 }

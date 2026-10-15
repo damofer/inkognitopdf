@@ -22,7 +22,7 @@
   <a href="LICENSE">Apache-2.0</a>
 </p>
 
-![The editor with a form open](docs/images/editor-en.png)
+![The editor with a form open](docs/images/en/editor.png)
 
 ## Privacy promise
 
@@ -53,11 +53,11 @@ Coming next: compress PDFs and add or remove passwords.
 
 | Sign                                      | Secure redaction                              | Split                                    |
 | ----------------------------------------- | --------------------------------------------- | ---------------------------------------- |
-| ![Signing panel](docs/images/sign-en.png) | ![Redaction marks](docs/images/redact-en.png) | ![Split panel](docs/images/split-en.png) |
+| ![Signing panel](docs/images/en/sign.png) | ![Redaction marks](docs/images/en/redact.png) | ![Split panel](docs/images/en/split.png) |
 
-| Phone                                      | Annotate on a phone                                                | Scanner                                                        |
-| ------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------- |
-| ![Phone editor](docs/images/mobile-en.png) | ![Annotation tools on a phone](docs/images/mobile-annotate-en.png) | ![Scanner filter step](docs/screenshots/scan/390-3-filtro.png) |
+| Phone                                      | Annotate on a phone                                                | Scanner                                         |
+| ------------------------------------------ | ------------------------------------------------------------------ | ----------------------------------------------- |
+| ![Phone editor](docs/images/en/mobile.png) | ![Annotation tools on a phone](docs/images/en/mobile-annotate.png) | ![Scanner filter step](docs/images/en/scan.png) |
 
 All pictures use synthetic sample documents. They are regenerated with `npm run build` and `node scripts/readme-images.mjs`.
 

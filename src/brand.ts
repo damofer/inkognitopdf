@@ -4,5 +4,8 @@
 // prepared by earlier versions keep working.
 export const BRAND = "InkognitoPDF";
 
+/** The public source code repository. */
+export const SOURCE_URL = "https://github.com/damofer/inkognitopdf";
+
 /** The wordmark, split for styling: "Inkognito" + "PDF". */
 export const BRAND_PARTS = ["Inkognito", "PDF"] as const;

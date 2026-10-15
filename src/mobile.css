@@ -38,7 +38,7 @@
   }
 
   /* Touch targets of at least 44 px in every bar, menu and panel. */
-  .app-header :is(button, .open-button, select),
+  .app-header :is(button, .open-button, .source-link, select),
   .viewer-toolbar :is(button, select, input),
   .mobile-options :is(button, select, input, .toolbar-check),
   .mobile-sheet :is(button, .toolbar-check),
@@ -109,7 +109,7 @@
     box-shadow: 0 12px 32px rgb(0 0 0 / 0.25);
   }
 
-  .header-actions.open > :is(button, .open-button) {
+  .header-actions.open > :is(button, .open-button, .source-link) {
     display: flex;
     align-items: center;
     padding: 0 14px;

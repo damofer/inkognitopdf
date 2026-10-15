@@ -22,7 +22,7 @@
   <a href="LICENSE">Apache-2.0</a>
 </p>
 
-![El editor con un formulario abierto](docs/images/editor-es.png)
+![El editor con un formulario abierto](docs/images/es/editor.png)
 
 ## Compromiso de privacidad
 
@@ -53,11 +53,11 @@ Próximamente: comprimir PDFs y poner o quitar contraseñas.
 
 | Firmar                                     | Borrado seguro                                           | Dividir                                         |
 | ------------------------------------------ | -------------------------------------------------------- | ----------------------------------------------- |
-| ![Panel de firma](docs/images/sign-es.png) | ![Zonas marcadas para borrar](docs/images/redact-es.png) | ![Panel para dividir](docs/images/split-es.png) |
+| ![Panel de firma](docs/images/es/sign.png) | ![Zonas marcadas para borrar](docs/images/es/redact.png) | ![Panel para dividir](docs/images/es/split.png) |
 
-| Teléfono                                            | Anotar en el teléfono                                                          | Escáner                                                                  |
-| --------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| ![Editor en el teléfono](docs/images/mobile-es.png) | ![Herramientas para anotar en el teléfono](docs/images/mobile-annotate-es.png) | ![Paso del filtro en el escáner](docs/screenshots/scan/390-3-filtro.png) |
+| Teléfono                                            | Anotar en el teléfono                                                          | Escáner                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| ![Editor en el teléfono](docs/images/es/mobile.png) | ![Herramientas para anotar en el teléfono](docs/images/es/mobile-annotate.png) | ![Paso del filtro en el escáner](docs/images/es/scan.png) |
 
 Todas las imágenes usan documentos de muestra sintéticos. Se regeneran con `npm run build` y `node scripts/readme-images.mjs`.
 

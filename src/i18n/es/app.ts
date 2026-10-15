@@ -10,6 +10,8 @@ export const app = {
   "app.merging": (files: number) => `Uniendo ${files} PDF…`,
   "app.opening": (name: string) => `Abriendo «${name}»…`,
   "app.home": "Ir a la página de inicio de InkognitoPDF",
+  "app.sourceCode": "Código fuente",
+  "app.sourceCodeHint": "Código abierto en GitHub (se abre en otra pestaña)",
   "app.description":
     "Editor de PDF open source que procesa tus documentos en tu dispositivo.",
   "lang.label": "Idioma",

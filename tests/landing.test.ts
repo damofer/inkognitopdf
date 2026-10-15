@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 import { en } from "../src/i18n/en";
 import { es } from "../src/i18n/es";
 import { attrPairs, prerender } from "../src/landing/prerender";
+import { SOURCE_URL } from "../src/brand";
 
 const html = readFileSync(
   join(import.meta.dirname, "..", "index.html"),
@@ -42,6 +43,23 @@ describe("landing page", () => {
     const out = prerender(html, (key) => en[key as keyof typeof en] as string);
     expect(out).not.toMatch(/data-i18n="[^"]+"[^>]*><\//);
     expect(out).toContain("Your documents never leave your device");
+  });
+
+  test("links to the source code on GitHub in a new tab, in both languages", () => {
+    expect(SOURCE_URL).toBe("https://github.com/damofer/inkognitopdf");
+    const links = [...html.matchAll(/<a\s[^>]*>/g)]
+      .map((m) => m[0])
+      .filter((tag) => tag.includes(`href="${SOURCE_URL}"`));
+    // The open source section and the footer.
+    expect(links).toHaveLength(2);
+    for (const tag of links) {
+      expect(tag).toContain('target="_blank"');
+      expect(tag).toContain('rel="noopener noreferrer"');
+    }
+    for (const key of ["landing.osCode", "landing.footerCode"] as const) {
+      expect(es[key]).toMatch(/GitHub/);
+      expect(en[key]).toMatch(/GitHub/);
+    }
   });
 
   test("every call to action opens the app at /app/", () => {

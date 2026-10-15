@@ -88,3 +88,32 @@ test.describe("phone", () => {
     await page.screenshot({ path: `${DIR}/panel-movil.png` });
   });
 });
+
+test("the app menu links to the source code on GitHub", async ({ page }) => {
+  await page.goto("/app/");
+  const link = page.getByRole("link", { name: "Código fuente" });
+  await expect(link).toHaveAttribute(
+    "href",
+    "https://github.com/damofer/inkognitopdf",
+  );
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Source code" })).toBeVisible();
+});
+
+test.describe("phone", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test("the source code link is in the menu, 44 px tall", async ({ page }) => {
+    await page.goto("/app/");
+    await page.getByRole("button", { name: "Menú" }).click();
+    const link = page.getByRole("link", { name: "Código fuente" });
+    await expect(link).toBeVisible();
+    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  });
+});

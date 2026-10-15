@@ -12,6 +12,8 @@ export const app: typeof es = {
   "app.merging": (files: number) => `Merging ${files} PDFs…`,
   "app.opening": (name: string) => `Opening “${name}”…`,
   "app.home": "Go to the InkognitoPDF home page",
+  "app.sourceCode": "Source code",
+  "app.sourceCodeHint": "Open source on GitHub (opens in a new tab)",
   "app.description":
     "Open source PDF editor that processes your documents on your device.",
   "lang.label": "Language",
