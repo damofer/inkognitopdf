@@ -56,14 +56,28 @@ test("answered in the app, the landing does not ask again", async ({
   await expect(appNotice(page)).toBeVisible();
 });
 
-/** The header lets nothing show through. */
-async function opaque(page: Page, selector: string) {
-  const color = await page
+/**
+ * The text scrolling behind the header can't be read: the app's header is
+ * opaque; the landing's is translucent with a strong blur.
+ */
+async function hidesWhatScrolls(page: Page, selector: string) {
+  const style = await page
     .locator(selector)
     .first()
-    .evaluate((el) => getComputedStyle(el).backgroundColor);
-  // rgb(…) is opaque; rgba(…, a) with a < 1 is not.
-  expect(color, selector).toMatch(/^rgb\(/);
+    .evaluate((el) => {
+      const css = getComputedStyle(el);
+      return { color: css.backgroundColor, filter: css.backdropFilter };
+    });
+  if (selector === ".app-header") {
+    // rgb(…) is opaque; rgba(…, a) with a < 1 is not.
+    expect(style.color, selector).toMatch(/^rgb\(/);
+    return;
+  }
+  const alpha = Number(style.color.match(/rgba\(.*,\s*([\d.]+)\)/)?.[1]);
+  expect(alpha, selector).toBeGreaterThanOrEqual(0.7);
+  expect(alpha, selector).toBeLessThan(1);
+  const blur = Number(style.filter.match(/blur\(([\d.]+)px\)/)?.[1]);
+  expect(blur, selector).toBeGreaterThanOrEqual(16);
 }
 
 for (const size of [
@@ -104,7 +118,7 @@ for (const size of [
           expect(boxes).toHaveLength(2);
           expect(Math.abs(boxes[0]!.y - boxes[1]!.y)).toBeLessThan(1);
           for (const b of boxes) expect(b!.height).toBeGreaterThanOrEqual(43.5);
-          await opaque(page, header);
+          await hidesWhatScrolls(page, header);
           if (path === "/") await page.mouse.wheel(0, 700);
           await page.waitForTimeout(300);
           await page.screenshot({
@@ -113,3 +127,26 @@ for (const size of [
         }
       });
   });
+
+test.describe("phone 412×915, landing header", () => {
+  test.use({
+    viewport: { width: 412, height: 915 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test("text scrolling behind it is blurred out", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#analytics")).toBeAttached();
+    // Put a heading and its text right behind the header.
+    await page.evaluate(() => {
+      const heading = document.querySelector("#analytics h3")!;
+      const top = heading.getBoundingClientRect().top + scrollY - 20;
+      scrollTo({ top, behavior: "instant" });
+    });
+    await page.waitForTimeout(300);
+    await hidesWhatScrolls(page, ".site-header");
+    await page.screenshot({ path: `${DIR}/header-412-landing.png` });
+  });
+});

@@ -196,9 +196,18 @@ p {
   position: sticky;
   top: 0;
   z-index: 50;
-  /* Opaque: the text scrolling behind must not show through. */
-  background: rgb(35 39 47);
+  /* Without a blur, nearly opaque: the text behind must not be legible. */
+  background: rgb(35 39 47 / 0.96);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .site-header {
+    /* Translucent, but blurred enough that what scrolls behind can't be read. */
+    background: rgb(35 39 47 / 0.8);
+    /* Prefixed first: the minifier keeps only the last of the two. */
+    -webkit-backdrop-filter: saturate(1.5) blur(20px);
+    backdrop-filter: saturate(1.5) blur(20px);
+  }
 }
 
 .header-row {
