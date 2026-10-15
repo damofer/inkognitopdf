@@ -173,3 +173,118 @@ export async function darkCover(seed = 7): Promise<Rgba> {
   const data = ctx.getImageData(0, 0, image.width, image.height);
   return { width: data.width, height: data.height, data: data.data };
 }
+
+/** Where the photo sits on the page of `darkPhotoJpeg` (pixels). */
+export const PHOTO_BOX = { x0: 120, y0: 330, x1: 1120, y1: 1030 };
+
+/**
+ * A document page (A4 at 150 ppi) with black paragraphs and a large night
+ * photo: sky, moon, stars, a building with lit windows in a grid and
+ * reflections on water. Its highlights must not pass for light text.
+ */
+export function darkPhotoJpeg(seed = 3): Buffer {
+  ensureFont();
+  GlobalFonts.registerFromPath(bundledFontPath("Arimo", "Regular"), "Arimo");
+  const w = 1240;
+  const h = 1754;
+  const canvas = createCanvas(w, h);
+  const ctx = canvas.getContext("2d");
+  const next = rng(seed);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "#111111";
+  ctx.font = "22px Arimo";
+  const paragraph = (top: number) => {
+    for (let line = 0; line < 6; line++)
+      ctx.fillText(
+        "El informe anual recoge la actividad del observatorio y sus noches.",
+        PHOTO_BOX.x0,
+        top + line * 34,
+      );
+  };
+  paragraph(90);
+  paragraph(1110);
+
+  const { x0, y0, x1, y1 } = PHOTO_BOX;
+  const pw = x1 - x0;
+  const ph = y1 - y0;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x0, y0, pw, ph);
+  ctx.clip();
+  const sky = ctx.createLinearGradient(0, y0, 0, y1);
+  sky.addColorStop(0, "#0b1026");
+  sky.addColorStop(0.6, "#1c2240");
+  sky.addColorStop(1, "#0a0d18");
+  ctx.fillStyle = sky;
+  ctx.fillRect(x0, y0, pw, ph);
+  for (let i = 0; i < 400; i++) {
+    ctx.fillStyle = `rgba(255, 255, 240, ${0.3 + next() * 0.7})`;
+    ctx.beginPath();
+    ctx.arc(
+      x0 + next() * pw,
+      y0 + next() * ph * 0.55,
+      0.5 + next() ** 3 * 2,
+      0,
+      2 * Math.PI,
+    );
+    ctx.fill();
+  }
+  // The moon, with a glow.
+  const glow = ctx.createRadialGradient(
+    x0 + 780,
+    y0 + 140,
+    30,
+    x0 + 780,
+    y0 + 140,
+    150,
+  );
+  glow.addColorStop(0, "rgba(255, 250, 220, 0.6)");
+  glow.addColorStop(1, "rgba(255, 250, 220, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(x0 + 600, y0, 360, 320);
+  ctx.fillStyle = "#f4efd6";
+  ctx.beginPath();
+  ctx.arc(x0 + 780, y0 + 140, 55, 0, 2 * Math.PI);
+  ctx.fill();
+  // Buildings with lit windows in a grid.
+  for (const [bx, bw, bh] of [
+    [40, 180, 300],
+    [260, 140, 380],
+    [430, 220, 260],
+  ] as const) {
+    ctx.fillStyle = "#06070c";
+    ctx.fillRect(x0 + bx, y0 + 470 - bh, bw, bh);
+    for (let wy = y0 + 470 - bh + 20; wy < y0 + 450; wy += 34)
+      for (let wx = x0 + bx + 14; wx < x0 + bx + bw - 20; wx += 30)
+        if (next() < 0.55) {
+          ctx.fillStyle = next() < 0.5 ? "#f6d77a" : "#fff1b8";
+          ctx.fillRect(wx, wy, 14, 20);
+        }
+  }
+  // Water with reflections.
+  ctx.fillStyle = "#070a14";
+  ctx.fillRect(x0, y0 + 470, pw, ph - 470);
+  for (let i = 0; i < 120; i++) {
+    ctx.fillStyle = `rgba(246, 215, 122, ${0.2 + next() * 0.6})`;
+    ctx.fillRect(
+      x0 + next() * pw,
+      y0 + 480 + next() * (ph - 490),
+      10 + next() * 60,
+      2 + next() * 3,
+    );
+  }
+  ctx.restore();
+  return canvas.toBuffer("image/jpeg", 88);
+}
+
+/** The photo document decoded back to pixels. */
+export async function darkPhotoPage(seed = 3): Promise<Rgba> {
+  const { loadImage } = await import("@napi-rs/canvas");
+  const image = await loadImage(darkPhotoJpeg(seed));
+  const canvas = createCanvas(image.width, image.height);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(image, 0, 0);
+  const data = ctx.getImageData(0, 0, image.width, image.height);
+  return { width: data.width, height: data.height, data: data.data };
+}

@@ -1,6 +1,6 @@
 // Spec 003, O017: light text on dark backgrounds. Pure image functions, and
 // Tesseract on a synthetic book cover after each scanner mode.
-import { createCanvas } from "@napi-rs/canvas";
+import { GlobalFonts, createCanvas } from "@napi-rs/canvas";
 import { join } from "node:path";
 import { createWorker, OEM, PSM, type Worker } from "tesseract.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -14,25 +14,46 @@ import {
 import { bitmapToRgba, rowBytes, type Bitmap } from "../src/scan/enhance";
 import { gray, type Rgba } from "../src/scan/image";
 import { enhance } from "../src/scan/pipeline";
-import { COVER_TITLES, darkCover } from "./ocr/darkCover";
+import { bundledFontPath } from "./helpers";
+import {
+  COVER_TITLES,
+  darkCover,
+  darkPhotoPage,
+  PHOTO_BOX,
+} from "./ocr/darkCover";
 
-/** A white page with a dark band (rows y0–y1) holding light strokes. */
+/** A white page with a dark band (rows y0–y1) holding light text. */
 function bandPage(w: number, h: number, y0: number, y1: number): Rgba {
-  const data = new Uint8ClampedArray(w * h * 4).fill(255);
+  ensureFont();
+  const canvas = createCanvas(w, h);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "rgb(40, 45, 130)";
+  ctx.fillRect(0, y0, w, y1 - y0);
+  ctx.fillStyle = "rgb(240, 240, 230)";
+  ctx.font = "28px ArimoBold";
+  ctx.fillText("TEXTO CLARO", 50, y0 + 60);
+  // Dark text on the white part (a solid block stands for a bold heading).
+  ctx.fillStyle = "rgb(20, 20, 20)";
+  ctx.fillRect(50, 20, 100, 20);
+  const data = ctx.getImageData(0, 0, w, h);
+  return { width: w, height: h, data: data.data };
+}
+
+let fontReady = false;
+function ensureFont() {
+  if (fontReady) return;
+  GlobalFonts.registerFromPath(bundledFontPath("Arimo", "Bold"), "ArimoBold");
+  fontReady = true;
+}
+
+/** Share of ink pixels in a rectangle. */
+function inkShare(b: Bitmap, x0: number, y0: number, x1: number, y1: number) {
+  let n = 0;
   for (let y = y0; y < y1; y++)
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      const text =
-        y > y0 + 40 && y < y0 + 60 && x > 50 && x < 150 && x % 10 < 3;
-      data[i] = text ? 240 : 40;
-      data[i + 1] = text ? 240 : 45;
-      data[i + 2] = text ? 230 : 130;
-    }
-  // Dark text on the white part.
-  for (let y = 20; y < 40; y++)
-    for (let x = 50; x < 150; x++)
-      data.fill(20, (y * w + x) * 4, (y * w + x) * 4 + 3);
-  return { width: w, height: h, data };
+    for (let x = x0; x < x1; x++) if (isInk(b, x, y)) n++;
+  return n / ((x1 - x0) * (y1 - y0));
 }
 
 const isInk = (b: Bitmap, x: number, y: number) =>
@@ -71,8 +92,8 @@ describe("dark backgrounds", () => {
 
   it("light text on it becomes ink, its background paper", () => {
     const bitmap = readableCopy(bandPage(400, 600, 300, 600));
-    expect(isInk(bitmap, 101, 350)).toBe(true); // a light stroke
-    expect(isInk(bitmap, 300, 450)).toBe(false); // the dark band
+    expect(inkShare(bitmap, 50, 335, 260, 362)).toBeGreaterThan(0.15); // text
+    expect(inkShare(bitmap, 0, 420, 400, 600)).toBeLessThan(0.01); // band
     expect(isInk(bitmap, 100, 30)).toBe(true); // dark text on white
     expect(isInk(bitmap, 300, 100)).toBe(false); // white paper
   });
@@ -80,8 +101,54 @@ describe("dark backgrounds", () => {
   it("the greyscale mode leaves the dark band as it is", () => {
     const image = bandPage(400, 600, 300, 600);
     const out = readableGray(image);
-    const raw = 0.299 * 40 + 0.587 * 45 + 0.114 * 130;
+    const raw = 0.299 * 40 + 0.587 * 45 + 0.114 * 130; // the band's colour
     expect(out.data[450 * 400 + 300]).toBeCloseTo(raw, 0);
+  });
+
+  it("a dark photo in a document is not a text background", async () => {
+    const page = await darkPhotoPage();
+    const v = gray(page.width, page.height);
+    for (let i = 0; i < v.data.length; i++)
+      v.data[i] =
+        0.299 * page.data[i * 4]! +
+        0.587 * page.data[i * 4 + 1]! +
+        0.114 * page.data[i * 4 + 2]!;
+    expect(darkBackground(v)).not.toBeNull(); // it is dark…
+    expect(darkBackground(v, true)).toBeNull(); // …but holds no light text
+  });
+
+  it("the photocopy keeps a dark photo the right way round", async () => {
+    const page = await darkPhotoPage();
+    const bitmap = readableCopy(page);
+    // Brightness of the photo's pixels that came out white and of those that
+    // came out black: lights stay white, the night stays black.
+    const { x0, y0, x1, y1 } = PHOTO_BOX;
+    const sum = [0, 0];
+    const count = [0, 0];
+    for (let y = y0 + 4; y < y1 - 4; y++)
+      for (let x = x0 + 4; x < x1 - 4; x++) {
+        const i = (y * page.width + x) * 4;
+        const light =
+          0.299 * page.data[i]! +
+          0.587 * page.data[i + 1]! +
+          0.114 * page.data[i + 2]!;
+        const k = isInk(bitmap, x, y) ? 1 : 0;
+        sum[k]! += light;
+        count[k]!++;
+      }
+    const white = sum[0]! / count[0]!;
+    const black = sum[1]! / count[1]!;
+    console.log(
+      `foto oscura en la fotocopia: brillo medio de lo blanco ${white.toFixed(0)}, de lo negro ${black.toFixed(0)}`,
+    );
+    expect(white).toBeGreaterThan(black + 20);
+    // The buildings stay black, their lit windows white.
+    expect(
+      inkShare(bitmap, x0 + 45, y0 + 180, x0 + 215, y0 + 465),
+    ).toBeGreaterThan(0.6);
+    expect(isInk(bitmap, x0 + 780, y0 + 140)).toBe(false); // the moon
+    // The text around it is still there.
+    expect(inkShare(bitmap, 120, 60, 1100, 200)).toBeGreaterThan(0.03);
   });
 
   it("removes lone specks there, not accents next to letters", () => {
