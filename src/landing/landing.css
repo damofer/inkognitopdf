@@ -406,33 +406,15 @@ p {
   stroke: none;
 }
 
-.hero-art {
-  margin: 0;
-  max-width: 560px;
-  justify-self: center;
-  width: 100%;
-}
+/* Promo video: the hero's right column (square, served by the site, loaded
+   after the page) */
 
-/* Promo video (square, local, loaded when in view) */
-
-.promo {
-  padding: 8px 0 56px;
-}
-.promo-wrap {
-  display: grid;
-  justify-items: center;
-  gap: 18px;
-}
-.promo-title {
-  margin: 0;
-  font-size: 1.35rem;
-  text-align: center;
-}
 .promo-media {
   position: relative;
+  justify-self: center;
   margin: 0;
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: var(--radius);

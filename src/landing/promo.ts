@@ -1,12 +1,16 @@
-// Landing page: the promo video under the hero. It is loaded only when it
-// comes into view (the sources wait in data-src), plays muted in a loop, and
-// with "reduce motion" only its poster is shown. Everything is served by the
-// site itself, and the service worker does not precache it.
+// Landing page: the promo video in the hero. Its poster shows at once; the
+// video itself (the sources wait in data-src) is fetched only after the page
+// has loaded and once it is in view, so it never slows the first load and a
+// phone that does not scroll to it never fetches it. It plays muted in a loop,
+// and with "reduce motion" only the poster is shown. Everything is served by
+// the site itself, and the service worker does not precache it.
 import { t } from "../i18n/core";
 
 export interface PromoOptions {
   /** The visitor asked the system to reduce motion. */
   reducedMotion: boolean;
+  /** Calls `ready` once the page has finished loading. */
+  whenLoaded: (ready: () => void) => void;
   /** Calls `show` once the element is (nearly) in view. */
   whenVisible: (element: Element, show: () => void) => void;
 }
@@ -14,6 +18,10 @@ export interface PromoOptions {
 /** The browser's own answers. */
 export const browserPromoOptions = (): PromoOptions => ({
   reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+  whenLoaded(ready) {
+    if (document.readyState === "complete") ready();
+    else addEventListener("load", () => ready(), { once: true });
+  },
   whenVisible(element, show) {
     if (!("IntersectionObserver" in window)) return show();
     const observer = new IntersectionObserver(
@@ -22,7 +30,8 @@ export const browserPromoOptions = (): PromoOptions => ({
         observer.disconnect();
         show();
       },
-      { rootMargin: "200px 0px" },
+      // Only once it is actually on screen.
+      { threshold: 0 },
     );
     observer.observe(element);
   },
@@ -58,14 +67,16 @@ export function setupPromo(
     figure.dataset.state = "poster";
     return;
   }
-  options.whenVisible(figure, () => {
-    for (const source of video.querySelectorAll<HTMLSourceElement>(
-      "source[data-src]",
-    ))
-      source.src = source.dataset.src!;
-    video.load();
-    void video.play().catch(() => labelPromo(root));
-  });
+  options.whenLoaded(() =>
+    options.whenVisible(figure, () => {
+      for (const source of video.querySelectorAll<HTMLSourceElement>(
+        "source[data-src]",
+      ))
+        source.src = source.dataset.src!;
+      video.load();
+      void video.play().catch(() => labelPromo(root));
+    }),
+  );
   video.addEventListener("playing", () => {
     figure.dataset.state = "playing";
     button.hidden = false;

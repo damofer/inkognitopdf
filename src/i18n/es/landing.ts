@@ -23,10 +23,7 @@ export const landing = {
   "landing.badgeLocal": "100 % en tu dispositivo",
   "landing.badgeOffline": "Funciona sin conexión",
   "landing.badgeOpen": "Open source · Apache-2.0",
-  "landing.heroArt":
-    "Ilustración: un PDF que se edita y se firma dentro del navegador, con un candado que indica que no sale del dispositivo.",
 
-  "landing.promoTitle": "Míralo en 20 segundos",
   "landing.promoVideo":
     "Vídeo sin sonido, con textos en inglés: un editor de PDF «gratis» que cobra al descargar, y la alternativa, InkognitoPDF, para editar, firmar, escanear, unir, comprimir y proteger PDF gratis, sin cuenta, de código abierto y sin que los archivos salgan del dispositivo.",
   "landing.promoPoster":

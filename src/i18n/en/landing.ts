@@ -25,10 +25,7 @@ export const landing: typeof es = {
   "landing.badgeLocal": "100% on your device",
   "landing.badgeOffline": "Works offline",
   "landing.badgeOpen": "Open source · Apache-2.0",
-  "landing.heroArt":
-    "Illustration: a PDF being edited and signed inside the browser, with a lock showing it never leaves the device.",
 
-  "landing.promoTitle": "See it in 20 seconds",
   "landing.promoVideo":
     "Silent video: a “free” PDF editor that charges when you download, and the alternative, InkognitoPDF, to edit, sign, scan, merge, compress and protect PDFs for free, with no account, open source, and without files leaving the device.",
   "landing.promoPoster":
