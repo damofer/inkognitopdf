@@ -590,7 +590,11 @@ button[aria-pressed="true"] {
   user-select: none;
 }
 
-.item-whiteout,
+/* A whiteout covers the page as it will in the saved file. */
+.item-whiteout {
+  background: #fff;
+}
+
 /* Hit area of an edited text; the edit itself is shown by .page-edited. */
 .item-textEdit {
   background: transparent;
