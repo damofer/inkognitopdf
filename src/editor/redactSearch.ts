@@ -1,7 +1,14 @@
-import type { EditorState, OcrItem, OcrWord } from "../model/document";
+import type {
+  EditorState,
+  Needles,
+  OcrItem,
+  OcrWord,
+  RedactionItem,
+} from "../model/document";
 import { boundingRect, type Point, type Rect } from "../model/geometry";
 import { apply, type ShowPart, type TextShow } from "../engine/textShows";
 import type { PdfFile } from "../storage/pdfFile";
+import { BadPatternError, findRanges } from "../engine/textMatch";
 import { mergeLineRects } from "./itemOps";
 import { showsOf } from "./textStyleProbe";
 
@@ -17,12 +24,11 @@ export interface Match {
   rect: Rect;
 }
 
-export class BadPatternError extends Error {}
+export { BadPatternError, findRanges };
 
 /** Glyph box used for marks: a little inside the box the engine removes. */
 const MARK_DESCENT = 0.18;
 const MARK_ASCENT = 0.78;
-const MAX_MATCHES = 2000;
 
 type Glyph = { show: TextShow; part: Extract<ShowPart, { kind: "glyph" }> };
 
@@ -33,7 +39,10 @@ interface Indexed<T> {
   units: (T | null)[];
 }
 
-function glyphText(shows: TextShow[]): Indexed<Glyph> {
+function glyphText(
+  shows: TextShow[],
+  keep: (glyph: Glyph) => boolean = () => true,
+): Indexed<Glyph> {
   let text = "";
   const units: (Glyph | null)[] = [];
   let last: Glyph | null = null;
@@ -44,6 +53,8 @@ function glyphText(shows: TextShow[]): Indexed<Glyph> {
   for (const show of shows)
     for (const part of show.parts) {
       if (part.kind !== "glyph" || part.unicode === "") continue;
+      const glyph = { show, part };
+      if (!keep(glyph)) continue;
       if (last) {
         // A gap or a new line between glyphs reads as a space.
         const m = last.show.userMatrix;
@@ -55,14 +66,10 @@ function glyphText(shows: TextShow[]): Indexed<Glyph> {
         const along = dx * u.x + dy * u.y;
         const across = -dx * u.y + dy * u.x;
         const size = Math.max(last.show.size, 1);
-        if (
-          Math.abs(across) > 0.5 * size ||
-          along < -0.5 * size ||
-          along > 0.2 * size
-        )
-          add(" ", null);
+        if (Math.abs(across) > 0.5 * size || along < -0.5 * size)
+          add("\n", null);
+        else if (along > 0.2 * size) add(" ", null);
       }
-      const glyph = { show, part };
       add(part.unicode, glyph);
       last = glyph;
     }
@@ -115,48 +122,6 @@ function ocrText(items: OcrItem[]): Indexed<Rect> {
   return { text, units };
 }
 
-/** Lower case without accents, keeping one character per character. */
-const fold = (s: string) =>
-  [...s]
-    .map((c) => {
-      const f = c.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-      if (f.length === c.length) return f;
-      const lower = c.toLowerCase();
-      return lower.length === c.length ? lower : c;
-    })
-    .join("");
-
-/** [start, end) ranges of every match of the query in `text`. */
-export function findRanges(
-  text: string,
-  query: string,
-  regex: boolean,
-): [number, number][] {
-  const ranges: [number, number][] = [];
-  if (regex) {
-    let pattern: RegExp;
-    try {
-      pattern = new RegExp(query, "giu");
-    } catch {
-      throw new BadPatternError(query);
-    }
-    for (const m of text.matchAll(pattern)) {
-      if (m[0].length === 0) continue;
-      ranges.push([m.index, m.index + m[0].length]);
-      if (ranges.length >= MAX_MATCHES) break;
-    }
-    return ranges;
-  }
-  const needle = fold(query.trim().replace(/\s+/g, " "));
-  if (!needle) return ranges;
-  const hay = fold(text.replace(/\s/g, " "));
-  for (let i = hay.indexOf(needle); i >= 0; i = hay.indexOf(needle, i + 1)) {
-    ranges.push([i, i + needle.length]);
-    if (ranges.length >= MAX_MATCHES) break;
-  }
-  return ranges;
-}
-
 function rectsOf<T>(
   indexed: Indexed<T>,
   ranges: [number, number][],
@@ -206,4 +171,63 @@ export async function searchDocument(
     }
   }
   return matches;
+}
+
+/** Share of `box` inside `area`. */
+function inside(box: Rect, area: Rect): number {
+  const w =
+    Math.min(box.x + box.width, area.x + area.width) - Math.max(box.x, area.x);
+  const h =
+    Math.min(box.y + box.height, area.y + area.height) -
+    Math.max(box.y, area.y);
+  const size = box.width * box.height;
+  return w > 0 && h > 0 && size > 0 ? (w * h) / size : 0;
+}
+
+/** Shorter texts are not looked for elsewhere: they would match anything. */
+const MIN_NEEDLE = 3;
+
+/**
+ * What to look for elsewhere in the file when the areas are applied (spec 012,
+ * CA13): the text under each area, line by line, and the searches that
+ * marked them.
+ */
+export async function needlesOf(
+  file: PdfFile | null,
+  state: EditorState,
+  areas: RedactionItem[],
+): Promise<Needles> {
+  const texts = new Set<string>();
+  const patterns = new Set<string>();
+  const addText = (text: string) => {
+    for (const line of text.split("\n")) {
+      const t = line.trim().replace(/\s+/g, " ");
+      if (t.length >= MIN_NEEDLE) texts.add(t);
+    }
+  };
+  for (const entry of state.pages) {
+    const rects = areas.filter((a) => a.pageId === entry.id).map((a) => a.rect);
+    if (rects.length === 0) continue;
+    if (file && entry.source.kind === "original") {
+      const shows = await showsOf(file, entry.source.index);
+      for (const rect of rects)
+        addText(glyphText(shows, (g) => inside(markBox(g), rect) > 0.3).text);
+    }
+    const ocr = state.items.filter(
+      (i): i is OcrItem => i.kind === "ocr" && i.pageId === entry.id,
+    );
+    for (const rect of rects)
+      for (const item of ocr)
+        for (const line of item.lines)
+          addText(
+            line.words
+              .filter((w) => inside(wordBox(item, w), rect) > 0.3)
+              .map((w) => w.text.trim())
+              .join(" "),
+          );
+  }
+  for (const { query } of areas)
+    if (query?.regex) patterns.add(query.text);
+    else if (query) addText(query.text);
+  return { texts: [...texts], patterns: [...patterns] };
 }

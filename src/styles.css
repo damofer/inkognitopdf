@@ -1830,6 +1830,26 @@ button[aria-pressed="true"] {
   color: #b3261e;
 }
 
+/* Secure redaction: the warning can be long on a phone. */
+.redact-confirm {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.redact-elsewhere ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.redact-elsewhere .toolbar-check {
+  min-height: 44px;
+}
+
+.redact-elsewhere-note {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
 .dialog-actions {
   display: flex;
   justify-content: flex-end;

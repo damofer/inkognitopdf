@@ -14,16 +14,23 @@ import type {
   EditorState,
   ImageItem,
   Item,
+  Needles,
   PageEntry,
   TextItem,
 } from "../model/document";
 import { isImageTextEdit } from "../model/document";
+import type { Rect } from "../model/geometry";
 import { addAnnotation, removeAnnotation } from "./annotations";
 import { applyForms, flattenForms } from "./forms";
 import { drawOcr } from "./ocrLayer";
 import { drawScan } from "./scanPage";
 import { detachRemovedPages } from "./organize";
 import { cleanFile, redactPage, type ImageCodec } from "./redact";
+import {
+  mergeNeedles,
+  redactElsewhere,
+  type ElsewhereCounts,
+} from "./redactElsewhere";
 import { drawSignature } from "./signature";
 import { hexToRgb } from "./color";
 import { FontCache, drawTextWith, type LoadFont } from "./fonts";
@@ -42,11 +49,18 @@ export interface SaveResult {
   bytes: Uint8Array;
   /** Human-readable notes for the user (Spanish), e.g. font substitutions. */
   warnings: string[];
+  /** With `findElsewhere`: where else the data is (spec 012, CA13). */
+  elsewhere?: ElsewhereCounts;
 }
 
 export interface SaveOptions {
   /** Draws the form fields into the pages and removes them (spec 005, CA6). */
   flattenForms?: boolean;
+  /**
+   * Only counts where else in the file these needles are, away from the
+   * applied redaction areas (spec 012, CA13); no bytes are produced.
+   */
+  findElsewhere?: Needles;
 }
 
 export class EngineError extends Error {
@@ -126,6 +140,28 @@ export async function applyEdits(
       else await drawItem(doc, page, item, fonts, now);
   }
 
+  // Spec 012, CA13: the redacted data, elsewhere in the file. Before forms
+  // are flattened, so emptied fields are drawn empty.
+  const redactions = state.items.filter((i) => i.kind === "redaction");
+  const applied = redactions.filter((r) => r.applied);
+  const areas = new Map<PDFPage, Rect[]>();
+  for (const r of applied) {
+    const page = pagesById.get(r.pageId);
+    if (page) areas.set(page, [...(areas.get(page) ?? []), r.rect]);
+  }
+  if (options.findElsewhere) {
+    const elsewhere = await redactElsewhere(
+      doc,
+      options.findElsewhere,
+      areas,
+      fonts,
+      false,
+    );
+    return { bytes: new Uint8Array(), warnings: [], elsewhere };
+  }
+  const needles = mergeNeedles(applied.map((r) => r.elsewhere));
+  if (needles) await redactElsewhere(doc, needles, areas, fonts, true);
+
   if (options.flattenForms) await flattenForms(doc, fonts, isolate);
 
   if (fonts.usedFallback) warnings.push(t("engine.fallbackFonts"));
@@ -133,20 +169,18 @@ export async function applyEdits(
   await fonts.embedSubstitutes();
 
   // Spec 012: secure redaction runs on the final content of each page.
-  const redactions = state.items.filter((i) => i.kind === "redaction");
-  const applied = redactions.filter((r) => r.applied);
   const pending = redactions.length - applied.length;
   if (pending > 0) warnings.push(t("redact.pending", pending));
   if (applied.length > 0) {
     await doc.flush();
     for (const [index, entry] of state.pages.entries()) {
-      const areas = applied
+      const rects = applied
         .filter((r) => r.pageId === entry.id)
         .map((r) => r.rect);
-      if (areas.length === 0) continue;
+      if (rects.length === 0) continue;
       const page = pages[index]!;
       warnings.push(
-        ...(await redactPage(doc, page, areas, deps.images, index + 1)),
+        ...(await redactPage(doc, page, rects, deps.images, index + 1)),
       );
       // A new stream: the one pdf-lib keeps for the page was replaced.
       page.node.addContentStream(
@@ -154,7 +188,7 @@ export async function applyEdits(
           doc.context.contentStream([
             pushGraphicsState(),
             setFillingRgbColor(0, 0, 0),
-            ...areas.map((r) => rectangle(r.x, r.y, r.width, r.height)),
+            ...rects.map((r) => rectangle(r.x, r.y, r.width, r.height)),
             fill(),
             popGraphicsState(),
           ]),

@@ -327,6 +327,22 @@ export async function applyForms(
       await setField(doc, fonts, raw, values.get(raw.name));
 }
 
+/**
+ * Empties the value and default value of fields and redraws their widgets
+ * (spec 012, CA13): data found elsewhere than under a redaction area.
+ */
+export async function clearFieldValues(
+  doc: PDFDocument,
+  fonts: FontCache,
+  fields: RawField[],
+): Promise<void> {
+  for (const raw of fields) {
+    for (const dict of raw.chain)
+      for (const key of ["V", "DV"]) dict.delete(PDFName.of(key));
+    await setField(doc, fonts, raw, "");
+  }
+}
+
 /** True when the document has fields other than signatures. */
 export function hasFillableFields(doc: PDFDocument): boolean {
   return rawFields(doc).some((f) => {

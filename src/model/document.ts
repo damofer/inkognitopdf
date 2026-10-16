@@ -260,6 +260,20 @@ export interface RedactionItem extends ItemBase {
   applied: boolean;
   /** Applied together with removing the document metadata. */
   clearMetadata?: boolean;
+  /** The search that marked it (CA2), looked for elsewhere too (CA13). */
+  query?: { text: string; regex: boolean };
+  /**
+   * Applied together with removing, elsewhere in the file (notes, bookmarks,
+   * attachments, field values, metadata), what was under the areas and what
+   * was searched (CA13).
+   */
+  elsewhere?: Needles;
+}
+
+/** Texts (any case and accents) and regular expressions to look for. */
+export interface Needles {
+  texts: string[];
+  patterns: string[];
 }
 
 export type Item =

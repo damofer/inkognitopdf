@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "../i18n";
-import type { EditorState, RedactionItem } from "../model/document";
+import type { EditorState, Needles, RedactionItem } from "../model/document";
+import type { ElsewhereCounts, ElsewhereKind } from "../engine/redactElsewhere";
 import type { Rect } from "../model/geometry";
 import { newId, type Operation } from "../model/operations";
 import type { PdfFile } from "../storage/pdfFile";
@@ -68,6 +69,7 @@ export function RedactOptions({
               pageId: match.pageId,
               rect: match.rect,
               applied: false,
+              query: { text: query, regex },
             },
           })),
         );
@@ -81,7 +83,7 @@ export function RedactOptions({
     }
   };
 
-  const apply = (clearMetadata: boolean) => {
+  const apply = (clearMetadata: boolean, elsewhere: Needles | null) => {
     dispatch(
       pending.map((item) => ({
         kind: "updateItem" as const,
@@ -89,6 +91,7 @@ export function RedactOptions({
           ...item,
           applied: true,
           ...(clearMetadata ? { clearMetadata: true } : {}),
+          ...(elsewhere ? { elsewhere } : {}),
         },
       })),
     );
@@ -144,7 +147,9 @@ export function RedactOptions({
       {confirming &&
         createPortal(
           <ConfirmRedaction
-            count={pending.length}
+            file={file}
+            state={state}
+            pending={pending}
             onConfirm={apply}
             onCancel={() => setConfirming(false)}
           />,
@@ -154,17 +159,90 @@ export function RedactOptions({
   );
 }
 
+const PLACE = {
+  annotations: "redact.elsewhereAnnotations",
+  bookmarks: "redact.elsewhereBookmarks",
+  attachments: "redact.elsewhereAttachments",
+  fields: "redact.elsewhereFields",
+  metadata: "redact.elsewhereMetadata",
+} as const satisfies Record<ElsewhereKind, string>;
+const KINDS = Object.keys(PLACE) as ElsewhereKind[];
+
+/**
+ * Where else in the file the data of the areas is (spec 012, CA13): the text
+ * under them and the searches that marked them, in notes, bookmarks,
+ * attachments, field values and metadata. Null while looking.
+ */
+function useElsewhere(
+  file: PdfFile | null,
+  state: EditorState,
+  pending: RedactionItem[],
+) {
+  const [found, setFound] = useState<{
+    needles: Needles;
+    counts: ElsewhereCounts | null;
+  } | null>(null);
+  const args = useRef({ file, state, pending });
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const { file, state, pending } = args.current;
+      const { needlesOf } = await import("./redactSearch");
+      const needles = await needlesOf(file, state, pending);
+      let counts: ElsewhereCounts | null = null;
+      if (needles.texts.length + needles.patterns.length > 0)
+        try {
+          const { buildPdf } = await import("./save");
+          const ids = new Set(pending.map((p) => p.id));
+          const preview = {
+            ...state,
+            items: state.items.map((i) =>
+              ids.has(i.id) ? { ...i, applied: true } : i,
+            ),
+          };
+          ({ elsewhere: counts = null } = await buildPdf(file, preview, {
+            findElsewhere: needles,
+          }));
+        } catch {
+          // Saving looks again and removes what it finds.
+          counts = null;
+        }
+      if (live) setFound({ needles, counts });
+    })();
+    return () => {
+      live = false;
+    };
+  }, []);
+  return found;
+}
+
 function ConfirmRedaction({
-  count,
+  file,
+  state,
+  pending,
   onConfirm,
   onCancel,
 }: {
-  count: number;
-  onConfirm: (clearMetadata: boolean) => void;
+  file: PdfFile | null;
+  state: EditorState;
+  pending: RedactionItem[];
+  onConfirm: (clearMetadata: boolean, elsewhere: Needles | null) => void;
   onCancel: () => void;
 }) {
   const t = useT();
-  const [clearMetadata, setClearMetadata] = useState(false);
+  const count = pending.length;
+  const [clearMetadata, setClearMetadata] = useState(true);
+  const [removeElsewhere, setRemoveElsewhere] = useState(true);
+  const found = useElsewhere(file, state, pending);
+  // With the metadata box checked all of it goes: not listed apart.
+  const places = KINDS.filter(
+    (k) =>
+      (found?.counts?.[k] ?? 0) > 0 && !(k === "metadata" && clearMetadata),
+  );
+  const needles =
+    found && found.needles.texts.length + found.needles.patterns.length > 0
+      ? found.needles
+      : null;
   const cancelRef = useRef<HTMLButtonElement>(null);
   const cancel = useRef(onCancel);
   useEffect(() => {
@@ -201,6 +279,40 @@ function ConfirmRedaction({
           />
           {t("redact.clearMetadata")}
         </label>
+        <div className="redact-elsewhere" aria-live="polite">
+          {!found ? (
+            <p>{t("redact.elsewhereSearching")}</p>
+          ) : places.length > 0 ? (
+            <>
+              <p>{t("redact.elsewhereTitle")}</p>
+              <ul>
+                {places.map((k) => (
+                  <li key={k} data-kind={k}>
+                    {t(PLACE[k], found.counts![k])}
+                  </li>
+                ))}
+              </ul>
+              <label className="toolbar-check">
+                <input
+                  type="checkbox"
+                  checked={removeElsewhere}
+                  onChange={(e) => setRemoveElsewhere(e.currentTarget.checked)}
+                />
+                {t("redact.elsewhereRemove")}
+              </label>
+              <p className="redact-elsewhere-note">
+                {t("redact.elsewhereRemoveNote")}
+              </p>
+              {!removeElsewhere && (
+                <p className="dialog-warning" role="alert">
+                  {t("redact.elsewhereKept")}
+                </p>
+              )}
+            </>
+          ) : found.counts ? (
+            <p>{t("redact.elsewhereNone")}</p>
+          ) : null}
+        </div>
         <div className="dialog-actions">
           <button ref={cancelRef} type="button" onClick={onCancel}>
             {t("redact.cancel")}
@@ -208,7 +320,10 @@ function ConfirmRedaction({
           <button
             type="button"
             className="danger"
-            onClick={() => onConfirm(clearMetadata)}
+            disabled={!found}
+            onClick={() =>
+              onConfirm(clearMetadata, removeElsewhere ? needles : null)
+            }
           >
             {t("redact.confirm")}
           </button>

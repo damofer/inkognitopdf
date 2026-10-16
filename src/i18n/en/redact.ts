@@ -22,6 +22,28 @@ export const redact: typeof es = {
     "It cannot be undone in the saved file. In the editor you can undo until you save.",
   "redact.clearMetadata":
     "Also remove the document metadata (title, author, subject, keywords, program)",
+  "redact.elsewhereSearching":
+    "Looking for the same text elsewhere in the file…",
+  "redact.elsewhereTitle": "That text also appears outside the areas, in:",
+  "redact.elsewhereAnnotations": (n: number) =>
+    n === 1 ? "1 note or comment" : `${n} notes or comments`,
+  "redact.elsewhereBookmarks": (n: number) =>
+    n === 1 ? "1 bookmark" : `${n} bookmarks`,
+  "redact.elsewhereAttachments": (n: number) =>
+    n === 1 ? "1 attached file" : `${n} attached files`,
+  "redact.elsewhereFields": (n: number) =>
+    n === 1 ? "1 form field" : `${n} form fields`,
+  "redact.elsewhereMetadata": (n: number) =>
+    n === 1
+      ? "1 metadata entry (title, author, subject or keywords)"
+      : `${n} metadata entries (title, author, subject or keywords)`,
+  "redact.elsewhereRemove": "Also remove these occurrences",
+  "redact.elsewhereRemoveNote":
+    "The notes and attachments that contain it are deleted, the bookmarks are removed (their sub-bookmarks are kept), the fields are emptied and those metadata entries are deleted.",
+  "redact.elsewhereKept":
+    "If you do not remove them, that text stays in the saved file even though the areas are redacted.",
+  "redact.elsewhereNone":
+    "It does not appear in notes, bookmarks, attachments, fields or metadata.",
   "redact.confirm": "Apply redaction",
   "redact.cancel": "Cancel",
   "redact.imageRemoved": (page: number) =>

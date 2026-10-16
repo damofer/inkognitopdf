@@ -854,7 +854,7 @@ export function clearBits(data: Uint8Array, from: number, to: number) {
   while (bit < to) clear(bit++);
 }
 
-const rectOfAnnot = (doc: PDFDocument, annot: PDFDict) =>
+export const rectOfAnnot = (doc: PDFDocument, annot: PDFDict) =>
   rectOf(doc, annot.lookup(PDFName.of("Rect")));
 
 /** Removes a field (or widget) from its parent's Kids or from the form. */
@@ -886,6 +886,21 @@ function removeField(doc: PDFDocument, node: PDFObject, depth = 0) {
 
 /** Removes annotations (and fields) that touch an area, with their popups and replies. */
 function redactAnnotations(doc: PDFDocument, page: PDFPage, areas: Rect[]) {
+  removeAnnotations(doc, page, (dict) => {
+    const rect = rectOfAnnot(doc, dict);
+    return !!rect && areas.some((a) => overlaps(a, rect));
+  });
+}
+
+/**
+ * Removes the annotations of a page for which `hit` is true, with their
+ * popups and their replies; widgets also leave their field.
+ */
+export function removeAnnotations(
+  doc: PDFDocument,
+  page: PDFPage,
+  hit: (annot: PDFDict) => boolean,
+) {
   const annots = page.node.lookup(PDFName.of("Annots"));
   if (!(annots instanceof PDFArray)) return;
   const removed = new Set<PDFObject>();
@@ -896,13 +911,12 @@ function redactAnnotations(doc: PDFDocument, page: PDFPage, areas: Rect[]) {
     for (let i = annots.size() - 1; i >= 0; i--) {
       const entry = annots.get(i);
       const dict = doc.context.lookup(entry);
-      if (!(dict instanceof PDFDict)) continue;
-      const rect = rectOfAnnot(doc, dict);
+      if (!(dict instanceof PDFDict) || removed.has(dict)) continue;
       const popupOfRemoved =
         dict.lookup(PDFName.of("Subtype")) === PDFName.of("Popup") &&
         isRemoved(dict.get(PDFName.of("Parent")));
       if (
-        (rect && areas.some((a) => overlaps(a, rect))) ||
+        hit(dict) ||
         popupOfRemoved ||
         isRemoved(dict.get(PDFName.of("IRT")))
       ) {
