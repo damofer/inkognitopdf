@@ -95,9 +95,9 @@ export const xray: typeof es = {
   "xray.times": (n) => (n === 1 ? "once" : `${n} times`),
   "xray.comments": (n) => (n === 1 ? "1 comment" : `${n} comments`),
   "xray.noName": "(no name)",
-  "xray.clean": "Clean and save",
+  "xray.clean": "Clean",
   "xray.cleaning": "Cleaning…",
   "xray.nothingChecked": "Check at least one thing to remove.",
-  "xray.cleaned": (file) => `Saved “${file}”. This is the clean copy:`,
-  "xray.cleanSuffix": "clean",
+  "xray.cleaned":
+    "Cleaned. This is the document now; save it with “Save PDF” when you are done:",
 };

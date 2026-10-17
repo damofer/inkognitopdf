@@ -95,9 +95,9 @@ export const xray = {
   "xray.comments": (n: number) =>
     n === 1 ? "1 comentario" : `${n} comentarios`,
   "xray.noName": "(sin nombre)",
-  "xray.clean": "Limpiar y guardar",
+  "xray.clean": "Limpiar",
   "xray.cleaning": "Limpiando…",
   "xray.nothingChecked": "Marca al menos una cosa para quitar.",
-  "xray.cleaned": (file: string) => `Guardado «${file}». Así queda la copia:`,
-  "xray.cleanSuffix": "limpio",
+  "xray.cleaned":
+    "Limpio. Así queda el documento; guárdalo con «Guardar PDF» cuando termines:",
 };

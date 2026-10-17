@@ -1,5 +1,5 @@
 // Spec 015: what the PDF hides, as a traffic light, and a clean copy of it.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT, type MessageKey } from "../i18n";
 import type {
   PrivacyDetail,
@@ -12,10 +12,11 @@ import { formatSize } from "../protect/CompressPanel";
 interface XrayPanelProps {
   /** Analyzes the opened file. */
   scan: () => Promise<PrivacyReport>;
-  /** Saves a clean copy; returns its name and its report. */
-  clean: (
-    kinds: Set<PrivacyKind>,
-  ) => Promise<{ name: string; report: PrivacyReport }>;
+  /**
+   * Cleans the open document (not saved yet) and returns its new report;
+   * null when there is no file to clean (a document started from scratch).
+   */
+  clean: ((kinds: Set<PrivacyKind>) => Promise<PrivacyReport>) | null;
   /** Downloads the earlier version that ends at `end`. */
   downloadVersion: (end: number, n: number) => void;
   onClose: () => void;
@@ -40,7 +41,7 @@ const OFF_BY_DEFAULT = new Set<PrivacyKind>(["links", "ocrText"]);
 type State =
   | { step: "scanning" }
   | { step: "failed" }
-  | { step: "report"; report: PrivacyReport; cleaned?: string }
+  | { step: "report"; report: PrivacyReport; cleaned?: boolean }
   | { step: "cleaning"; report: PrivacyReport };
 
 export function XrayPanel({
@@ -53,9 +54,12 @@ export function XrayPanel({
   const [state, setState] = useState<State>({ step: "scanning" });
   const [checked, setChecked] = useState<Set<PrivacyKind>>(new Set());
 
+  // The opened document is analyzed once; after cleaning, the report shown is
+  // the one of the clean document.
+  const scanOnce = useRef(scan);
   useEffect(() => {
     let live = true;
-    scan().then(
+    scanOnce.current().then(
       (report) => {
         if (!live) return;
         setState({ step: "report", report });
@@ -72,7 +76,7 @@ export function XrayPanel({
     return () => {
       live = false;
     };
-  }, [scan]);
+  }, []);
 
   const detailText = (kind: PrivacyKind, d: PrivacyDetail): string => {
     const page = d.page ? `${t("xray.page", d.page)}: ` : "";
@@ -133,10 +137,11 @@ export function XrayPanel({
     });
 
   const doClean = async (report: PrivacyReport) => {
+    if (!clean) return;
     setState({ step: "cleaning", report });
     try {
-      const result = await clean(checked);
-      setState({ step: "report", report: result.report, cleaned: result.name });
+      const cleanReport = await clean(checked);
+      setState({ step: "report", report: cleanReport, cleaned: true });
       setChecked(new Set());
     } catch {
       setState({ step: "failed" });
@@ -155,7 +160,7 @@ export function XrayPanel({
         <span className="xray-level">
           {t(`xray.level.${f.level}` as MessageKey)}
         </span>
-        {CLEANABLE.has(f.kind) && (
+        {clean && CLEANABLE.has(f.kind) && (
           <label className="toolbar-check">
             <input
               type="checkbox"
@@ -216,7 +221,7 @@ export function XrayPanel({
         <p role="status" className="xray-summary">
           {state.step === "report" && state.cleaned && (
             <>
-              {t("xray.cleaned", state.cleaned)}
+              {t("xray.cleaned")}
               <br />
             </>
           )}
@@ -232,7 +237,7 @@ export function XrayPanel({
           </ul>
         )}
         <small className="protect-note">{t("xray.local")}</small>
-        {!(state.step === "report" && state.cleaned) && canClean && (
+        {!(state.step === "report" && state.cleaned) && clean && canClean && (
           <button
             type="button"
             className="primary"

@@ -900,15 +900,15 @@ export function EditorView({
     });
     return report;
   }, [file, state]);
+  // Cleaning changes the open document, under the edits (like inserting a
+  // PDF, spec 013); saving comes later, with «Guardar PDF».
   const cleanXray = async (kinds: Set<PrivacyKind>) => {
-    const [{ cleanPrivacy, scanPrivacy }, { buildPdf, downloadPdf }] =
-      await Promise.all([import("../engine/privacy"), import("./save")]);
-    const { bytes } = await buildPdf(file, state);
-    const clean = await cleanPrivacy(bytes, kinds);
-    const name = `${baseName} (${t("xray.cleanSuffix")}).pdf`;
-    downloadPdf(await protect(clean), name);
+    if (!file || !onReplaceBase) throw new Error("No file to clean"); // i18n-ignore: never shown, the button needs a file
+    const { cleanPrivacy, scanPrivacy } = await import("../engine/privacy");
+    const clean = await cleanPrivacy(file.copyBytes(), kinds);
+    await onReplaceBase(createPdfFile(file.name, clean));
     track("privacy_clean");
-    return { name, report: await scanPrivacy(clean) };
+    return scanPrivacy(clean);
   };
   const downloadVersion = async (end: number, n: number) => {
     if (!file) return;
@@ -2215,7 +2215,7 @@ export function EditorView({
       {xrayOpen && (
         <XrayPanel
           scan={scanXray}
-          clean={cleanXray}
+          clean={file && onReplaceBase ? cleanXray : null}
           downloadVersion={(end, n) => void downloadVersion(end, n)}
           onClose={() => setXrayOpen(false)}
         />

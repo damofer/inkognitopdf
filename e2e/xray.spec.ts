@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { scanPrivacy } from "../src/engine/privacy";
 import { leaky } from "../tests/privacyFixture";
-import { firstPage, fixture } from "./helpers";
+import { firstPage, fixture, saveAndRead } from "./helpers";
 
 const DIR = "docs/screenshots/xray";
 
@@ -39,7 +39,9 @@ async function download(page: Page, click: () => Promise<void>) {
   };
 }
 
-test("the report, the earlier version and the clean copy", async ({ page }) => {
+test("the report, the earlier version, cleaning and then saving", async ({
+  page,
+}) => {
   await open(page, file);
   await page.getByRole("button", { name: "Radiografía" }).click();
   await expect(panel(page).getByRole("status")).toHaveText(
@@ -79,21 +81,31 @@ test("the report, the earlier version and the clean copy", async ({ page }) => {
   await findingOf(page, "metadata")
     .getByRole("checkbox", { name: "Quitar" })
     .uncheck();
-  const clean = await download(page, () =>
-    panel(page).getByRole("button", { name: "Limpiar y guardar" }).click(),
-  );
-  expect(clean.name).toBe("contrato (limpio).pdf");
+  // Cleaning changes the open document and downloads nothing.
+  let downloads = 0;
+  page.on("download", () => downloads++);
+  await panel(page)
+    .getByRole("button", { name: "Limpiar", exact: true })
+    .click();
   await expect(panel(page).getByRole("status")).toContainText(
-    "Guardado «contrato (limpio).pdf». Así queda la copia:",
+    "Limpio. Así queda el documento; guárdalo con «Guardar PDF» cuando termines:",
   );
-  const report = await scanPrivacy(clean.bytes);
+  await expect(panel(page).locator(".xray-finding")).toHaveCount(3);
+  expect(downloads).toBe(0);
+  await page.screenshot({ path: `${DIR}/copia-limpia-escritorio.png` });
+
+  // Saving afterwards keeps it clean.
+  await panel(page).getByRole("button", { name: "Cerrar radiografía" }).click();
+  const saved = await saveAndRead(page);
+  expect(saved.name).toBe("contrato (editado).pdf");
+  const report = await scanPrivacy(saved.bytes);
   expect(report.findings.map((f) => f.kind)).toEqual([
     "metadata",
     "links",
     "ocrText",
   ]);
-  await expect(panel(page).locator(".xray-finding")).toHaveCount(3);
-  await page.screenshot({ path: `${DIR}/copia-limpia-escritorio.png` });
+  const doc = await PDFDocument.load(saved.bytes, { updateMetadata: false });
+  expect(doc.getAuthor()).toBe("Ana Secreta");
 });
 
 test("a plain document has nothing hidden", async ({ page }) => {
