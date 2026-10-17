@@ -2,7 +2,7 @@
  * Scanned page detection (spec 003, CA1): almost no text, and images that
  * cover more than half of the page.
  */
-import { OPS } from "pdfjs-dist";
+import { OPS } from "pdfjs-dist/legacy/build/pdf.mjs";
 import type { PDFPageProxy } from "../viewer/pdfjs";
 
 type Matrix = [number, number, number, number, number, number];

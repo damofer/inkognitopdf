@@ -1,4 +1,4 @@
-import { AnnotationMode } from "pdfjs-dist";
+import { AnnotationMode } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { applyEdits } from "../engine/applyEdits";
 import {
   effectiveRotation,

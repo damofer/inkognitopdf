@@ -1,15 +1,22 @@
+// The legacy build of pdf.js, page and worker: the modern one uses brand-new
+// JavaScript (Map#getOrInsertComputed, Math.sumPrecise, Iterator helpers…)
+// and, in a browser a few versions old (Chromium 141, Safari 17), the pages
+// stay blank without an error. The legacy build brings its own polyfills.
 import {
   GlobalWorkerOptions,
   getDocument,
   type PDFDocumentProxy,
-} from "pdfjs-dist";
-import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+} from "pdfjs-dist/legacy/build/pdf.mjs";
+import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import type { PdfFile } from "../storage/pdfFile";
 
 // The worker is bundled with the app, so viewing works offline (PWA).
 GlobalWorkerOptions.workerSrc = workerUrl;
 
-export type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+export type {
+  PDFDocumentProxy,
+  PDFPageProxy,
+} from "pdfjs-dist/legacy/build/pdf.mjs";
 
 /** Loads a document from a copy of the file's bytes; the original stays intact. */
 export function loadDocument(file: PdfFile): Promise<PDFDocumentProxy> {

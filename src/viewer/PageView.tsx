@@ -5,7 +5,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { AnnotationMode, TextLayer } from "pdfjs-dist";
+import { AnnotationMode, TextLayer } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { effectiveRotation, type PageEntry } from "../model/document";
 import { PageGeometry } from "../model/geometry";
 import type { PDFDocumentProxy } from "./pdfjs";
