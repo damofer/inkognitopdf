@@ -19,6 +19,7 @@ import { support } from "./support";
 import { templates } from "./templates";
 import { tools } from "./tools";
 import { viewer } from "./viewer";
+import { xray } from "./xray";
 
 export const es = {
   ...app,
@@ -40,6 +41,7 @@ export const es = {
   ...templates,
   ...tools,
   ...viewer,
+  ...xray,
 };
 
 export type Messages = typeof es;

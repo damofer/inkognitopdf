@@ -88,7 +88,7 @@ export function matcherOf(needles: Needles): (text: string) => boolean {
 }
 
 /** Text of a string, a name, an array of them or a (rich text) stream. */
-function textOf(
+export function textOf(
   doc: PDFDocument,
   obj: PDFObject | undefined,
   depth = 0,
@@ -185,7 +185,7 @@ function fileSpecText(doc: PDFDocument, spec: PDFObject | undefined): string {
 }
 
 /** Leaves [name, file specification] of the EmbeddedFiles name tree. */
-function embeddedFiles(doc: PDFDocument): [string, PDFObject][] {
+export function embeddedFiles(doc: PDFDocument): [string, PDFObject][] {
   const names = doc.catalog.lookup(PDFName.of("Names"));
   if (!(names instanceof PDFDict)) return [];
   const root = names.lookup(PDFName.of("EmbeddedFiles"));

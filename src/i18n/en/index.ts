@@ -20,6 +20,7 @@ import { support } from "./support";
 import { templates } from "./templates";
 import { tools } from "./tools";
 import { viewer } from "./viewer";
+import { xray } from "./xray";
 
 export const en: Messages = {
   ...app,
@@ -41,4 +42,5 @@ export const en: Messages = {
   ...templates,
   ...tools,
   ...viewer,
+  ...xray,
 };

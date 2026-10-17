@@ -62,6 +62,8 @@ import type { CompressLevel } from "../engine/compress";
 import type { Protection } from "../engine/pdfCrypto";
 import { unlock, type AskPassword } from "../storage/unlock";
 import { NumberingPanel } from "../numbering/NumberingPanel";
+import { XrayPanel } from "../xray/XrayPanel";
+import type { PrivacyKind } from "../engine/privacy";
 import { NumberingPreview } from "../numbering/NumberingPreview";
 import {
   defaultNumbering,
@@ -883,6 +885,38 @@ export function EditorView({
     if (!protection) return bytes;
     const { encryptPdf } = await import("../engine/pdfCrypto");
     return encryptPdf(bytes, protection);
+  };
+  // Spec 015: the privacy x-ray of the opened file, and its clean copy.
+  const [xrayOpen, setXrayOpen] = useState(false);
+  const scanXray = useCallback(async () => {
+    const [{ scanPrivacy }, { buildPdf }] = await Promise.all([
+      import("../engine/privacy"),
+      import("./save"),
+    ]);
+    const bytes = file ? file.copyBytes() : (await buildPdf(null, state)).bytes;
+    const report = await scanPrivacy(bytes);
+    track("privacy_scan", {
+      found: report.findings.some((f) => f.level !== "info") ? "yes" : "no",
+    });
+    return report;
+  }, [file, state]);
+  const cleanXray = async (kinds: Set<PrivacyKind>) => {
+    const [{ cleanPrivacy, scanPrivacy }, { buildPdf, downloadPdf }] =
+      await Promise.all([import("../engine/privacy"), import("./save")]);
+    const { bytes } = await buildPdf(file, state);
+    const clean = await cleanPrivacy(bytes, kinds);
+    const name = `${baseName} (${t("xray.cleanSuffix")}).pdf`;
+    downloadPdf(await protect(clean), name);
+    track("privacy_clean");
+    return { name, report: await scanPrivacy(clean) };
+  };
+  const downloadVersion = async (end: number, n: number) => {
+    if (!file) return;
+    const { downloadPdf } = await import("./save");
+    downloadPdf(
+      file.copyBytes().slice(0, end),
+      `${baseName} (${t("xray.versionSuffix", String(n))}).pdf`,
+    );
   };
   const [compressing, setCompressing] = useState(false);
   const [compressed, setCompressed] = useState<CompressOutcome | null>(null);
@@ -1948,6 +1982,14 @@ export function EditorView({
         >
           {t("editor.ocr")}
         </button>
+        <button
+          type="button"
+          aria-pressed={xrayOpen}
+          title={t("xray.hint")}
+          onClick={() => setXrayOpen((o) => !o)}
+        >
+          {t("xray.button")}
+        </button>
       </span>
       <span
         className="toolbar-group tools"
@@ -2170,6 +2212,14 @@ export function EditorView({
           onClose={() => setOcrOpen(false)}
         />
       )}
+      {xrayOpen && (
+        <XrayPanel
+          scan={scanXray}
+          clean={cleanXray}
+          downloadVersion={(end, n) => void downloadVersion(end, n)}
+          onClose={() => setXrayOpen(false)}
+        />
+      )}
       {splitOpen && (
         <SplitPanel
           pageCount={state.pages.length}
@@ -2288,6 +2338,8 @@ export function EditorView({
           onInsertPdf={onReplaceBase ? chooseInsert : null}
           splitOpen={splitOpen}
           onToggleSplit={() => togglePanel("split")}
+          xrayOpen={xrayOpen}
+          onToggleXray={() => setXrayOpen((o) => !o)}
           numbersOpen={panel === "numbers"}
           onToggleNumbers={toggleNumbers}
           compressOpen={panel === "compress"}

@@ -63,6 +63,9 @@ interface MobileBarProps {
   onInsertPdf?: (() => void) | null;
   splitOpen?: boolean;
   onToggleSplit?: () => void;
+  /** Privacy x-ray (spec 015). */
+  xrayOpen?: boolean;
+  onToggleXray?: () => void;
   /** Page numbers, headers and footers (spec 022). */
   numbersOpen?: boolean;
   onToggleNumbers?: () => void;
@@ -91,6 +94,8 @@ export function MobileBar({
   onToggleSplit,
   numbersOpen = false,
   onToggleNumbers,
+  xrayOpen = false,
+  onToggleXray,
   compressOpen = false,
   onToggleCompress,
   protectOpen = false,
@@ -212,6 +217,22 @@ export function MobileBar({
                         ✂
                       </span>
                       <span>{t("organize.split")}</span>
+                    </button>
+                  )}
+                  {onToggleXray && (
+                    <button
+                      type="button"
+                      className="sheet-item"
+                      aria-pressed={xrayOpen}
+                      onClick={() => {
+                        setSheet(null);
+                        onToggleXray();
+                      }}
+                    >
+                      <span className="sheet-icon" aria-hidden="true">
+                        ◎
+                      </span>
+                      <span>{t("xray.button")}</span>
                     </button>
                   )}
                   {onToggleNumbers && (

@@ -2286,3 +2286,85 @@ button.danger {
 .tpl-preview[aria-busy="true"] .tpl-page {
   opacity: 0.75;
 }
+
+/* Privacy x-ray (spec 015). */
+.xray-panel {
+  width: min(440px, calc(100vw - 32px));
+}
+
+.xray-summary {
+  font-weight: 600;
+}
+
+.xray-findings {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xray-finding {
+  --level: #6b7280;
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border, #ddd);
+  border-left: 4px solid var(--level);
+  border-radius: 6px;
+}
+
+.xray-finding.level-high {
+  --level: #c92a2a;
+}
+
+.xray-finding.level-medium {
+  --level: #d08700;
+}
+
+.xray-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.xray-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--level);
+}
+
+.xray-level {
+  font-size: 0.8rem;
+  color: var(--level);
+}
+
+.xray-head .toolbar-check {
+  margin-left: auto;
+}
+
+.xray-about {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.xray-details {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.xray-details button {
+  margin-left: 6px;
+  padding: 0 8px;
+}
+
+/* The action stays in reach below a long report. */
+.xray-panel > button.primary {
+  position: sticky;
+  bottom: 0;
+  box-shadow: 0 -6px 12px var(--surface, #fff);
+}

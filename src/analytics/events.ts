@@ -32,6 +32,8 @@ const VALUES = {
   split: ["ranges", "every", "selection"],
   /** Compression preset (spec 014). */
   preset: ["high", "balanced", "small"],
+  /** Whether the privacy x-ray found something (spec 015), never what. */
+  found: ["yes", "no"],
   /** Page number format and position (spec 022), never the text. */
   format: ["number", "pageOf", "slash", "dashes", "bates", "custom"],
   position: ["tl", "tc", "tr", "bl", "bc", "br", "several"],
@@ -67,6 +69,8 @@ const EVENTS = {
   compress_pdf: ["preset", "pages"],
   protect_pdf: ["restricted"],
   page_numbers: ["format", "position"],
+  privacy_scan: ["found"],
+  privacy_clean: [],
   unlock_pdf: [],
   add_image: [],
   create_field: [],
