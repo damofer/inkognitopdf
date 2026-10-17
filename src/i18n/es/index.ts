@@ -14,6 +14,7 @@ import { privacy } from "./privacy";
 import { protect } from "./protect";
 import { redact } from "./redact";
 import { scan } from "./scan";
+import { share } from "./share";
 import { sign } from "./sign";
 import { signEngine } from "./signEngine";
 import { support } from "./support";
@@ -37,6 +38,7 @@ export const es = {
   ...protect,
   ...redact,
   ...scan,
+  ...share,
   ...sign,
   ...signEngine,
   ...support,

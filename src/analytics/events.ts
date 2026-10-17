@@ -34,6 +34,8 @@ const VALUES = {
   preset: ["high", "balanced", "small"],
   /** How many pieces of personal data were marked (spec 016), never which. */
   pii: ["1", "2-5", "6+"],
+  /** Where a PDF came from: «Open with» or shared from an app (spec 017). */
+  via: ["launch", "share"],
   /** Whether the privacy x-ray found something (spec 015), never what. */
   found: ["yes", "no"],
   /** Page number format and position (spec 022), never the text. */
@@ -74,6 +76,8 @@ const EVENTS = {
   privacy_scan: ["found"],
   privacy_clean: [],
   pii_mark: ["pii"],
+  open_external: ["via"],
+  share_pdf: [],
   unlock_pdf: [],
   add_image: [],
   create_field: [],

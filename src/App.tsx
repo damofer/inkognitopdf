@@ -24,6 +24,7 @@ import { loadDocument, type PDFDocumentProxy } from "./viewer/pdfjs";
 import { SupportPanel } from "./support/SupportPanel";
 import { PasswordPrompt } from "./protect/PasswordPrompt";
 import { unlock, type AskPassword } from "./storage/unlock";
+import { onLaunch, takeShared, wasShared } from "./storage/incoming";
 
 // Templates (spec 021) load only when opened: their catalog is code.
 const TemplatesView = lazy(() =>
@@ -49,6 +50,8 @@ type State =
   | { status: "error"; message: string };
 
 let nextOpenId = 1;
+/** Shared PDFs are taken once, even when effects run twice (StrictMode). */
+let sharedTaken = false;
 
 async function initialStateFor(doc: PDFDocumentProxy): Promise<EditorState> {
   const pages = await Promise.all(
@@ -209,6 +212,31 @@ export function App() {
       restricted: false,
     });
   };
+
+  // Spec 017: PDFs opened from the system («Open with») or shared from
+  // another app.
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  });
+  useEffect(() => {
+    onLaunch((files) => {
+      track("open_external", { via: "launch" });
+      void openRef.current(files);
+    });
+    if (!wasShared() || sharedTaken) return;
+    sharedTaken = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    void takeShared().then((files) => {
+      if (files.length === 0) {
+        setState({ status: "error", message: t("share.nothing") });
+        return;
+      }
+      track("open_external", { via: "share" });
+      void openRef.current(files);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on start
+  }, []);
 
   // Spec 011: the visit, now or when the visitor accepts; installs.
   useEffect(() => {

@@ -59,6 +59,18 @@ export default defineConfig({
         theme_color: "#23272F",
         background_color: "#181b21",
         display: "standalone",
+        // Spec 017: «Open with» for PDFs, and PDFs shared from other apps.
+        file_handlers: [
+          { action: "/app/", accept: { "application/pdf": [".pdf"] } },
+        ],
+        share_target: {
+          action: "/app/share-target",
+          method: "POST",
+          enctype: "multipart/form-data",
+          params: {
+            files: [{ name: "pdf", accept: ["application/pdf", ".pdf"] }],
+          },
+        },
         icons: [
           { src: "brand/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "brand/icon-512.png", sizes: "512x512", type: "image/png" },
@@ -90,6 +102,9 @@ export default defineConfig({
         // The promo video and its poster are only for the landing page.
         globIgnores: ["fonts/**", "tesseract/**", "brand/og-*", "promo/**"],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        // Spec 017: receives shared PDFs; loaded before the routes, so its
+        // fetch handler answers first.
+        importScripts: ["share-target.js"],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,

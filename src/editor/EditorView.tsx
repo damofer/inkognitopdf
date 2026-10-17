@@ -63,6 +63,7 @@ import type { Protection } from "../engine/pdfCrypto";
 import { unlock, type AskPassword } from "../storage/unlock";
 import { NumberingPanel } from "../numbering/NumberingPanel";
 import { XrayPanel } from "../xray/XrayPanel";
+import { canShareFiles, sharePdf } from "./share";
 import type { PrivacyKind } from "../engine/privacy";
 import { NumberingPreview } from "../numbering/NumberingPreview";
 import {
@@ -411,7 +412,10 @@ export function EditorView({
   const [signatures, setSignatures] = useState<SignatureReport[]>([]);
   const [signaturesOpen, setSignaturesOpen] = useState(false);
   const [rootsVersion, setRootsVersion] = useState(0);
-  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+  /** Rewriting breaks the digital signatures: asked before saving or sharing. */
+  const [confirmOverwrite, setConfirmOverwrite] = useState<
+    "save" | "share" | null
+  >(null);
   // Signatures and signing plans are those of the file as it was opened, even
   // after PDFs are inserted into it (spec 013).
   const [openedFile] = useState(file);
@@ -1046,10 +1050,10 @@ export function EditorView({
   const save = async (overwrite = false) => {
     // CA12: rewriting the file breaks its digital signatures.
     if (signatures.length > 0 && !overwrite) {
-      setConfirmOverwrite(true);
+      setConfirmOverwrite("save");
       return;
     }
-    setConfirmOverwrite(false);
+    setConfirmOverwrite(null);
     setSaving(true);
     setNotice(null);
     try {
@@ -1071,6 +1075,58 @@ export function EditorView({
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Spec 017: the document as it would be saved, sent to another app.
+  const [canShare] = useState(canShareFiles);
+  const [sharing, setSharing] = useState(false);
+  const [shareReady, setShareReady] = useState<{
+    bytes: Uint8Array;
+    name: string;
+  } | null>(null);
+  const shareBuilt = async (ready: { bytes: Uint8Array; name: string }) => {
+    try {
+      const outcome = await sharePdf(ready.bytes, ready.name);
+      setShareReady(outcome === "needsGesture" ? ready : null);
+      if (outcome === "shared") track("share_pdf");
+    } catch (cause) {
+      setShareReady(null);
+      setNotice(
+        t(
+          "share.failed",
+          cause instanceof Error ? cause.message : String(cause),
+        ),
+      );
+    }
+  };
+  const share = async (overwrite = false) => {
+    if (signatures.length > 0 && !overwrite) {
+      setConfirmOverwrite("share");
+      return;
+    }
+    setConfirmOverwrite(null);
+    setSharing(true);
+    setNotice(null);
+    try {
+      const { buildPdf, editedFileName } = await import("./save");
+      const { bytes, warnings } = await buildPdf(file, state, {
+        flattenForms: flattenForms && hasForm,
+      });
+      if (warnings.length > 0) setNotice(warnings.join(" "));
+      await shareBuilt({
+        bytes: await protect(bytes),
+        name: editedFileName(file?.name ?? null),
+      });
+    } catch (cause) {
+      setNotice(
+        t(
+          "share.failed",
+          cause instanceof Error ? cause.message : String(cause),
+        ),
+      );
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -1629,9 +1685,39 @@ export function EditorView({
         className="primary"
         onClick={() => void save()}
         disabled={saving}
+        // Spec 017: on a phone, the share icon needs the room of « PDF».
+        aria-label={mobile && canShare ? t("editor.savePdf") : undefined}
       >
-        {saving ? t("editor.saving") : t("editor.savePdf")}
+        {saving
+          ? t("editor.saving")
+          : mobile && canShare
+            ? t("share.saveShort")
+            : t("editor.savePdf")}
       </button>
+      {canShare && (
+        <button
+          type="button"
+          className="share-button"
+          title={t("share.hint")}
+          // On a phone the bar has room for an icon only.
+          aria-label={mobile ? t("share.button") : undefined}
+          onClick={() => void share()}
+          disabled={sharing}
+        >
+          {mobile ? (
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <circle cx="18" cy="5" r="2.5" />
+              <circle cx="6" cy="12" r="2.5" />
+              <circle cx="18" cy="19" r="2.5" />
+              <path d="M8.2 10.9l7.6-4.6M8.2 13.1l7.6 4.6" />
+            </svg>
+          ) : sharing ? (
+            t("share.preparing")
+          ) : (
+            t("share.button")
+          )}
+        </button>
+      )}
     </>
   );
 
@@ -2039,11 +2125,37 @@ export function EditorView({
           aria-label={t("editor.signatures")}
         >
           <span>{t("editor.overwriteSigned")}</span>
-          <button type="button" onClick={() => void save(true)}>
-            {t("editor.saveAnyway")}
+          <button
+            type="button"
+            onClick={() =>
+              void (confirmOverwrite === "share" ? share(true) : save(true))
+            }
+          >
+            {confirmOverwrite === "share"
+              ? t("share.now")
+              : t("editor.saveAnyway")}
           </button>
-          <button type="button" onClick={() => setConfirmOverwrite(false)}>
+          <button type="button" onClick={() => setConfirmOverwrite(null)}>
             {t("editor.cancel")}
+          </button>
+        </div>
+      )}
+      {shareReady && (
+        <div
+          className="notice"
+          role="alertdialog"
+          aria-label={t("share.readyTitle")}
+        >
+          <span>{t("share.ready", shareReady.name)}</span>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => void shareBuilt(shareReady)}
+          >
+            {t("share.now")}
+          </button>
+          <button type="button" onClick={() => setShareReady(null)}>
+            {t("share.cancel")}
           </button>
         </div>
       )}
