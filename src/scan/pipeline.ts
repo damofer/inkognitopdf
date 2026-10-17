@@ -14,7 +14,8 @@ import {
 import { aspectRatio, warp, type Quad } from "./homography";
 import { toGray, type Gray, type Rgba } from "./image";
 
-export type PaperSize = "auto" | "a4" | "letter";
+/** "card": an ID card (ID-1, spec 020), only for the ID card mode. */
+export type PaperSize = "auto" | "a4" | "letter" | "card";
 
 /** Output resolution, pixels per inch (spec 002, CA8). */
 export const SCAN_PPI = 200;
@@ -25,6 +26,9 @@ const SIZES = {
   a5: [419.53, 595.28],
   legal: [612, 1008],
 } as const;
+
+/** ID-1 card (DNI, driving licence): 85.6 × 53.98 mm, portrait. */
+export const CARD_SIZE = [153.01, 242.65] as const;
 
 /** The whole photo, as a quad (used when no page is found). */
 export function fullQuad(width: number, height: number): Quad {
@@ -65,6 +69,7 @@ export function pageSize(
   const landscape = ratio > 1;
   const orient = (w: number, h: number) =>
     landscape ? { widthPt: h, heightPt: w } : { widthPt: w, heightPt: h };
+  if (paper === "card") return orient(CARD_SIZE[0], CARD_SIZE[1]);
   if (paper !== "auto") return orient(SIZES[paper][0], SIZES[paper][1]);
   const portrait = landscape ? 1 / ratio : ratio;
   for (const [w, h] of Object.values(SIZES))
@@ -114,4 +119,83 @@ export function enhance(page: Rgba, mode: ScanMode, quarters = 0): Enhanced {
     return { mode, gray: g, image: grayToRgba(g) };
   }
   return { mode, image };
+}
+
+/** A black and white bitmap of an image that is already black and white. */
+export function rgbaToBitmap(image: Rgba): Bitmap {
+  const { width, height } = image;
+  const row = Math.ceil(width / 8);
+  const data = new Uint8Array(row * height);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if (image.data[i]! + image.data[i + 1]! + image.data[i + 2]! >= 384)
+        data[y * row + (x >> 3)]! |= 0x80 >> (x & 7);
+    }
+  return { width, height, data };
+}
+
+const MM = 72 / 25.4;
+
+/**
+ * Spec 020, ID card mode: the sides of a card (each rectified at its real
+ * size and enhanced) on one white A4 page, centred, the first above, as a
+ * photocopy of an ID would be. The page keeps black and white only when
+ * every side is.
+ */
+export function composeIdPage(sides: Enhanced[], ppi = SCAN_PPI): Enhanced {
+  const px = (pt: number) => Math.round((pt / 72) * ppi);
+  const width = px(SIZES.a4[0]);
+  const height = px(SIZES.a4[1]);
+  const data = new Uint8ClampedArray(width * height * 4).fill(255);
+  let top = px(30 * MM);
+  for (const side of sides) {
+    const card = side.image;
+    const left = Math.max(0, Math.round((width - card.width) / 2));
+    for (let y = 0; y < card.height && top + y < height; y++) {
+      const from = y * card.width * 4;
+      const length = Math.min(card.width, width - left) * 4;
+      data.set(
+        card.data.subarray(from, from + length),
+        ((top + y) * width + left) * 4,
+      );
+    }
+    top += card.height + px(15 * MM);
+  }
+  const image: Rgba = { width, height, data };
+  if (sides.every((s) => s.mode === "bw"))
+    return { mode: "bw", image, bitmap: rgbaToBitmap(image) };
+  if (sides.every((s) => s.mode !== "original"))
+    return { mode: "gray", image, gray: toGray(image) };
+  return { mode: "original", image };
+}
+
+/**
+ * Spec 020: a small grey picture of the page inside `quad`, with mean 0 and
+ * deviation 1, so a new sheet in the same place can be told from the last
+ * one whatever the light.
+ */
+export function pageSignature(
+  photo: Rgba,
+  quad: Quad,
+  width = 24,
+  height = 32,
+): Float32Array {
+  // Four samples a side per cell, averaged, so a few pixels of jitter or
+  // noise do not count as a change.
+  const big = toGray(warp(photo, quad, width * 4, height * 4));
+  const n = width * height;
+  const small = new Float32Array(n);
+  for (let y = 0; y < height * 4; y++)
+    for (let x = 0; x < width * 4; x++)
+      small[(y >> 2) * width + (x >> 2)]! += big.data[y * width * 4 + x]! / 16;
+  let mean = 0;
+  for (let i = 0; i < n; i++) mean += small[i]!;
+  mean /= n;
+  let variance = 0;
+  for (let i = 0; i < n; i++) variance += (small[i]! - mean) ** 2;
+  const deviation = Math.sqrt(variance / n) || 1;
+  const signature = new Float32Array(n);
+  for (let i = 0; i < n; i++) signature[i] = (small[i]! - mean) / deviation;
+  return signature;
 }

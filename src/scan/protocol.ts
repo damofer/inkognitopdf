@@ -14,7 +14,29 @@ export type ScanRequest =
       quarters: number;
       paper: PaperSize;
     }
-  | { op: "drop"; id: string };
+  | { op: "drop"; id: string }
+  /** Spec 020: a reduced camera frame, to follow the page live. */
+  | { op: "detect"; bitmap: ImageBitmap }
+  /** Spec 020: the sides of an ID card on one A4 page. */
+  | { op: "compose"; sides: ComposeSide[] };
+
+export interface ComposeSide {
+  id: string;
+  quad: Quad;
+  mode: ScanMode;
+  quarters: number;
+}
+
+export interface DetectResult {
+  /** Page corners in the frame, or null. */
+  quad: Quad | null;
+  /** What the page looks like, to tell the next sheet from this one. */
+  signature: Float32Array | null;
+}
+
+export interface ComposeResult {
+  scan: ScanImage;
+}
 
 export interface AddResult {
   width: number;
@@ -33,7 +55,11 @@ export interface RenderResult {
 }
 
 export type ScanResponse =
-  | { seq: number; ok: true; result: AddResult | RenderResult | null }
+  | {
+      seq: number;
+      ok: true;
+      result: AddResult | RenderResult | DetectResult | ComposeResult | null;
+    }
   | { seq: number; ok: false; error: string; code?: ScanErrorCode };
 
 /**

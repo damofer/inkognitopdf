@@ -47,6 +47,10 @@ const VALUES = {
   tier: ["10000", "20000", "50000", "other", "kofi"],
   lang: ["es", "en"],
   mode: ["bw", "gray", "original"],
+  /** Spec 020: photos chosen or taken one by one, or the live camera. */
+  capture: ["photo", "live"],
+  /** Spec 020: whether the ID card mode was on. */
+  card: ["yes", "no"],
   source: ["file", "scan", "blank"],
   /** Visited page: only the route, never the full URL. */
   page_path: ["/", "/app/"],
@@ -60,7 +64,7 @@ const EVENTS = {
   page_view: ["page_path", "page_title"],
   open_document: ["pages", "size"],
   new_blank: [],
-  scan_document: ["pages", "mode"],
+  scan_document: ["pages", "mode", "capture", "card"],
   ocr_run: ["pages"],
   edit_text: [],
   edit_scan_text: [],

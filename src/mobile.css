@@ -668,6 +668,22 @@
     font-size: 1.05rem;
   }
 
+  .scan-empty .scan-check {
+    justify-content: center;
+    gap: 10px;
+    min-height: 44px;
+  }
+
+  .scan-empty input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+
+  .scan-camera-bar {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
   .scan-bottom {
     flex: none;
     display: grid;

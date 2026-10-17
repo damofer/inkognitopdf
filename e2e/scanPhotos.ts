@@ -8,6 +8,7 @@ import {
   synthPhoto,
   testPage,
   type PhotoOptions,
+  type TestPage,
 } from "../tests/scan/synthPhoto";
 
 function jpeg(width: number, height: number, data: Uint8ClampedArray): Buffer {
@@ -66,10 +67,7 @@ export interface PhotoFiles {
 }
 
 export async function writePhotos(
-  photos: Record<
-    string,
-    Omit<PhotoOptions, "page"> & { exifRotated?: boolean }
-  >,
+  photos: Record<string, PhotoOptions & { exifRotated?: boolean }>,
 ): Promise<PhotoFiles> {
   const dir = await mkdtemp(join(tmpdir(), "pdfcraft-scan-"));
   const page = testPage(150);
@@ -84,4 +82,70 @@ export async function writePhotos(
     await writeFile(join(dir, name), bytes);
   }
   return { dir, path: (name) => join(dir, name) };
+}
+
+/**
+ * Spec 020: a made-up ID card (85.6 × 53.98 mm, landscape) to photograph:
+ * a photo box and lines of text, different on each side.
+ */
+export function cardPage(side: "front" | "back", ppi = 300): TestPage {
+  testPage(10); // registers the fonts
+  const widthPt = 242.65;
+  const heightPt = 153.01;
+  const width = Math.round((widthPt / 72) * ppi);
+  const height = Math.round((heightPt / 72) * ppi);
+  const pt = ppi / 72;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "#000";
+  ctx.font = `${11 * pt}px ArimoBold`;
+  ctx.fillText(
+    side === "front" ? "DOCUMENTO DE PRUEBA" : "REVERSO DE PRUEBA",
+    12 * pt,
+    20 * pt,
+  );
+  ctx.font = `${8 * pt}px Arimo`;
+  if (side === "front") {
+    ctx.fillStyle = "#555";
+    ctx.fillRect(12 * pt, 32 * pt, 62 * pt, 80 * pt);
+    ctx.fillStyle = "#000";
+    const lines = ["APELLIDOS", "EJEMPLO EJEMPLO", "NOMBRE", "PERSONA"];
+    lines.forEach((line, i) => ctx.fillText(line, 86 * pt, (44 + i * 16) * pt));
+  } else {
+    for (let i = 0; i < 5; i++)
+      ctx.fillText(
+        "<<<<<<0123456789<<<<<<<<<<<<<",
+        12 * pt,
+        (40 + i * 18) * pt,
+      );
+    ctx.fillRect(12 * pt, 128 * pt, 218 * pt, 10 * pt);
+  }
+  const rgba = ctx.getImageData(0, 0, width, height).data;
+  const data = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++)
+    data[i] =
+      0.299 * rgba[i * 4]! +
+      0.587 * rgba[i * 4 + 1]! +
+      0.114 * rgba[i * 4 + 2]!;
+  return {
+    page: { width, height, data },
+    widthPt,
+    heightPt,
+    ppi,
+    rules: [],
+    columns: [],
+  };
+}
+
+/** A sheet with other content than the test page: the next page of a batch. */
+export function otherSheet(ppi = 150): TestPage {
+  const base = testPage(ppi);
+  const { width, height } = base.page;
+  const data = Float32Array.from(base.page.data);
+  for (let y = Math.round(height * 0.35); y < height * 0.75; y++)
+    for (let x = Math.round(width * 0.15); x < width * 0.85; x++)
+      data[y * width + x] = (x >> 5) % 2 ? 30 : 255 - data[y * width + x]!;
+  return { ...base, page: { width, height, data } };
 }

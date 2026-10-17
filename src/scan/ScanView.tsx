@@ -15,6 +15,7 @@ import { newId } from "../model/operations";
 import type { ScanMode } from "./enhance";
 import { isConvex, type Point, type Quad } from "./homography";
 import { fullQuad, type PaperSize } from "./pipeline";
+import { CameraView, canUseCamera } from "./CameraView";
 import { ScanClient } from "./scanClient";
 import { scanPage } from "./scanImage";
 import { Toast } from "../Toast";
@@ -36,6 +37,8 @@ interface Shot {
   /** Rendered result for the current quad, mode and rotation. */
   result?: { url: string; scan: ScanImage; key: string };
   step: "crop" | "result";
+  /** Taken with the live camera (spec 020). */
+  live?: boolean;
 }
 
 const MODES = [
@@ -105,6 +108,8 @@ interface ScanSettings {
   autoDetect: boolean;
   paper: PaperSize;
   withOcr: boolean;
+  /** Live camera: take each page when it holds still (spec 020). */
+  autoCapture: boolean;
 }
 
 const SETTINGS_KEY = "inkognitopdf.scan";
@@ -112,6 +117,7 @@ const DEFAULT_SETTINGS: ScanSettings = {
   autoDetect: true,
   paper: "auto",
   withOcr: false,
+  autoCapture: true,
 };
 
 function loadSettings(): ScanSettings {
@@ -124,7 +130,7 @@ function loadSettings(): ScanSettings {
         typeof saved.autoDetect === "boolean"
           ? saved.autoDetect
           : DEFAULT_SETTINGS.autoDetect,
-      paper: (["auto", "a4", "letter"] as const).includes(
+      paper: (["auto", "a4", "letter"] as PaperSize[]).includes(
         saved.paper as PaperSize,
       )
         ? (saved.paper as PaperSize)
@@ -133,6 +139,10 @@ function loadSettings(): ScanSettings {
         typeof saved.withOcr === "boolean"
           ? saved.withOcr
           : DEFAULT_SETTINGS.withOcr,
+      autoCapture:
+        typeof saved.autoCapture === "boolean"
+          ? saved.autoCapture
+          : DEFAULT_SETTINGS.autoCapture,
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -192,7 +202,13 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   const [shots, setShots] = useState<Shot[]>([]);
   const [current, setCurrent] = useState(0);
   const [settings, setSettings] = useState(loadSettings);
-  const { autoDetect, paper, withOcr } = settings;
+  const { autoDetect, withOcr, autoCapture } = settings;
+  // Spec 020, ID card mode: each photo is one side of a card, at its real
+  // size, and every two go on one A4 page. Not remembered: it is for one scan.
+  const [idCard, setIdCard] = useState(false);
+  const paper: PaperSize = idCard ? "card" : settings.paper;
+  const [camera, setCamera] = useState(false);
+  const liveCamera = canUseCamera();
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -232,6 +248,39 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   const update = (id: string, change: (s: Shot) => Shot) =>
     setShots((all) => all.map((s) => (s.id === id ? change(s) : s)));
 
+  /**
+   * Adds a photo to the batch: the worker looks for the page in it. A photo
+   * from the live camera whose page was found needs no cropping (spec 020).
+   */
+  const addShot = async (
+    full: ImageBitmap,
+    name: string,
+    photoUrl: string,
+    live: boolean,
+  ): Promise<Shot> => {
+    const id = newId("scan");
+    const found = await client.current!.add(id, full, true);
+    const detected = found.found ? found.quad : null;
+    const shot: Shot = {
+      id,
+      name,
+      photoUrl,
+      width: found.width,
+      height: found.height,
+      detected,
+      quad:
+        autoDetect && detected ? detected : fullQuad(found.width, found.height),
+      // An ID card keeps its colours; a sheet becomes a photocopy.
+      mode: idCard ? "original" : "bw",
+      quarters: 0,
+      step: live && autoDetect && detected ? "result" : "crop",
+      live,
+    };
+    setShots((all) => [...all, shot]);
+    if (autoDetect && !detected) setNotice(t("scan.pageNotFound"));
+    return shot;
+  };
+
   const addFiles = async (files: FileList | null) => {
     if (!files || files.length === 0 || !client.current) return;
     setNotice(null);
@@ -245,28 +294,8 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
           imageOrientation: "from-image",
         });
         // The browser shows the file itself, upright (EXIF) like the bitmap.
-        const photoUrl = URL.createObjectURL(file);
-        const id = newId("scan");
-        const found = await client.current.add(id, full, true);
-        const detected = found.found ? found.quad : null;
-        const shot: Shot = {
-          id,
-          name: file.name,
-          photoUrl,
-          width: found.width,
-          height: found.height,
-          detected,
-          quad:
-            autoDetect && detected
-              ? detected
-              : fullQuad(found.width, found.height),
-          mode: "bw",
-          quarters: 0,
-          step: "crop",
-        };
-        setShots((all) => [...all, shot]);
+        await addShot(full, file.name, URL.createObjectURL(file), false);
         added++;
-        if (autoDetect && !detected) setNotice(t("scan.pageNotFound"));
       } catch {
         setNotice(t("scan.unreadable", file.name));
       }
@@ -281,6 +310,40 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   const fileChange = (e: ChangeEvent<HTMLInputElement>) => {
     void addFiles(e.currentTarget.files);
     e.currentTarget.value = "";
+  };
+
+  // Spec 020: the live camera, and where it leaves the user when done.
+  const cameraStart = useRef(0);
+  const openCamera = () => {
+    setNotice(null);
+    cameraStart.current = shotsRef.current.length;
+    setCamera(true);
+  };
+  const cameraShot = async (frame: ImageBitmap) => {
+    const url = await bitmapUrl(frame);
+    await addShot(
+      frame,
+      t("scan.cameraName", shotsRef.current.length + 1),
+      url,
+      true,
+    );
+  };
+  const closeCamera = () => {
+    setCamera(false);
+    const all = shotsRef.current;
+    const start = cameraStart.current;
+    if (all.length === start) return;
+    // A page the camera could not find is cropped by hand first.
+    const crop = all.findIndex((s, i) => i >= start && s.step === "crop");
+    const shown = crop >= 0 ? crop : start;
+    setCurrent(shown);
+    setView(crop >= 0 || !mobile ? "edit" : "pages");
+    // The other cropped pages get their result too, for the thumbnails.
+    void (async () => {
+      for (const [i, s] of all.entries())
+        if (i >= start && i !== shown && s.step === "result")
+          await render(s).catch(() => undefined);
+    })();
   };
 
   /** Renders a shot (in the worker) if its result is out of date. */
@@ -348,7 +411,23 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
     setBusy(t("scan.processingPages"));
     try {
       const pages: PageEntry[] = [];
-      for (const s of shotsRef.current) {
+      const all = shotsRef.current;
+      if (idCard) {
+        // Spec 020: front and back on one A4 page, at their real size.
+        for (let i = 0; i < all.length; i += 2) {
+          const { scan } = await client.current!.compose(
+            all.slice(i, i + 2).map((s) => ({
+              id: s.id,
+              quad: s.quad,
+              mode: s.mode,
+              quarters: s.quarters,
+            })),
+          );
+          pages.push(scanPage(newId("scan-page"), scan));
+        }
+        return pages;
+      }
+      for (const s of all) {
         const done = await render(s);
         pages.push(scanPage(newId("scan-page"), done.result!.scan));
       }
@@ -366,6 +445,8 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
     track("scan_document", {
       pages: pagesBucket(count),
       ...(shots[0] ? { mode: shots[0].mode } : {}),
+      capture: shots.some((s) => s.live) ? "live" : "photo",
+      card: idCard ? "yes" : "no",
     });
 
   const savePdf = async () => {
@@ -472,7 +553,8 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
         {t("scan.size")}{" "}
         <select
           aria-label={t("scan.pageSize")}
-          value={paper}
+          value={settings.paper}
+          disabled={idCard}
           onChange={(e) =>
             change({ paper: e.currentTarget.value as PaperSize })
           }
@@ -493,6 +575,33 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
     </>
   );
 
+  const idCardField = (
+    <label className="scan-check">
+      <input
+        type="checkbox"
+        checked={idCard}
+        onChange={(e) => setIdCard(e.currentTarget.checked)}
+      />
+      {t("scan.idCard")}
+    </label>
+  );
+
+  const cameraView = camera && (
+    <CameraView
+      detect={(frame) => client.current!.detect(frame)}
+      count={shots.length}
+      auto={autoCapture}
+      onAuto={(auto) => change({ autoCapture: auto })}
+      idCard={idCard}
+      onShot={cameraShot}
+      onDone={closeCamera}
+      onError={() => {
+        setCamera(false);
+        setNotice(t("scan.cameraFailed"));
+      }}
+    />
+  );
+
   if (mobile) {
     const isFull =
       !!shot &&
@@ -510,7 +619,9 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
     const heading = !shot
       ? null
       : view === "pages"
-        ? t("scan.pageCount", shots.length)
+        ? idCard
+          ? t("scan.idSides", shots.length)
+          : t("scan.pageCount", shots.length)
         : t("scan.pageOf", current + 1, shots.length);
 
     let content: ReactNode;
@@ -519,9 +630,15 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       content = (
         <div className="scan-empty">
           <p className="hint">{t("scan.hint")}</p>
+          {liveCamera && (
+            <button type="button" className="primary" onClick={openCamera}>
+              <ScanIcon name="live" />
+              {t("scan.cameraOpen")}
+            </button>
+          )}
           <button
             type="button"
-            className="primary"
+            className={liveCamera ? undefined : "primary"}
             onClick={() => cameraRef.current?.click()}
           >
             <ScanIcon name="camera" />
@@ -531,6 +648,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
             <ScanIcon name="images" />
             {t("scan.chooseImages")}
           </button>
+          {idCardField}
         </div>
       );
     } else if (view === "edit" && shot.step === "crop") {
@@ -667,6 +785,18 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
                   </button>
                 </li>
               ))}
+              {liveCamera && (
+                <li>
+                  <button
+                    type="button"
+                    className="scan-thumb scan-add"
+                    aria-label={t("scan.cameraAgain")}
+                    onClick={openCamera}
+                  >
+                    <ScanIcon name="live" />
+                  </button>
+                </li>
+              )}
               <li>
                 <button
                   type="button"
@@ -764,6 +894,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
               </header>
               {settingsFields}
               <p className="hint">{t("scan.settingsRemembered")}</p>
+              {idCardField}
             </div>
           </>
         )}
@@ -794,6 +925,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
           hidden
           onChange={fileChange}
         />
+        {cameraView}
         {toastView}
       </div>
     );
@@ -822,7 +954,13 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
             onChange={fileChange}
           />
         </label>
+        {liveCamera && (
+          <button type="button" onClick={openCamera}>
+            {t("scan.cameraOpen")}
+          </button>
+        )}
         {settingsFields}
+        {idCardField}
         <span className="scan-spacer" />
         <button
           type="button"
@@ -847,6 +985,11 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       {status && (
         <p className="scan-status" role="status">
           {status}
+        </p>
+      )}
+      {idCard && shots.length > 0 && (
+        <p className="hint scan-id-hint">
+          {t("scan.idHint")} {t("scan.idSides", shots.length)}.
         </p>
       )}
 
@@ -961,12 +1104,19 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
           ))}
         </ol>
       )}
+      {cameraView}
       {toastView}
     </div>
   );
 }
 
 const ICON_PATHS = {
+  live: (
+    <>
+      <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
+      <circle cx="12" cy="12" r="3.5" />
+    </>
+  ),
   close: <path d="M6 6l12 12M18 6 6 18" />,
   settings: (
     <>

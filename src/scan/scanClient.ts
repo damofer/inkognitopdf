@@ -4,6 +4,9 @@ import type { Quad } from "./homography";
 import type { PaperSize } from "./pipeline";
 import type {
   AddResult,
+  ComposeResult,
+  ComposeSide,
+  DetectResult,
   RenderResult,
   ScanRequest,
   ScanResponse,
@@ -55,6 +58,16 @@ export class ScanClient {
     paper: PaperSize,
   ): Promise<RenderResult> {
     return this.call({ op: "render", id, quad, mode, quarters, paper });
+  }
+
+  /** Spec 020: the page in a reduced camera frame. */
+  detect(bitmap: ImageBitmap): Promise<DetectResult> {
+    return this.call({ op: "detect", bitmap }, [bitmap]);
+  }
+
+  /** Spec 020: both sides of an ID card on one A4 page. */
+  compose(sides: ComposeSide[]): Promise<ComposeResult> {
+    return this.call({ op: "compose", sides });
   }
 
   drop(id: string): Promise<null> {

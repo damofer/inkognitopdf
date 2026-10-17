@@ -72,4 +72,30 @@ export const scan = {
   "scan.editPage": (page: number) => `Ajustar la página ${page}`,
   "scan.ocrFailed": (error: string) =>
     `No se pudo reconocer el texto: ${error}`,
+
+  // Live camera and ID card mode (spec 020).
+  "scan.cameraOpen": "Escanear con la cámara",
+  "scan.cameraTitle": "Escaneo con la cámara",
+  "scan.cameraAgain": "Seguir con la cámara",
+  "scan.cameraAuto": "Disparo automático",
+  "scan.cameraTake": "Hacer la foto",
+  "scan.cameraDone": (count: number) =>
+    count === 0 ? "Listo" : `Listo (${count})`,
+  "scan.cameraSearching": "Buscando la hoja: ponla sobre un fondo oscuro.",
+  "scan.cameraHold": "Hoja encontrada. Sujeta el móvil quieto…",
+  "scan.cameraReady": "Hoja encontrada. Pulsa el botón para hacer la foto.",
+  "scan.cameraNext": "Hecho. Pon la siguiente hoja.",
+  "scan.cameraFront": "Enfoca el anverso de la tarjeta.",
+  "scan.cameraBack": "Ahora el reverso de la tarjeta.",
+  "scan.cameraFlip": "Hecho. Da la vuelta a la tarjeta.",
+  "scan.cameraName": (n: number) => `Foto ${n}`,
+  "scan.cameraFailed":
+    "No se pudo abrir la cámara. Permite el acceso o usa «Hacer foto».",
+  "scan.idCard": "Modo DNI (dos caras en un A4)",
+  "scan.idHint":
+    "Modo DNI: cada dos fotos (anverso y reverso) van juntas en una hoja A4, a tamaño real.",
+  "scan.idSides": (sides: number) => {
+    const pages = Math.ceil(sides / 2);
+    return `${sides === 1 ? "1 cara" : `${sides} caras`} en ${pages === 1 ? "1 hoja" : `${pages} hojas`}`;
+  },
 };

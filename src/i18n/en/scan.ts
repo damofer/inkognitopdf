@@ -72,4 +72,30 @@ export const scan: typeof es = {
   "scan.addPage": "Add page",
   "scan.editPage": (page: number) => `Adjust page ${page}`,
   "scan.ocrFailed": (error: string) => `Could not recognize the text: ${error}`,
+
+  // Live camera and ID card mode (spec 020).
+  "scan.cameraOpen": "Scan with the camera",
+  "scan.cameraTitle": "Camera scan",
+  "scan.cameraAgain": "Continue with the camera",
+  "scan.cameraAuto": "Auto capture",
+  "scan.cameraTake": "Take the photo",
+  "scan.cameraDone": (count: number) =>
+    count === 0 ? "Done" : `Done (${count})`,
+  "scan.cameraSearching": "Looking for the page: put it on a dark surface.",
+  "scan.cameraHold": "Page found. Hold the phone still...",
+  "scan.cameraReady": "Page found. Press the button to take the photo.",
+  "scan.cameraNext": "Done. Put down the next page.",
+  "scan.cameraFront": "Point at the front of the card.",
+  "scan.cameraBack": "Now the back of the card.",
+  "scan.cameraFlip": "Done. Turn the card over.",
+  "scan.cameraName": (n: number) => `Photo ${n}`,
+  "scan.cameraFailed":
+    'The camera could not be opened. Allow access to it, or use "Take photo".',
+  "scan.idCard": "ID card mode (both sides on one A4)",
+  "scan.idHint":
+    "ID card mode: every two photos (front and back) go together on one A4 page, at real size.",
+  "scan.idSides": (sides: number) => {
+    const pages = Math.ceil(sides / 2);
+    return `${sides === 1 ? "1 side" : `${sides} sides`} on ${pages === 1 ? "1 page" : `${pages} pages`}`;
+  },
 };

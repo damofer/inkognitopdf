@@ -156,7 +156,11 @@ for (const size of SIZES) {
       await expect(result).toHaveAttribute("data-mode", "bw");
       await view.getByRole("button", { name: "Continuar" }).click();
       await expect(view.locator(".scan-heading")).toContainText("2 páginas");
-      await expect(view.locator(".scan-thumb")).toHaveCount(3);
+      // Two pages, «Seguir con la cámara» (spec 020) and «Añadir página».
+      await expect(view.locator(".scan-thumb")).toHaveCount(4);
+      await expect(
+        view.getByRole("button", { name: "Seguir con la cámara" }),
+      ).toBeVisible();
       await expect(
         view.getByRole("button", { name: "Añadir página" }),
       ).toBeVisible();
