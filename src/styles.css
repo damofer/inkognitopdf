@@ -1581,6 +1581,48 @@ button[aria-pressed="true"] {
   box-shadow: var(--page-shadow);
 }
 
+/* Spec 030: the sheet straightening itself. */
+.scan-morph-stack {
+  display: grid;
+  place-items: center;
+}
+
+.scan-morph-stack > * {
+  grid-area: 1 / 1;
+}
+
+.scan-morph {
+  position: relative;
+  overflow: hidden;
+  width: min(calc(100vw - 64px), 1100px);
+  /* Room for the "Processing…" line under the toolbar. */
+  height: calc(100vh - 320px);
+  pointer-events: none;
+}
+
+.scan-morph img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  max-height: none;
+  transform-origin: 0 0;
+}
+
+.scan-morph-sheet {
+  will-change: transform;
+}
+
+.scan-result-in {
+  animation: scan-result-in 220ms ease-out both;
+}
+
+@keyframes scan-result-in {
+  from {
+    opacity: 0;
+  }
+}
+
 .crop-editor {
   position: relative;
   touch-action: none;

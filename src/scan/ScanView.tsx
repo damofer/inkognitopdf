@@ -14,10 +14,12 @@ import type { OcrItem, PageEntry, ScanImage } from "../model/document";
 import { newId } from "../model/operations";
 import type { ScanMode } from "./enhance";
 import { isConvex, type Point, type Quad } from "./homography";
+import { pageAspect } from "./morph";
 import { fullQuad, type PaperSize } from "./pipeline";
 import { CameraView, canUseCamera } from "./CameraView";
 import { ScanClient } from "./scanClient";
 import { scanPage } from "./scanImage";
+import { reduceMotion, SheetMorph } from "./SheetMorph";
 import { Toast } from "../Toast";
 import { useMobile } from "../useMobile";
 
@@ -213,6 +215,10 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   const liveCamera = canUseCamera();
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Spec 030: the sheet straightening itself, from the corners to the page.
+  const [morph, setMorph] = useState<{ id: string; done: boolean } | null>(
+    null,
+  );
   const [toast, setToast] = useState<string | null>(null);
   // Phone layout (spec 009): editing one photo, or the list of pages.
   const [view, setView] = useState<"edit" | "pages">("edit");
@@ -545,7 +551,50 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   const valid = shot ? isConvex(shot.quad) : false;
   const rendering =
     shot?.step === "result" && shot.result?.key !== renderKey(shot, paper);
-  const status = busy ?? (rendering ? t("scan.processing") : notice);
+  /** From the corners to the result, with the animation of spec 030. */
+  const toResult = (id: string) => {
+    update(id, (s) => ({ ...s, step: "result" }));
+    setMorph(reduceMotion() ? null : { id, done: false });
+  };
+  // Shown until it has ended and the page is ready; then the page fades in
+  // over its last frame.
+  const morphShown =
+    !!shot &&
+    shot.step === "result" &&
+    morph?.id === shot.id &&
+    (!mobile || view === "edit");
+  const morphing = morphShown && (!morph.done || rendering);
+  const fadeIn = morphShown && morph.done && !rendering;
+  const morphView = (size?: { width: number; height: number }) =>
+    shot &&
+    morph?.id === shot.id && (
+      <SheetMorph
+        key={morph.id}
+        photoUrl={shot.photoUrl}
+        photo={shot}
+        quad={shot.quad}
+        aspect={pageAspect(shot.quad, shot, paper, shot.quarters)}
+        quarters={shot.quarters}
+        size={size}
+        onEnd={() =>
+          setMorph((m) => (m?.id === shot.id ? { ...m, done: true } : m))
+        }
+      />
+    );
+  const resultImage = (style?: { width: number; height: number }) =>
+    shot?.result && (
+      <img
+        className={fadeIn ? "scan-result scan-result-in" : "scan-result"}
+        src={shot.result.url}
+        alt={t("scan.resultAlt", current + 1)}
+        data-mode={shot.mode}
+        style={style}
+        onAnimationEnd={() => setMorph(null)}
+      />
+    );
+  const status =
+    busy ??
+    (rendering && !(morphing && !morph?.done) ? t("scan.processing") : notice);
   const toastView = toast && (
     <Toast message={toast} onDone={() => setToast(null)} />
   );
@@ -666,6 +715,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       const after = shots.findIndex((s, i) => i > current && s.step === "crop");
       const any =
         after >= 0 ? after : shots.findIndex((s) => s.step === "crop");
+      setMorph(null);
       if (any >= 0) setCurrent(any);
       else setView("pages");
     };
@@ -728,7 +778,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
             type="button"
             className="primary grow"
             disabled={!valid || !!busy}
-            onClick={() => update(shot.id, (s) => ({ ...s, step: "result" }))}
+            onClick={() => toResult(shot.id)}
           >
             {t("scan.continue")}
           </button>
@@ -736,15 +786,20 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       );
     } else {
       const result = shot.result;
-      content = result && (
-        <img
-          className="scan-result"
-          src={result.url}
-          alt={t("scan.resultAlt", current + 1)}
-          data-mode={shot.mode}
-          style={contain(box, result.scan.width, result.scan.height)}
-        />
-      );
+      const size = box ? { width: box.w, height: box.h } : undefined;
+      content =
+        morphing || fadeIn ? (
+          <div className="scan-morph-stack">
+            {morphView(size)}
+            {fadeIn &&
+              resultImage(
+                contain(box, result!.scan.width, result!.scan.height),
+              )}
+          </div>
+        ) : (
+          result &&
+          resultImage(contain(box, result.scan.width, result.scan.height))
+        );
       bottom =
         view === "edit" ? (
           <>
@@ -1116,9 +1171,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
                 type="button"
                 className="primary"
                 disabled={!valid}
-                onClick={() =>
-                  update(shot.id, (s) => ({ ...s, step: "result" }))
-                }
+                onClick={() => toResult(shot.id)}
               >
                 {t("scan.continue")}
               </button>
@@ -1127,13 +1180,13 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
         )}
         {shot && shot.step === "result" && (
           <div className="scan-stage">
-            {shot.result && (
-              <img
-                className="scan-result"
-                src={shot.result.url}
-                alt={t("scan.resultAlt", current + 1)}
-                data-mode={shot.mode}
-              />
+            {morphing || fadeIn ? (
+              <div className="scan-morph-stack">
+                {morphView()}
+                {fadeIn && resultImage()}
+              </div>
+            ) : (
+              resultImage()
             )}
             <div className="scan-actions">
               {modeButtons}

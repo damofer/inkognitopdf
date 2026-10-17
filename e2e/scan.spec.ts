@@ -375,3 +375,42 @@ test("spec 029, CA5: a curved sheet is straightened, and can be left flat", asyn
   await expect(result).toHaveAttribute("data-mode", "bw");
   await expect(straighten).toHaveCount(0);
 });
+
+test("spec 030: the sheet straightens itself on the way to the result", async ({
+  page,
+}) => {
+  await page.goto("/app/");
+  await openScanner(page, ["hoja-1.jpg"]);
+  const morph = scanner(page).getByTestId("scan-morph");
+  const result = scanner(page).locator("img.scan-result");
+
+  // CA1: the sheet moves in perspective, then the page replaces it (CA3).
+  await scanner(page).getByRole("button", { name: "Continuar" }).click();
+  await expect(morph).toBeVisible();
+  await expect(morph.locator(".scan-morph-sheet")).toHaveAttribute(
+    "style",
+    /matrix3d/,
+  );
+  await expect(result).toBeVisible();
+  await expect(morph).toHaveCount(0);
+
+  // CA5: not again for a mode change.
+  await scanner(page)
+    .getByRole("button", { name: "Grises", exact: true })
+    .click();
+  await expect(result).toHaveAttribute("data-mode", "gray");
+  await expect(morph).toHaveCount(0);
+
+  // Back from the corners, it plays again.
+  await scanner(page).getByRole("button", { name: "Ajustar bordes" }).click();
+  await scanner(page).getByRole("button", { name: "Continuar" }).click();
+  await expect(morph).toBeVisible();
+  await expect(morph).toHaveCount(0);
+
+  // CA6: with less motion asked for, the result shows as before.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await scanner(page).getByRole("button", { name: "Ajustar bordes" }).click();
+  await scanner(page).getByRole("button", { name: "Continuar" }).click();
+  await expect(morph).toHaveCount(0);
+  await expect(result).toBeVisible();
+});

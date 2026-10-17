@@ -144,6 +144,8 @@ for (const size of SIZES) {
       await gray.click();
       await expect(gray).toHaveAttribute("aria-pressed", "true");
       await expect(result).toHaveAttribute("data-mode", "gray");
+      // Spec 030: the straightening animation has given way to the page.
+      await expect(view.getByTestId("scan-morph")).toHaveCount(0);
       await check(page, size, "3-filtro");
 
       // "Continue" goes on to the second photo, then to the pages.
