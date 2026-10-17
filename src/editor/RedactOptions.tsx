@@ -6,6 +6,9 @@ import type { ElsewhereCounts, ElsewhereKind } from "../engine/redactElsewhere";
 import type { Rect } from "../model/geometry";
 import { newId, type Operation } from "../model/operations";
 import type { PdfFile } from "../storage/pdfFile";
+import { PersonalDataDialog } from "./PersonalDataDialog";
+import type { PersonalHit } from "./redactSearch";
+import { track } from "../analytics/analytics";
 
 const same = (a: Rect, b: Rect) =>
   Math.abs(a.x - b.x) < 0.5 &&
@@ -32,6 +35,7 @@ export function RedactOptions({
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [lookingForPii, setLookingForPii] = useState(false);
   const pending = state.items.filter(
     (i): i is RedactionItem => i.kind === "redaction" && !i.applied,
   );
@@ -83,6 +87,36 @@ export function RedactOptions({
     }
   };
 
+  const isMarked = (pageId: string, rect: Rect) =>
+    state.items.some(
+      (i) =>
+        i.kind === "redaction" && i.pageId === pageId && same(i.rect, rect),
+    );
+
+  // Spec 016: each piece of personal data chosen becomes marks, with its text
+  // as the search, so it is also looked for elsewhere when applying.
+  const markPersonal = (hits: PersonalHit[]) => {
+    const ops: Operation[] = hits.flatMap((hit) =>
+      hit.rects
+        .filter((rect) => !isMarked(hit.pageId, rect))
+        .map((rect) => ({
+          kind: "addItem" as const,
+          item: {
+            kind: "redaction" as const,
+            id: newId("redaction"),
+            pageId: hit.pageId,
+            rect,
+            applied: false,
+            query: { text: hit.value, regex: false },
+          },
+        })),
+    );
+    if (ops.length > 0) dispatch(ops);
+    track("pii_mark", { pii: piiBucket(hits.length) });
+    setStatus(t("pii.done", hits.length));
+    setLookingForPii(false);
+  };
+
   const apply = (clearMetadata: boolean, elsewhere: Needles | null) => {
     dispatch(
       pending.map((item) => ({
@@ -131,6 +165,24 @@ export function RedactOptions({
           {t("redact.markMatches")}
         </button>
       </form>
+      <button
+        type="button"
+        title={t("pii.hint")}
+        onClick={() => setLookingForPii(true)}
+      >
+        {t("pii.button")}
+      </button>
+      {lookingForPii &&
+        createPortal(
+          <PersonalDataDialog
+            file={file}
+            state={state}
+            isMarked={isMarked}
+            onMark={markPersonal}
+            onCancel={() => setLookingForPii(false)}
+          />,
+          document.body,
+        )}
       {status && (
         <span className="redact-status" role="status">
           {status}
@@ -158,6 +210,9 @@ export function RedactOptions({
     </span>
   );
 }
+
+/** How many pieces of personal data were marked, coarsely (spec 011). */
+const piiBucket = (n: number) => (n <= 1 ? "1" : n <= 5 ? "2-5" : "6+");
 
 const PLACE = {
   annotations: "redact.elsewhereAnnotations",

@@ -11,6 +11,7 @@ import type { PdfFile } from "../storage/pdfFile";
 import { BadPatternError, findRanges } from "../engine/textMatch";
 import { mergeLineRects } from "./itemOps";
 import { showsOf } from "./textStyleProbe";
+import { findPersonalData, type PiiKind } from "../model/pii";
 
 /**
  * Search and redact (spec 012, CA2): finds a word or a regular expression in
@@ -230,4 +231,53 @@ export async function needlesOf(
     if (query?.regex) patterns.add(query.text);
     else if (query) addText(query.text);
   return { texts: [...texts], patterns: [...patterns] };
+}
+
+export interface PersonalHit {
+  kind: PiiKind;
+  value: string;
+  pageId: string;
+  /** 1-based, in the current order. */
+  page: number;
+  rects: Rect[];
+}
+
+/**
+ * Personal data in the text of every page, the file's and the recognized
+ * text of scanned pages (spec 016), with the areas that cover each one.
+ */
+export async function searchPersonalData(
+  file: PdfFile | null,
+  state: EditorState,
+): Promise<PersonalHit[]> {
+  const hits: PersonalHit[] = [];
+  const collect = <T>(
+    indexed: Indexed<T>,
+    box: (unit: T) => Rect,
+    pageId: string,
+    page: number,
+  ) => {
+    for (const m of findPersonalData(indexed.text))
+      hits.push({
+        kind: m.kind,
+        value: m.value,
+        pageId,
+        page,
+        rects: rectsOf(indexed, [[m.start, m.end]], box),
+      });
+  };
+  for (const [index, entry] of state.pages.entries()) {
+    if (file && entry.source.kind === "original")
+      collect(
+        glyphText(await showsOf(file, entry.source.index)),
+        markBox,
+        entry.id,
+        index + 1,
+      );
+    const ocr = state.items.filter(
+      (i): i is OcrItem => i.kind === "ocr" && i.pageId === entry.id,
+    );
+    if (ocr.length > 0) collect(ocrText(ocr), (r) => r, entry.id, index + 1);
+  }
+  return hits;
 }

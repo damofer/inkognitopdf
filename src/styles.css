@@ -1959,6 +1959,69 @@ button[aria-pressed="true"] {
   color: var(--muted);
 }
 
+/* Spec 016: the personal data found, grouped; the list scrolls. */
+.pii-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  width: min(520px, 100%);
+}
+
+.pii-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.pii-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.pii-list fieldset {
+  margin: 0;
+  padding: 4px 10px 6px;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 8px;
+}
+
+.pii-list legend {
+  padding: 0 4px;
+  font-weight: 600;
+}
+
+.pii-list .toolbar-check {
+  min-height: 44px;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+}
+
+.pii-list .toolbar-check input {
+  margin-top: 0;
+}
+
+.pii-value {
+  font-family: ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
+.pii-list small,
+.pii-note {
+  font-size: 0.85rem;
+  color: var(--muted, #555);
+}
+
+@media (max-width: 600px) {
+  .pii-tools button,
+  .pii-dialog .dialog-actions button {
+    min-height: 44px;
+  }
+}
+
 .dialog-actions {
   display: flex;
   justify-content: flex-end;

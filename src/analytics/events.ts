@@ -32,6 +32,8 @@ const VALUES = {
   split: ["ranges", "every", "selection"],
   /** Compression preset (spec 014). */
   preset: ["high", "balanced", "small"],
+  /** How many pieces of personal data were marked (spec 016), never which. */
+  pii: ["1", "2-5", "6+"],
   /** Whether the privacy x-ray found something (spec 015), never what. */
   found: ["yes", "no"],
   /** Page number format and position (spec 022), never the text. */
@@ -71,6 +73,7 @@ const EVENTS = {
   page_numbers: ["format", "position"],
   privacy_scan: ["found"],
   privacy_clean: [],
+  pii_mark: ["pii"],
   unlock_pdf: [],
   add_image: [],
   create_field: [],
