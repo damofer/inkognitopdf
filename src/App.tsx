@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -23,6 +25,13 @@ import { useMobile } from "./useMobile";
 import { SupportPanel } from "./support/SupportPanel";
 import { PasswordPrompt } from "./protect/PasswordPrompt";
 import { unlock, type AskPassword } from "./storage/unlock";
+
+// Templates (spec 021) load only when opened: their catalog is code.
+const TemplatesView = lazy(() =>
+  import("./templates/TemplatesView").then((m) => ({
+    default: m.TemplatesView,
+  })),
+);
 
 type State =
   | { status: "empty" }
@@ -61,6 +70,7 @@ export function App() {
   const t = useT();
   const [state, setState] = useState<State>({ status: "empty" });
   const [scanning, setScanning] = useState(false);
+  const [templating, setTemplating] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const closeSupport = useCallback(() => setSupportOpen(false), []);
   // Phone layout (spec 007): the header actions live in an overflow menu.
@@ -285,11 +295,22 @@ export function App() {
               }}
             />
           </label>
-          <button type="button" onClick={startBlank}>
-            {t("app.blankDocument")}
+          {/* A short label where the header is tight: it also holds Templates. */}
+          <button
+            type="button"
+            aria-label={t("app.blankDocument")}
+            onClick={startBlank}
+          >
+            <span className="label-long">{t("app.blankDocument")}</span>
+            <span className="label-short" aria-hidden="true">
+              {t("app.blankShort")}
+            </span>
           </button>
           <button type="button" onClick={() => setScanning(true)}>
             {t("app.scan")}
+          </button>
+          <button type="button" onClick={() => setTemplating(true)}>
+            {t("templates.button")}
           </button>
           <LangSwitch />
           <button type="button" onClick={reopenConsent}>
@@ -338,6 +359,15 @@ export function App() {
         {state.status === "empty" && (
           <div className="start">
             <p className="hint">{t("app.emptyHint")}</p>
+            {!mobile && (
+              <button
+                type="button"
+                className="start-templates"
+                onClick={() => setTemplating(true)}
+              >
+                {t("templates.start")}
+              </button>
+            )}
             {mobile && (
               <div className="start-actions">
                 <button
@@ -349,6 +379,9 @@ export function App() {
                 </button>
                 <button type="button" onClick={() => setScanning(true)}>
                   {t("app.scan")}
+                </button>
+                <button type="button" onClick={() => setTemplating(true)}>
+                  {t("templates.button")}
                 </button>
                 <button type="button" onClick={startBlank}>
                   {t("app.blankDocument")}
@@ -392,6 +425,17 @@ export function App() {
                 : null
             }
           />
+        )}
+        {templating && (
+          <Suspense fallback={<div className="scan-view" />}>
+            <TemplatesView
+              onClose={() => setTemplating(false)}
+              onOpen={(file) => {
+                setTemplating(false);
+                void open([file]);
+              }}
+            />
+          </Suspense>
         )}
       </main>
       {supportOpen && <SupportPanel onClose={closeSupport} />}

@@ -15,6 +15,7 @@ import { scan } from "./scan";
 import { sign } from "./sign";
 import { signEngine } from "./signEngine";
 import { support } from "./support";
+import { templates } from "./templates";
 import { tools } from "./tools";
 import { viewer } from "./viewer";
 
@@ -34,6 +35,7 @@ export const es = {
   ...sign,
   ...signEngine,
   ...support,
+  ...templates,
   ...tools,
   ...viewer,
 };

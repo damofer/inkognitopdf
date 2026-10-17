@@ -3,6 +3,7 @@ export const app = {
   "app.version": "Versión de la app",
   "app.openPdf": "Abrir PDF",
   "app.blankDocument": "Documento en blanco",
+  "app.blankShort": "En blanco",
   "app.scan": "Escanear",
   "app.newDocument": "Documento nuevo",
   "app.emptyHint":

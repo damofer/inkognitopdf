@@ -53,6 +53,7 @@
 | **Compress**          | Make files smaller: images are scaled down to what their page needs and encoded again, with three levels and the size before and after.                                                                                  |
 | **Passwords**         | Open protected PDFs (RC4 and AES, up to AES-256) and save with an AES-256 password; optional print and copy restrictions, which the app explains are only advisory.                                                      |
 | **Pages**             | Rotate, delete, insert blank pages and start from a blank document.                                                                                                                                                      |
+| **Templates**         | Resumes, cover letters, invoices, quotes, payment requests, receipts and letters ready to fill in, with a live preview, colors, fonts and paper size; download the PDF or keep editing it in the app.                    |
 | **Languages**         | English and Spanish, on desktop and on phones.                                                                                                                                                                           |
 
 ## Screenshots
@@ -104,6 +105,7 @@ src/
   storage/        opening files (the original is never modified), ZIP
   analytics/      consent and the closed list of usage events
   support/        donation links
+  templates/      templates: layout engine, PDF rendering and the catalog
   i18n/           Spanish (reference) and English texts
 tests/            unit tests and synthetic fixtures
 e2e/              end-to-end tests (Playwright)

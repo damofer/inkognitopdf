@@ -5,6 +5,7 @@ export const app: typeof es = {
   "app.version": "App version",
   "app.openPdf": "Open PDF",
   "app.blankDocument": "Blank document",
+  "app.blankShort": "Blank",
   "app.scan": "Scan",
   "app.newDocument": "New document",
   "app.emptyHint":

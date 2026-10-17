@@ -7,11 +7,28 @@
 export const PAGES = ["1", "2-5", "6-20", "21-100", "100+"] as const;
 export const SIZES = ["<1MB", "1-10MB", "10-50MB", "50MB+"] as const;
 export const FILES = ["2", "3-5", "6+"] as const;
+/** Template ids (spec 021); a test keeps them in step with the catalog. */
+export const TEMPLATE_IDS = [
+  "cv-classic",
+  "cv-modern",
+  "cv-ats",
+  "cover-letter",
+  "invoice",
+  "quote",
+  "payment-request",
+  "receipt",
+  "resignation",
+  "employment-certificate",
+  "authorization",
+  "no-debt", // i18n-ignore: template id
+] as const;
 
 const VALUES = {
   pages: PAGES,
   size: SIZES,
   files: FILES,
+  /** Which template, never what was written in it (spec 021). */
+  template: TEMPLATE_IDS,
   split: ["ranges", "every", "selection"],
   /** Compression preset (spec 014). */
   preset: ["high", "balanced", "small"],
@@ -56,6 +73,9 @@ const EVENTS = {
   install_app: [],
   donate_click: ["tier"],
   open_app: [],
+  template_open: ["template"],
+  template_download: ["template"],
+  template_to_editor: ["template"],
 } as const satisfies Record<string, readonly Param[]>;
 
 export type EventName = keyof typeof EVENTS;

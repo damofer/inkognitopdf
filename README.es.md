@@ -53,6 +53,7 @@
 | **Comprimir**              | Reduce el tamaño: las imágenes se ajustan a lo que su página necesita y se codifican de nuevo, con tres niveles y el tamaño antes y después.                                                                                |
 | **Contraseñas**            | Abre PDFs protegidos (RC4 y AES, hasta AES-256) y guarda con contraseña AES-256; restricciones opcionales de imprimir y copiar, que la app explica que son solo orientativas.                                               |
 | **Páginas**                | Gira, elimina, inserta páginas en blanco y empieza desde un documento en blanco.                                                                                                                                            |
+| **Plantillas**             | CV, cartas de presentación, facturas, cotizaciones, cuentas de cobro, recibos y cartas listos para rellenar, con vista previa, colores, tipografías y tamaño de papel; descarga el PDF o sigue editándolo en la app.        |
 | **Idiomas**                | Español e inglés, en el ordenador y en el teléfono.                                                                                                                                                                         |
 
 ## Capturas
@@ -104,6 +105,7 @@ src/
   storage/        abrir archivos (el original nunca se modifica), ZIP
   analytics/      consentimiento y lista cerrada de eventos de uso
   support/        enlaces de donación
+  templates/      plantillas: motor de maquetación, render a PDF y catálogo
   i18n/           textos en español (referencia) e inglés
 tests/            pruebas unitarias y fixtures sintéticos
 e2e/              pruebas de extremo a extremo (Playwright)

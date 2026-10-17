@@ -781,3 +781,115 @@
     display: inline;
   }
 }
+
+/* Templates on a phone (spec 021, CA11): tabs for the form and the preview,
+   the actions at the bottom. */
+@media (max-width: 760px) {
+  .tpl-view {
+    height: 100dvh;
+  }
+
+  .tpl-view :is(input, textarea, select) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .tpl-toolbar {
+    flex-wrap: nowrap;
+    padding: 6px 8px;
+  }
+
+  .tpl-toolbar h2 {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tpl-toolbar:has(.tpl-search) {
+    flex-wrap: wrap;
+  }
+
+  .tpl-search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .tpl-gallery {
+    padding: 12px;
+  }
+
+  .tpl-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .tpl-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tpl-tabs button {
+    border: 0;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tpl-tabs button[aria-selected="true"] {
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .tpl-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tpl-form,
+  .tpl-preview {
+    flex: 1;
+    border-right: 0;
+  }
+
+  .tpl-swatches button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tpl-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Header labels: the short one where the header row is tight (spec 021 adds
+   Templates to it). */
+.label-short {
+  display: none;
+}
+
+@media (min-width: 761px) and (max-width: 1439px) {
+  .header-actions .label-long {
+    display: none;
+  }
+
+  .header-actions .label-short {
+    display: inline;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1099px) {
+  .app-header {
+    gap: 8px;
+  }
+
+  .header-actions > :is(button, .open-button, .source-link) {
+    padding-inline: 6px;
+  }
+}

@@ -13,8 +13,11 @@ export interface Finding {
 
 const srcDir = join(import.meta.dirname, "..", "src");
 
-/** Files that hold the translations themselves. */
-const translationFiles = /^i18n[\\/](es|en)[\\/]/;
+/**
+ * Files that hold the translations themselves. Templates keep their own texts,
+ * in both languages, next to their layout (spec 021).
+ */
+const translationFiles = /^(i18n[\\/](es|en)|templates[\\/]content)[\\/]/;
 
 /** Attributes whose value is shown to the user or read by screen readers. */
 const visibleAttributes = new Set([
