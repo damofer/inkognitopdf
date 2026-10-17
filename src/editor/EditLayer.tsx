@@ -68,6 +68,7 @@ import type { ProbedStyle } from "./textStyleProbe";
 import { useEditedRender, type RenderEdits } from "./useEditedRender";
 import { DRAG_TOOLS, TEXT_TOOLS, type Tool } from "./tools";
 import { useT, type MessageKey } from "../i18n";
+import { Icon } from "../icons";
 
 /** Text being typed: a new text (itemId null) or an existing one. */
 export interface TextDraft {
@@ -113,6 +114,8 @@ export interface EditLayerProps {
   /** Form widgets of the page, filled with the select tool (spec 005, HU1). */
   widgets?: PageWidget[];
   onFormValue?: (name: string, value: string | string[]) => void;
+  /** Removes the selected item (spec 026: the «Delete» button on it). */
+  onRemove?: () => void;
   /** What the form field tool creates. */
   fieldType?: FormFieldType;
   fieldStyle?: FormFieldItem["style"];
@@ -192,9 +195,19 @@ const IMAGE_WIDTH = 150;
 const TAP_SLOP = 10;
 const TAP_TIME = 500;
 
+/** Room above an item for its «Delete» button, in px; less puts it below. */
+const DELETE_ROOM = 44;
+
 type Drag =
   | { kind: "create"; start: Point; current: Point; points: Point[] }
-  | { kind: "move"; id: string; start: Point; current: Point }
+  | {
+      kind: "move";
+      id: string;
+      start: Point;
+      current: Point;
+      /** A tap (no drag) opens the item's text: text with the text tool. */
+      editOnTap: boolean;
+    }
   | {
       kind: "resize";
       id: string;
@@ -313,11 +326,12 @@ export function EditLayer(props: EditLayerProps) {
       }
       const lines = mergeLineRects(rects);
       if (lines.length === 0) return;
+      const id = newId(shape);
       dispatch({
         kind: "addItem",
         item: {
           kind: "annotation",
-          id: newId(shape),
+          id,
           pageId: entry.id,
           shape,
           color:
@@ -329,12 +343,14 @@ export function EditLayer(props: EditLayerProps) {
         },
       });
       selection.removeAllRanges();
+      onSelect(id);
     };
     document.addEventListener("pointerup", onUp);
     return () => document.removeEventListener("pointerup", onUp);
   }, [
     tool,
     dispatch,
+    onSelect,
     entry.id,
     geometry,
     props.highlightColor,
@@ -773,27 +789,49 @@ export function EditLayer(props: EditLayerProps) {
       active.blur();
   };
 
+  /**
+   * Whether pressing the item with the current tool selects and drags it
+   * (spec 026): an item is moved right after it is placed, without going
+   * back to the select tool.
+   */
+  const grabbable = (item: Item, selected: boolean) => {
+    // Fields created in pdfcraft are moved with their own tool; with the
+    // select tool they are filled.
+    if (item.kind === "formField") return tool === "formField";
+    if (tool === "select") return true;
+    // The edit-text tool reopens edited page text with a click.
+    if (item.kind === "textEdit") return false;
+    // Tools that drag on the page, or select its text, keep doing so over
+    // items: only the selection is dragged (a tap selects, see onPointerUp).
+    if (DRAG_TOOLS.has(tool) || TEXT_TOOLS.has(tool)) return selected;
+    return true;
+  };
+
+  /** A tap on the item with its own tool opens its text. */
+  const editsOnTap = (item: Item) =>
+    (tool === "text" && item.kind === "text") ||
+    (item.kind === "annotation" &&
+      (item.shape === "note" || item.shape === "freeText") &&
+      tool === item.shape);
+
   const onItemPointerDown = (
     e: ReactPointerEvent<HTMLElement>,
     item: Item,
     resize = false,
   ) => {
     if (e.button !== 0) return;
-    if (tool === "text" && item.kind === "text") {
-      e.stopPropagation();
-      e.preventDefault();
-      if (!draft) props.onDraft(draftFor(item));
-      return;
-    }
-    // Fields created in pdfcraft are moved with their own tool; with the
-    // select tool they are filled.
-    const movable =
-      tool === "formField"
-        ? item.kind === "formField"
-        : tool === "select" && item.kind !== "formField";
-    if (!movable) return;
+    if (!grabbable(item, item.id === selectedId)) return;
     e.stopPropagation();
     e.preventDefault();
+    // A press outside an open text editor only closes it (blur commits).
+    if (draft && textareaRef.current) {
+      textareaRef.current.blur();
+      return;
+    }
+    if (annotDraft && annotRef.current) {
+      annotRef.current.blur();
+      return;
+    }
     releaseFocus();
     onSelect(item.id);
     const p = local(e);
@@ -809,8 +847,38 @@ export function EditLayer(props: EditLayerProps) {
               (item.kind === "image" || item.kind === "signature") &&
               !e.shiftKey,
           }
-        : { kind: "move", id: item.id, start: p, current: p },
+        : {
+            kind: "move",
+            id: item.id,
+            start: p,
+            current: p,
+            editOnTap: editsOnTap(item),
+          },
     );
+  };
+
+  /** Opens the text of a text, note or free text to change it. */
+  const editText = (item: Item) => {
+    if (item.kind === "text") props.onDraft(draftFor(item));
+    else if (item.kind === "annotation") setAnnotDraft({ isNew: false, item });
+  };
+
+  /** The topmost item under a point of the page, drawn or not. */
+  const itemAt = (e: { clientX: number; clientY: number }) => {
+    const nodes = rootRef.current?.querySelectorAll<HTMLElement>(
+      ".item[data-item-id]",
+    );
+    for (const node of [...(nodes ?? [])].reverse()) {
+      const r = node.getBoundingClientRect();
+      if (
+        e.clientX >= r.left &&
+        e.clientX <= r.right &&
+        e.clientY >= r.top &&
+        e.clientY <= r.bottom
+      )
+        return node.dataset.itemId!;
+    }
+    return null;
   };
 
   const onPointerMove = (e: ReactPointerEvent<HTMLElement>) => {
@@ -841,15 +909,34 @@ export function EditLayer(props: EditLayerProps) {
       const created = createdItem(drag);
       if (created) {
         dispatch({ kind: "addItem", item: created });
-        if (created.kind === "whiteout") onSelect(created.id);
-      }
+        // Selected, it can be moved or deleted at once; strokes are drawn one
+        // after another, so a new one does not take the last.
+        if (tool !== "ink") onSelect(created.id);
+      } else if (Math.hypot(...delta(drag)) <= TAP_SLOP)
+        // A tap with a drawing tool selects the item under it.
+        onSelect(itemAt(e));
       return;
     }
     const item = findItem(drag.id);
     if (!item) return;
+    const [dx, dy] = delta(drag);
+    if (
+      drag.kind === "move" &&
+      drag.editOnTap &&
+      Math.hypot(dx, dy) <= TAP_SLOP / 2
+    ) {
+      editText(item);
+      return;
+    }
+    if (dx === 0 && dy === 0) return;
     const moved = preview(item);
     if (moved !== item) commitItem(moved);
   };
+
+  const delta = (d: Drag): [number, number] => [
+    d.current.x - d.start.x,
+    d.current.y - d.start.y,
+  ];
 
   const createdItem = (d: Extract<Drag, { kind: "create" }>): Item | null => {
     const viewRect = rectFromCorners(d.start, d.current);
@@ -984,17 +1071,45 @@ export function EditLayer(props: EditLayerProps) {
     onSelect(id);
   };
 
-  /** Resize handle of the selected item, when its tool can resize it. */
-  const handle = (item: Item, selected: boolean, raw: Item) =>
-    selected &&
-    resizableRect(item) &&
-    (item.kind === "formField" ? tool === "formField" : tool === "select") ? (
-      <span
-        className="resize-handle"
-        role="presentation"
-        data-testid="resize-handle"
-        onPointerDown={(e) => onItemPointerDown(e, raw, true)}
-      />
+  /**
+   * Resize handle of the selected item, when its tool can resize it, and the
+   * «Delete» button over it (spec 026: a phone has no Supr key). `top` is the
+   * top of the item on the page: near it, the button goes below the item.
+   */
+  const handle = (item: Item, selected: boolean, raw: Item, top: number) =>
+    selected ? (
+      <>
+        {resizableRect(item) && grabbable(raw, true) && (
+          <span
+            className="resize-handle"
+            role="presentation"
+            data-testid="resize-handle"
+            onPointerDown={(e) => onItemPointerDown(e, raw, true)}
+          />
+        )}
+        {deleteButton(top)}
+      </>
+    ) : null;
+
+  const deleteButton = (top: number) =>
+    props.onRemove && !drag && !draftHere && !annotDraft ? (
+      <button
+        type="button"
+        className={`item-delete${top < DELETE_ROOM ? " below" : ""}`}
+        aria-label={t("editLayer.delete")}
+        title={t(touch ? "editLayer.delete" : "editLayer.deleteKey")}
+        onPointerDown={(e) => {
+          // Neither a drag of the item nor a click on the page.
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onRemove?.();
+        }}
+      >
+        <Icon name="trash" size={18} />
+      </button>
     ) : null;
 
   const textTool = tool === "select" || TEXT_TOOLS.has(tool);
@@ -1112,7 +1227,7 @@ export function EditLayer(props: EditLayerProps) {
           return (
             <div
               key={id}
-              className={`item item-existing${id === selectedId ? " selected" : ""}`}
+              className={`item item-existing grab${id === selectedId ? " selected" : ""}`}
               data-item-id={id}
               data-kind="existing"
               data-subtype={e.subtype}
@@ -1143,7 +1258,9 @@ export function EditLayer(props: EditLayerProps) {
                     item: { ...e.item, pageId: entry.id },
                   });
               }}
-            />
+            >
+              {id === selectedId && deleteButton(bounds.y)}
+            </div>
           );
         })}
       {tool === "select" && props.widgets && props.onFormValue && (
@@ -1160,6 +1277,7 @@ export function EditLayer(props: EditLayerProps) {
         if (raw.kind === "formField" && tool !== "formField") return null;
         const item = preview(raw);
         const selected = item.id === selectedId;
+        const grab = grabbable(raw, selected) ? " grab" : "";
         const common = {
           "data-item-id": item.id,
           "data-kind": item.kind,
@@ -1177,7 +1295,7 @@ export function EditLayer(props: EditLayerProps) {
               key={item.id}
               {...common}
               data-shape={item.shape}
-              className={`item item-${item.shape}${selected ? " selected" : ""}`}
+              className={`item item-${item.shape}${grab}${selected ? " selected" : ""}`}
               title={isNote ? item.text : undefined}
               style={{
                 left: v.x,
@@ -1198,11 +1316,10 @@ export function EditLayer(props: EditLayerProps) {
               }
             >
               {item.shape === "freeText" ? item.text : null}
-              {handle(item, selected, raw)}
+              {handle(item, selected, raw, v.y)}
             </div>
           );
         }
-        const resizeHandle = handle(item, selected, raw);
         if (item.kind === "textEdit" && isImageTextEdit(item)) {
           // Being typed again: the draft shows it.
           if (item.id === draftHere?.itemId) return null;
@@ -1211,7 +1328,7 @@ export function EditLayer(props: EditLayerProps) {
             <div key={item.id}>
               <div
                 {...common}
-                className={`item item-textEdit item-imageEdit${selected ? " selected" : ""}`}
+                className={`item item-textEdit item-imageEdit${grab}${selected ? " selected" : ""}`}
                 data-testid="image-edit"
                 style={{
                   left: cover.x,
@@ -1220,7 +1337,9 @@ export function EditLayer(props: EditLayerProps) {
                   height: cover.height,
                   background: item.background,
                 }}
-              />
+              >
+                {handle(item, selected, raw, cover.y)}
+              </div>
               <div
                 className="item-textEdit-text"
                 style={textBoxStyle(
@@ -1243,14 +1362,16 @@ export function EditLayer(props: EditLayerProps) {
             <div key={item.id}>
               <div
                 {...common}
-                className={`item item-textEdit${selected ? " selected" : ""}`}
+                className={`item item-textEdit${grab}${selected ? " selected" : ""}`}
                 style={{
                   left: mask.x,
                   top: mask.y,
                   width: mask.width,
                   height: mask.height,
                 }}
-              />
+              >
+                {handle(item, selected, raw, mask.y)}
+              </div>
               {!edited?.current && (
                 // Until the render with this edit is ready.
                 <div
@@ -1270,30 +1391,34 @@ export function EditLayer(props: EditLayerProps) {
             </div>
           );
         }
-        if (item.kind === "text")
+        if (item.kind === "text") {
+          const style = textBoxStyle(
+            item.at,
+            item.style,
+            item.rotate,
+            pageRotation,
+            geometry,
+          );
           return (
             <div
               key={item.id}
               {...common}
-              className={`item item-text${selected ? " selected" : ""}`}
-              style={textBoxStyle(
-                item.at,
-                item.style,
-                item.rotate,
-                pageRotation,
-                geometry,
-              )}
+              className={`item item-text${grab}${selected ? " selected" : ""}`}
+              style={style}
+              onDoubleClick={() => tool === "select" && editText(raw)}
             >
               {item.text}
+              {handle(item, selected, raw, Number(style.top))}
             </div>
           );
+        }
         const bounds = viewBounds(item, geometry);
         if (!bounds) return null;
         return (
           <div
             key={item.id}
             {...common}
-            className={`item item-${item.kind}${selected ? " selected" : ""}${
+            className={`item item-${item.kind}${grab}${selected ? " selected" : ""}${
               item.kind === "redaction" && item.applied ? " applied" : ""
             }`}
             {...(item.kind === "redaction"
@@ -1338,7 +1463,7 @@ export function EditLayer(props: EditLayerProps) {
             {item.kind === "formField" && (
               <span className="form-field-label">{item.name}</span>
             )}
-            {resizeHandle}
+            {handle(item, selected, raw, bounds.y)}
           </div>
         );
       })}

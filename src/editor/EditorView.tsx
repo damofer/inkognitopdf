@@ -836,6 +836,13 @@ export function EditorView({
     );
   };
 
+  // The «Delete» button of the selection (spec 026) calls the current one.
+  const removeRef = useRef(removeSelected);
+  useEffect(() => {
+    removeRef.current = removeSelected;
+  });
+  const removeSelection = useCallback(() => removeRef.current(), []);
+
   const chooseTool = (next: Tool) => {
     const owner = taskOf(next);
     if (owner && !TASK_TOOLS[task].includes(next)) setTask(owner);
@@ -1613,6 +1620,7 @@ export function EditorView({
         fieldType={fieldType}
         fieldStyle={fieldStyle}
         fieldNames={fieldNames}
+        onRemove={removeSelection}
         noteColor={noteColor}
         fillColor={fillColor}
         showOcrLow={ocrOpen}
@@ -1673,6 +1681,7 @@ export function EditorView({
       fieldType,
       fieldStyle,
       fieldNames,
+      removeSelection,
       noteColor,
       fillColor,
       pageItems,

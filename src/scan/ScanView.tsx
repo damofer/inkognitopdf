@@ -215,9 +215,10 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   // Phone layout (spec 009): editing one photo, or the list of pages.
   const [view, setView] = useState<"edit" | "pages">("edit");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Spec 027: "+" offers the live camera, a new photo or the gallery.
+  const [addOpen, setAddOpen] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const imagesRef = useRef<HTMLInputElement>(null);
-  const addRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const box = useBoxSize(mainRef);
   const shotsRef = useRef(shots);
@@ -270,8 +271,9 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       detected,
       quad:
         autoDetect && detected ? detected : fullQuad(found.width, found.height),
-      // An ID card keeps its colours; a sheet becomes a photocopy.
-      mode: idCard ? "original" : "bw",
+      // An ID card keeps its colours, or the mode of its other sides (spec
+      // 027); a sheet becomes a photocopy.
+      mode: idCard ? (shotsRef.current[0]?.mode ?? "original") : "bw",
       quarters: 0,
       step: live && autoDetect && detected ? "result" : "crop",
       live,
@@ -369,6 +371,31 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   };
 
   const shot = shots[current];
+
+  /**
+   * Spec 027: in the ID card mode the mode is the whole scan's, as every side
+   * goes on the same photocopy; otherwise it is the shown page's.
+   */
+  const setMode = (mode: ScanMode) =>
+    setShots((all) =>
+      all.map((s) => (idCard || s.id === shot?.id ? { ...s, mode } : s)),
+    );
+
+  // Spec 027: the other sides follow a change of mode, thumbnails included.
+  const modes = shots.map((s) => s.mode).join();
+  useEffect(() => {
+    if (!idCard) return;
+    let stale = false;
+    void (async () => {
+      for (const s of shotsRef.current)
+        if (!stale && s.step === "result" && s.id !== shot?.id)
+          await render(s).catch(() => undefined);
+    })();
+    return () => {
+      stale = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idCard, modes, paper]);
 
   // Keep the shown result in step with the mode, rotation and paper size.
   useEffect(() => {
@@ -531,7 +558,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
           key={mode}
           type="button"
           aria-pressed={shot.mode === mode}
-          onClick={() => update(shot.id, (s) => ({ ...s, mode }))}
+          onClick={() => setMode(mode)}
         >
           {t(label)}
         </button>
@@ -580,7 +607,13 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       <input
         type="checkbox"
         checked={idCard}
-        onChange={(e) => setIdCard(e.currentTarget.checked)}
+        onChange={(e) => {
+          const on = e.currentTarget.checked;
+          setIdCard(on);
+          // Spec 027: the sides already taken share the shown one's mode.
+          if (on && shot)
+            setShots((all) => all.map((s) => ({ ...s, mode: shot.mode })));
+        }}
       />
       {t("scan.idCard")}
     </label>
@@ -733,6 +766,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
           </>
         ) : (
           <>
+            {modeButtons}
             <div className="scan-row scan-page-tools">
               <button
                 type="button"
@@ -785,24 +819,13 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
                   </button>
                 </li>
               ))}
-              {liveCamera && (
-                <li>
-                  <button
-                    type="button"
-                    className="scan-thumb scan-add"
-                    aria-label={t("scan.cameraAgain")}
-                    onClick={openCamera}
-                  >
-                    <ScanIcon name="live" />
-                  </button>
-                </li>
-              )}
               <li>
                 <button
                   type="button"
                   className="scan-thumb scan-add"
                   aria-label={t("scan.addPage")}
-                  onClick={() => addRef.current?.click()}
+                  aria-expanded={addOpen}
+                  onClick={() => setAddOpen(true)}
                 >
                   <ScanIcon name="plus" />
                 </button>
@@ -898,6 +921,59 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
             </div>
           </>
         )}
+        {addOpen && (
+          <>
+            <div className="sheet-backdrop" onClick={() => setAddOpen(false)} />
+            <div
+              className="mobile-sheet scan-add-sheet"
+              role="dialog"
+              aria-label={t("scan.addPage")}
+            >
+              <header>
+                <h2>{t("scan.addPage")}</h2>
+                <button
+                  type="button"
+                  aria-label={t("scan.closeAdd")}
+                  onClick={() => setAddOpen(false)}
+                >
+                  ×
+                </button>
+              </header>
+              {liveCamera && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddOpen(false);
+                    openCamera();
+                  }}
+                >
+                  <ScanIcon name="live" />
+                  {t("scan.cameraOpen")}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setAddOpen(false);
+                  cameraRef.current?.click();
+                }}
+              >
+                <ScanIcon name="camera" />
+                {t("scan.takePhoto")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddOpen(false);
+                  imagesRef.current?.click();
+                }}
+              >
+                <ScanIcon name="images" />
+                {t("scan.chooseImages")}
+              </button>
+            </div>
+          </>
+        )}
         <input
           ref={cameraRef}
           type="file"
@@ -913,15 +989,6 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
           accept="image/jpeg,image/png,image/webp"
           multiple
           data-testid="scan-images"
-          hidden
-          onChange={fileChange}
-        />
-        <input
-          ref={addRef}
-          type="file"
-          accept="image/*"
-          multiple
-          data-testid="scan-add"
           hidden
           onChange={fileChange}
         />

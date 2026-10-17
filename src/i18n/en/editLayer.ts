@@ -10,6 +10,8 @@ export const editLayer: typeof es = {
   "editLayer.draftActions": "Text being edited",
   "editLayer.cancel": "Cancel",
   "editLayer.accept": "Accept",
+  "editLayer.delete": "Delete",
+  "editLayer.deleteKey": "Delete (Del)",
   "editLayer.lowConfidence": (confidence: number, text: string) =>
     `Low confidence (${confidence}): “${text}”`,
   "editLayer.fieldText": "text",

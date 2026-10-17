@@ -69,6 +69,7 @@ export const scan = {
   "scan.closeSettings": "Cerrar los ajustes",
   "scan.settingsRemembered": "Los ajustes se recuerdan en este dispositivo.",
   "scan.addPage": "Añadir página",
+  "scan.closeAdd": "Cerrar",
   "scan.editPage": (page: number) => `Ajustar la página ${page}`,
   "scan.ocrFailed": (error: string) =>
     `No se pudo reconocer el texto: ${error}`,
@@ -76,7 +77,6 @@ export const scan = {
   // Live camera and ID card mode (spec 020).
   "scan.cameraOpen": "Escanear con la cámara",
   "scan.cameraTitle": "Escaneo con la cámara",
-  "scan.cameraAgain": "Seguir con la cámara",
   "scan.cameraAuto": "Disparo automático",
   "scan.cameraTake": "Hacer la foto",
   "scan.cameraDone": (count: number) =>

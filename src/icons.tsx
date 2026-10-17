@@ -106,6 +106,7 @@ const PATHS = {
     </>
   ),
   close: <path d="M18 6 6 18M6 6l12 12" />,
+  trash: <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />,
   edit: <path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" />,
   annotate: (
     <>

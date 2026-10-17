@@ -1066,6 +1066,16 @@ button[aria-pressed="true"] {
   pointer-events: none;
 }
 
+/*
+ * Spec 026: items the current tool drags (see `grabbable` in EditLayer). A
+ * finger on them drags too, instead of scrolling the page.
+ */
+.edit-overlay .item.grab {
+  pointer-events: auto;
+  cursor: move;
+  touch-action: none;
+}
+
 .edit-overlay.tool-select .item,
 .edit-overlay.tool-text .item-text {
   pointer-events: auto;
@@ -1107,8 +1117,57 @@ button[aria-pressed="true"] {
 }
 
 .item.selected {
+  z-index: 1;
   outline: 2px dashed var(--accent);
   outline-offset: 2px;
+}
+
+/* Spec 026: «Delete» over the selected item, for phones without Supr. */
+.item-delete {
+  position: absolute;
+  top: -40px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--danger);
+  box-shadow: var(--panel-shadow);
+  font-size: 14px;
+  line-height: 1;
+  white-space: normal;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.item-delete:hover {
+  border-color: var(--danger);
+}
+
+/* Without room above, below and to the left, clear of the resize handle. */
+.item-delete.below {
+  top: auto;
+  right: auto;
+  bottom: -40px;
+  left: -6px;
+}
+
+@media (pointer: coarse) {
+  .item-delete {
+    top: -50px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .item-delete.below {
+    top: auto;
+    bottom: -50px;
+  }
 }
 
 .resize-handle {

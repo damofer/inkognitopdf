@@ -70,13 +70,13 @@ export const scan: typeof es = {
   "scan.closeSettings": "Close settings",
   "scan.settingsRemembered": "Settings are remembered on this device.",
   "scan.addPage": "Add page",
+  "scan.closeAdd": "Close",
   "scan.editPage": (page: number) => `Adjust page ${page}`,
   "scan.ocrFailed": (error: string) => `Could not recognize the text: ${error}`,
 
   // Live camera and ID card mode (spec 020).
   "scan.cameraOpen": "Scan with the camera",
   "scan.cameraTitle": "Camera scan",
-  "scan.cameraAgain": "Continue with the camera",
   "scan.cameraAuto": "Auto capture",
   "scan.cameraTake": "Take the photo",
   "scan.cameraDone": (count: number) =>

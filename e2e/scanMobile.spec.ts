@@ -156,15 +156,45 @@ for (const size of SIZES) {
       await expect(result).toHaveAttribute("data-mode", "bw");
       await view.getByRole("button", { name: "Continuar" }).click();
       await expect(view.locator(".scan-heading")).toContainText("2 páginas");
-      // Two pages, «Seguir con la cámara» (spec 020) and «Añadir página».
-      await expect(view.locator(".scan-thumb")).toHaveCount(4);
-      await expect(
-        view.getByRole("button", { name: "Seguir con la cámara" }),
-      ).toBeVisible();
+      // Two pages and «Añadir página»; the modes of the shown page (spec 027).
+      await expect(view.locator(".scan-thumb")).toHaveCount(3);
       await expect(
         view.getByRole("button", { name: "Añadir página" }),
       ).toBeVisible();
+      await expect(
+        view.getByRole("button", { name: "Fotocopia", exact: true }),
+      ).toBeVisible();
       await check(page, size, "4-paginas");
+
+      // Outside the ID card mode, the mode is the shown page's only: page 2
+      // turns to "Original" and page 1 stays in "Grises".
+      const original = view.getByRole("button", {
+        name: "Original",
+        exact: true,
+      });
+      await original.click();
+      await expect(result).toHaveAttribute("data-mode", "original");
+      await view.getByRole("button", { name: /^Página 1:/ }).click();
+      await expect(result).toHaveAttribute("data-mode", "gray");
+      await view.getByRole("button", { name: /^Página 2:/ }).click();
+      await expect(original).toHaveAttribute("aria-pressed", "true");
+
+      // «Añadir página»: the live camera, a new photo or the gallery.
+      await view.getByRole("button", { name: "Añadir página" }).click();
+      const add = view.getByRole("dialog", { name: "Añadir página" });
+      for (const name of ["Hacer foto", "Elegir imágenes"])
+        expect(
+          (await add.getByRole("button", { name }).boundingBox())!.height,
+        ).toBeGreaterThanOrEqual(44);
+      await check(page, size, "4b-anadir");
+      const chooser = page.waitForEvent("filechooser");
+      await add.getByRole("button", { name: "Hacer foto" }).click();
+      const photoChooser = await chooser;
+      expect(photoChooser.isMultiple()).toBe(false);
+      expect(await photoChooser.element().getAttribute("capture")).toBe(
+        "environment",
+      );
+      await expect(add).toHaveCount(0);
 
       // Settings in a sheet.
       await view.getByRole("button", { name: "Ajustes del escáner" }).click();
@@ -254,7 +284,14 @@ test.describe("settings", () => {
     await expect(view.locator(".scan-heading")).toContainText("1 página");
 
     // "Add page" goes back to the corners of the new photo.
-    await view.getByTestId("scan-add").setInputFiles(photos.path("foto-2.jpg"));
+    await view.getByRole("button", { name: "Añadir página" }).click();
+    const chooser = page.waitForEvent("filechooser");
+    await view
+      .getByRole("dialog", { name: "Añadir página" })
+      .getByRole("button", { name: "Elegir imágenes" })
+      .click();
+    expect((await chooser).isMultiple()).toBe(true);
+    await (await chooser).setFiles(photos.path("foto-2.jpg"));
     await expect(view.locator(".crop-hit")).toHaveCount(4);
     await expect(view.locator(".scan-heading")).toContainText("Página 2 de 2");
   });

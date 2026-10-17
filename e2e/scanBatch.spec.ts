@@ -4,7 +4,13 @@
 // Screenshots go to docs/screenshots/scan-batch/.
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { PDFDocument, PDFName, type PDFDict, type PDFRawStream } from "pdf-lib";
+import {
+  PDFDocument,
+  PDFName,
+  PDFNumber,
+  type PDFDict,
+  type PDFRawStream,
+} from "pdf-lib";
 import {
   cardPage,
   otherSheet,
@@ -326,7 +332,77 @@ test.describe("phone", () => {
     await expect(view.locator(".scan-heading")).toContainText(
       "2 caras en 1 hoja",
     );
-    await expect(view.locator(".scan-strip li")).toHaveCount(4);
+    // The two sides and «Añadir página» (spec 027).
+    await expect(view.locator(".scan-strip li")).toHaveCount(3);
     await page.screenshot({ path: `${DIR}/movil-paginas-dni.png` });
+
+    // Spec 027: «Fotocopia», chosen once in the list of pages, is for both
+    // sides, so the sheet is a black and white photocopy.
+    const bw = view.getByRole("button", { name: "Fotocopia" });
+    await bw.click();
+    await expect(bw).toHaveAttribute("aria-pressed", "true");
+    await expect(view.locator("img.scan-result")).toHaveAttribute(
+      "data-mode",
+      "bw",
+    );
+    await view.getByRole("button", { name: "Página 2: Foto 2" }).click();
+    await expect(bw).toHaveAttribute("aria-pressed", "true");
+    await expect(view.locator("img.scan-result")).toHaveAttribute(
+      "data-mode",
+      "bw",
+    );
+    const doc = await download(page);
+    expect(doc.getPageCount()).toBe(1);
+    expect(
+      scanImages(doc)[0]!.dict.get(PDFName.of("BitsPerComponent")),
+    ).toEqual(PDFNumber.of(1));
+
+    // A side added later comes as a photocopy too.
+    await view.getByRole("button", { name: "Añadir página" }).click();
+    const add = view.getByRole("dialog", { name: "Añadir página" });
+    const chooser = page.waitForEvent("filechooser");
+    await add.getByRole("button", { name: "Elegir imágenes" }).click();
+    await (await chooser).setFiles(photos.path("dni-anverso.jpg"));
+    await expect(add).toHaveCount(0);
+    await expect(view.locator(".scan-heading")).toContainText("Página 3 de 3");
+    await view.getByRole("button", { name: "Continuar" }).click();
+    await expect(view.locator("img.scan-result")).toHaveAttribute(
+      "data-mode",
+      "bw",
+    );
+  });
+
+  test("ID card from the gallery: one mode for both sides", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await page.goto("/app/");
+    await page.getByRole("button", { name: "Escanear" }).click();
+    const view = scanner(page);
+    await view.getByLabel("Modo DNI (dos caras en un A4)").check();
+    await view
+      .getByTestId("scan-images")
+      .setInputFiles([
+        photos.path("dni-anverso.jpg"),
+        photos.path("dni-reverso.jpg"),
+      ]);
+    await view.getByRole("button", { name: "Continuar" }).click();
+    const result = view.locator("img.scan-result");
+    await expect(result).toHaveAttribute("data-mode", "original");
+    await view.getByRole("button", { name: "Fotocopia" }).click();
+    await expect(result).toHaveAttribute("data-mode", "bw");
+    // On to the back: its corners, then its result, already a photocopy.
+    await view.getByRole("button", { name: "Continuar" }).click();
+    await expect(view.locator(".scan-heading")).toContainText("Página 2 de 2");
+    await view.getByRole("button", { name: "Continuar" }).click();
+    await expect(result).toHaveAttribute("data-mode", "bw");
+    await view.getByRole("button", { name: "Continuar" }).click();
+    await expect(view.locator(".scan-heading")).toContainText(
+      "2 caras en 1 hoja",
+    );
+    const doc = await download(page);
+    expect(
+      scanImages(doc)[0]!.dict.get(PDFName.of("BitsPerComponent")),
+    ).toEqual(PDFNumber.of(1));
   });
 });

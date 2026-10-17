@@ -9,6 +9,9 @@ export const editLayer = {
   "editLayer.draftActions": "Texto en edición",
   "editLayer.cancel": "Cancelar",
   "editLayer.accept": "Aceptar",
+  // Spec 026: the button on the selected item.
+  "editLayer.delete": "Eliminar",
+  "editLayer.deleteKey": "Eliminar (Supr)",
   "editLayer.lowConfidence": (confidence: number, text: string) =>
     `Confianza baja (${confidence}): «${text}»`,
   // Bases of the names of new form fields (texto_1, casilla_1…).

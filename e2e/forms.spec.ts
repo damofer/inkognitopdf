@@ -292,8 +292,9 @@ test("CA8: annotations of the file are moved, recolored and deleted", async ({
   await existing("Ink").click();
   await page.keyboard.press("Delete");
   await expect(existing("Ink")).toHaveCount(0);
+  // Spec 026: or with the «Eliminar» button on the selection.
   await existing("Stamp").click();
-  await page.keyboard.press("Delete");
+  await page.getByRole("button", { name: "Eliminar", exact: true }).click();
   await expect(existing("Stamp")).toHaveCount(0);
   // Undo brings the stamp back.
   await page.getByRole("button", { name: "Deshacer" }).click();
