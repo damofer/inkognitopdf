@@ -30,6 +30,21 @@ const DEGREE = 4;
 const WORK_SIZE = 1200;
 /** Least bend of a line (share of the page height) worth straightening. */
 export const MIN_BEND = 0.004;
+/**
+ * Most bend believed (share of the page height): an open book's lines bend a
+ * few per cent. More is a fit to drawings or slanted strokes, not to text.
+ */
+export const MAX_BEND = 0.12;
+/** Lines of text this long (share of the page width) are needed... */
+const LONG_LINE = 0.45;
+/** ...this many of them. */
+const MIN_LONG_LINES = 3;
+/** Least share of the page width the text must cover. */
+const MIN_SPAN = 0.6;
+/** Largest |P|, |Q| and lift on the page: a sheet, not a whirl. */
+const MAX_SHAPE = 0.35;
+/** Most the straightened page may be wider than the flat one. */
+const MAX_STRETCH = 1.4;
 
 /** A fitted sheet shape. */
 export interface Curl {
@@ -43,6 +58,8 @@ export interface Curl {
   bend: number;
   /** Lines of text the fit used. */
   lines: number;
+  /** Of them, the ones spanning LONG_LINE of the page width or more. */
+  long: number;
   /** Spread of the lines about their own mean before and after the fit. */
   before: number;
   after: number;
@@ -284,6 +301,9 @@ export function fitCurl(
   height: number,
 ): Curl | null {
   if (lines.length < 3) return null;
+  const long = lines.filter(
+    (line) => line[line.length - 1]!.x - line[0]!.x >= LONG_LINE * width,
+  ).length;
   const n = 2 * DEGREE;
   const f = new Array<number>(DEGREE).fill(0);
   // Per line: features and v, each minus the line's mean (that removes V).
@@ -374,6 +394,7 @@ export function fitCurl(
         u1,
         bend: 0,
         lines: groups.size,
+        long,
         before,
         after,
       };
@@ -408,14 +429,58 @@ function bendOf(curl: Curl): number {
   return bend;
 }
 
-/** A curl worth straightening: enough lines, a clear bend, a good fit. */
+/**
+ * A curl worth straightening: enough long lines across the page, a clear but
+ * believable bend, a good fit and the shape of a sheet. Anything else (a
+ * photo, drawings, a few words) is left flat.
+ */
 export function isCurled(curl: Curl | null): curl is Curl {
   return (
     !!curl &&
     curl.lines >= 3 &&
+    curl.long >= MIN_LONG_LINES &&
+    curl.u1 - curl.u0 >= MIN_SPAN &&
     curl.bend >= MIN_BEND &&
-    curl.after < 0.6 * curl.before
+    curl.bend <= MAX_BEND &&
+    curl.after < 0.6 * curl.before &&
+    sheetLike(curl)
   );
+}
+
+/** P, Q and the lift stay small over the whole page. */
+function sheetLike(curl: Curl): boolean {
+  for (let k = 0; k <= 50; k++) {
+    const u = -0.5 + k / 50;
+    if (
+      Math.abs(curlAt(curl, curl.p, u)) > MAX_SHAPE ||
+      Math.abs(curlAt(curl, curl.q, u)) > MAX_SHAPE ||
+      Math.abs(liftAt(curl, u)) > MAX_SHAPE
+    )
+      return false;
+  }
+  return true;
+}
+
+/**
+ * Whether straightening with `curl` seen from `camera` gives a page: not much
+ * wider than the flat one, and every column of the photo used once, in order
+ * (no folds).
+ */
+export function warpsCleanly(
+  curl: Curl,
+  ratio: number,
+  camera: CameraPose,
+): boolean {
+  if (flatRatio(curl, ratio, camera.height) > MAX_STRETCH * ratio) return false;
+  let last = -Infinity;
+  for (let k = 0; k <= 200; k++) {
+    const u = -0.5 + k / 200;
+    const lift = liftAt(curl, u);
+    const seen = (u - camera.u * lift) / (1 - lift);
+    if (!(seen > last) || Math.abs(seen) > 0.6) return false;
+    last = seen;
+  }
+  return true;
 }
 
 /** The sheet's shape for the page inside `frame`, or null if it is flat. */

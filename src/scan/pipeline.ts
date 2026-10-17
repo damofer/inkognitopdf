@@ -4,7 +4,13 @@
  */
 import { readableCopy, readableGray } from "./darkAreas";
 import { detectPage } from "./detect";
-import { cameraPose, findCurl, flatRatio, warpCurled } from "./dewarp";
+import {
+  cameraPose,
+  findCurl,
+  flatRatio,
+  warpCurled,
+  warpsCleanly,
+} from "./dewarp";
 import {
   grayToRgba,
   bitmapToRgba,
@@ -101,11 +107,14 @@ export function rectify(
 ): Rectified {
   const ratio = aspectRatio(quad, photo.width, photo.height);
   const frame = insetQuad(quad);
-  const curl =
+  const found =
     straighten && paper !== "card" ? findCurl(photo, frame, ratio) : null;
-  const camera = curl
+  const camera = found
     ? cameraPose(quad, frame, ratio, photo.width, photo.height)
     : null;
+  // A shape that would fold or stretch the page is not trusted.
+  const curl =
+    found && camera && warpsCleanly(found, ratio, camera) ? found : null;
   const { widthPt, heightPt } = pageSize(
     curl && camera ? flatRatio(curl, ratio, camera.height) : ratio,
     paper,

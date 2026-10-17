@@ -1,7 +1,9 @@
 // Spec 029: straightening curved pages, on synthetic photos of a bent sheet.
+import { createCanvas } from "@napi-rs/canvas";
 import { describe, expect, it } from "vitest";
 import { detectPage } from "../../src/scan/detect";
 import { fitCurl, isCurled } from "../../src/scan/dewarp";
+import type { Quad } from "../../src/scan/homography";
 import { toGray, type Gray } from "../../src/scan/image";
 import { rectify } from "../../src/scan/pipeline";
 import {
@@ -12,6 +14,67 @@ import {
 } from "./synthPhoto";
 
 const page = testPage(100);
+
+/**
+ * A box's printed face, as in a user's photo: a big title, line drawings at
+ * an angle and a label, but no lines of text to straighten.
+ */
+function drawingPage(): TestPage {
+  const { width: w, height: h } = page.page;
+  const ctx = createCanvas(w, h).getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "#b4483a";
+  ctx.font = `${h * 0.09}px ArimoBold`;
+  ctx.fillText("HDMI", w * 0.12, h * 0.22);
+  ctx.strokeStyle = "#b4483a";
+  ctx.lineWidth = 2;
+  ctx.font = `${h * 0.07}px ArimoBold`;
+  ctx.strokeText("Wireless", w * 0.1, h * 0.11);
+  ctx.strokeStyle = "#222";
+  ctx.lineWidth = 3;
+  for (const [x, y, angle, sx, sy] of [
+    [0.3, 0.5, -0.35, 0.18, 0.4],
+    [0.68, 0.55, 0.6, 0.18, 0.4],
+    [0.5, 0.86, 0.1, 0.24, 0.09],
+  ] as const) {
+    ctx.save();
+    ctx.translate(x * w, y * h);
+    ctx.rotate(angle);
+    for (const k of [1, 0.7, 0.3]) {
+      ctx.beginPath();
+      ctx.roundRect(
+        (-sx * w * k) / 2,
+        (-sy * h * k) / 2,
+        sx * w * k,
+        sy * h * k,
+        20 * k,
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.fillStyle = "#b4483a";
+  ctx.beginPath();
+  ctx.roundRect(0, h * 0.72, w * 0.35, h * 0.07, 16);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = `${h * 0.04}px ArimoBold`;
+  ctx.fillText("OS  ■  ●", w * 0.02, h * 0.77);
+  const rgba = ctx.getImageData(0, 0, w, h).data;
+  const data = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++)
+    data[i] =
+      0.299 * rgba[i * 4]! +
+      0.587 * rgba[i * 4 + 1]! +
+      0.114 * rgba[i * 4 + 2]!;
+  return {
+    ...page,
+    page: { width: w, height: h, data },
+    rules: [],
+    columns: [],
+  };
+}
 
 /** y of a dark horizontal rule, followed from the middle of [x0, x1]. */
 function traceRule(out: Gray, x0: number, x1: number, y0: number) {
@@ -196,6 +259,33 @@ describe("curved pages (spec 029)", () => {
     expect(rectify(photo, corners, "auto", 100).curved).toBe(false);
   });
 
+  it(
+    "leaves a flat sheet of drawings alone, with any corners",
+    { timeout: 120_000 },
+    () => {
+      const drawings = drawingPage();
+      for (const seed of [401, 402, 403]) {
+        const { photo, corners } = synthPhoto({
+          seed,
+          page: drawings,
+          tilt: 35,
+        });
+        const whole: Quad = [
+          { x: 0, y: 0 },
+          { x: photo.width, y: 0 },
+          { x: photo.width, y: photo.height },
+          { x: 0, y: photo.height },
+        ];
+        for (const quad of [corners, whole]) {
+          const plain = rectify(photo, quad, "auto", 60, false);
+          const fixed = rectify(photo, quad, "auto", 60);
+          expect(fixed.curved, `seed ${seed}`).toBe(false);
+          expect(fixed.image.width).toBe(plain.image.width);
+        }
+      }
+    },
+  );
+
   it("never bends an ID card", { timeout: 60_000 }, () => {
     const { photo, corners } = synthPhoto({ page, ...CURLED[0]! });
     expect(rectify(photo, corners, "card", 100).curved).toBe(false);
@@ -220,6 +310,20 @@ describe("fitCurl", () => {
     expect(isCurled(curl)).toBe(true);
     expect(curl.after).toBeLessThan(1e-4);
     expect(curl.bend).toBeGreaterThan(0.01);
+  });
+
+  it("does not believe a wild fit to a few short strokes", () => {
+    // Slanted, wavy strokes like a drawing's: the polynomials can follow
+    // them, but no sheet bends like that.
+    const width = 800;
+    const height = 1100;
+    const lines = [0.2, 0.35, 0.5, 0.62, 0.75, 0.88].map((y, k) =>
+      Array.from({ length: 40 }, (_, i) => {
+        const x = (0.1 + 0.06 * k + (0.25 * i) / 39) * width;
+        return { x, y: y * height + 60 * Math.sin(x / 40 + k) + 0.4 * x };
+      }),
+    );
+    expect(isCurled(fitCurl(lines, width, height))).toBe(false);
   });
 
   it("finds no bend in straight lines", () => {
