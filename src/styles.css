@@ -627,6 +627,26 @@ button[aria-pressed="true"] {
   border: 2px solid #fff;
   border-radius: 2px;
   cursor: nwse-resize;
+  touch-action: none;
+}
+
+/*
+ * A finger on an item its tool moves drags it; the page does not scroll
+ * (the overlay of tap tools lets the browser pan, which cancels the drag).
+ * Elsewhere on the page a finger still scrolls; edited text too.
+ */
+.edit-overlay.tool-select .item:not(.item-textEdit),
+.edit-overlay.tool-formField .item-formField {
+  touch-action: none;
+}
+
+/* The resize handle is 44 px to a finger. */
+@media (pointer: coarse) {
+  .resize-handle::before {
+    content: "";
+    position: absolute;
+    inset: -18px;
+  }
 }
 
 .text-draft {
