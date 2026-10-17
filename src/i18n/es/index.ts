@@ -1,6 +1,7 @@
 // Spanish messages: the reference set. Every area file in en/ mirrors the one
 // here with the same keys and argument lists.
 import { app } from "./app";
+import { compare } from "./compare";
 import { editor } from "./editor";
 import { editLayer } from "./editLayer";
 import { engine } from "./engine";
@@ -25,6 +26,7 @@ import { xray } from "./xray";
 
 export const es = {
   ...app,
+  ...compare,
   ...editor,
   ...editLayer,
   ...engine,

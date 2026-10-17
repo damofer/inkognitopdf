@@ -78,6 +78,8 @@ const EVENTS = {
   pii_mark: ["pii"],
   open_external: ["via"],
   share_pdf: [],
+  compare_pdf: ["pages"],
+  compare_report: [],
   unlock_pdf: [],
   add_image: [],
   create_field: [],

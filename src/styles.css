@@ -2439,3 +2439,209 @@ button.danger {
   stroke: currentColor;
   stroke-width: 1.8;
 }
+
+/* Spec 018: two versions side by side, over the whole window. */
+.compare-view {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg, #f3f4f6);
+  color: var(--text);
+}
+
+.compare-view > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-view h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.compare-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.compare-legend::before {
+  content: "";
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: -0.05em;
+}
+
+.compare-legend.removed::before {
+  background: rgb(220 38 38 / 0.45);
+  border: 1px solid #dc2626;
+}
+
+.compare-legend.added::before {
+  background: rgb(22 163 74 / 0.4);
+  border: 1px solid #16a34a;
+}
+
+.compare-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.compare-close {
+  min-width: 36px;
+  font-size: 1.2rem;
+}
+
+.compare-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px 24px;
+}
+
+.compare-summary {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.compare-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.compare-nav .toolbar-check {
+  margin-left: 8px;
+}
+
+.compare-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.compare-sides figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.compare-sides figcaption {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.compare-sides figcaption small {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.compare-page {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+}
+
+.compare-page canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.compare-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.compare-mark {
+  position: absolute;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.compare-mark.removed {
+  background: rgb(220 38 38 / 0.3);
+  outline: 1px solid #dc2626;
+}
+
+.compare-mark.added {
+  background: rgb(22 163 74 / 0.28);
+  outline: 1px solid #16a34a;
+}
+
+.compare-nopage {
+  padding: 24px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.compare-changes h3 {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+}
+
+.compare-changes ol {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compare-changes button {
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.compare-changes button[aria-current="page"] {
+  border-color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .compare-view > header {
+    padding: 8px 12px;
+  }
+
+  .compare-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .compare-actions .primary {
+    flex: 1;
+  }
+
+  .compare-view :is(button, .toolbar-check) {
+    min-height: 44px;
+  }
+
+  .compare-nav button {
+    min-width: 44px;
+  }
+
+  .compare-body {
+    padding: 10px 12px 20px;
+  }
+
+  .compare-sides {
+    grid-template-columns: 1fr;
+  }
+}

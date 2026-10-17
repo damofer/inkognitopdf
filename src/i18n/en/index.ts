@@ -2,6 +2,7 @@
 // missing key or a different argument list fails the type check.
 import type { Messages } from "../es";
 import { app } from "./app";
+import { compare } from "./compare";
 import { editor } from "./editor";
 import { editLayer } from "./editLayer";
 import { engine } from "./engine";
@@ -26,6 +27,7 @@ import { xray } from "./xray";
 
 export const en: Messages = {
   ...app,
+  ...compare,
   ...editor,
   ...editLayer,
   ...engine,

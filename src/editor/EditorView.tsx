@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   effectiveRotation,
   type AnnotationItem,
@@ -64,6 +72,8 @@ import { unlock, type AskPassword } from "../storage/unlock";
 import { NumberingPanel } from "../numbering/NumberingPanel";
 import { XrayPanel } from "../xray/XrayPanel";
 import { canShareFiles, sharePdf } from "./share";
+import { isPristine } from "../model/document";
+import type { CompareInput } from "../compare/CompareView";
 import type { PrivacyKind } from "../engine/privacy";
 import { NumberingPreview } from "../numbering/NumberingPreview";
 import {
@@ -97,6 +107,11 @@ interface EditorViewProps {
 
 /** Panels of the pages column (specs 013, 014 and 022): one open at a time. */
 type PagesPanel = "split" | "compress" | "protect" | "numbers";
+
+// Spec 018: the comparison loads only when used.
+const CompareView = lazy(() =>
+  import("../compare/CompareView").then((m) => ({ default: m.CompareView })),
+);
 
 const FONTS: { value: FontFamily; label: string }[] = [
   { value: "Helvetica", label: "Helvetica" },
@@ -873,6 +888,44 @@ export function EditorView({
     }
   };
   const chooseInsert = () => insertInputRef.current?.click();
+
+  // Spec 018: another version of the PDF, compared with the document as it
+  // is now (with its edits).
+  const compareInputRef = useRef<HTMLInputElement>(null);
+  const [comparing, setComparing] = useState<{
+    before: CompareInput;
+    after: CompareInput;
+  } | null>(null);
+  const [preparingCompare, setPreparingCompare] = useState(false);
+  const compareWith = async (other: File | undefined) => {
+    if (!other) return;
+    setPreparingCompare(true);
+    setNotice(null);
+    try {
+      const opened = await unlock(await openPdfFile(other), askPassword);
+      const { buildPdf, editedFileName } = await import("./save");
+      const pristine = file && doc && isPristine(state, doc.numPages);
+      const now = pristine
+        ? file.copyBytes()
+        : (await buildPdf(file, state)).bytes;
+      setComparing({
+        before: { name: opened.file.name, bytes: opened.file.copyBytes() },
+        after: {
+          name: pristine ? file.name : editedFileName(file?.name ?? null),
+          bytes: now,
+        },
+      });
+    } catch (cause) {
+      setNotice(
+        t(
+          "compare.failed",
+          cause instanceof Error ? cause.message : String(cause),
+        ),
+      );
+    } finally {
+      setPreparingCompare(false);
+    }
+  };
 
   const [panel, setPanel] = useState<PagesPanel | null>(null);
   const togglePanel = (which: PagesPanel) =>
@@ -2076,6 +2129,14 @@ export function EditorView({
         >
           {t("xray.button")}
         </button>
+        <button
+          type="button"
+          title={t("compare.hint")}
+          disabled={preparingCompare}
+          onClick={() => compareInputRef.current?.click()}
+        >
+          {preparingCompare ? t("compare.loading") : t("compare.button")}
+        </button>
       </span>
       <span
         className="toolbar-group tools"
@@ -2409,6 +2470,31 @@ export function EditorView({
       </p>
       {imageInput}
       {insertInput}
+      <input
+        ref={compareInputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        hidden
+        data-testid="compare-pdf"
+        onChange={(e) => {
+          void compareWith(e.currentTarget.files?.[0]);
+          e.currentTarget.value = "";
+        }}
+      />
+      {comparing && (
+        <Suspense fallback={null}>
+          <CompareView
+            before={comparing.before}
+            after={comparing.after}
+            onDownload={(bytes, name) =>
+              void import("./save").then(({ downloadPdf }) =>
+                downloadPdf(bytes, name),
+              )
+            }
+            onClose={() => setComparing(null)}
+          />
+        </Suspense>
+      )}
       <Viewer
         doc={doc}
         pages={state.pages}
@@ -2452,6 +2538,7 @@ export function EditorView({
           onToggleSplit={() => togglePanel("split")}
           xrayOpen={xrayOpen}
           onToggleXray={() => setXrayOpen((o) => !o)}
+          onCompare={() => compareInputRef.current?.click()}
           numbersOpen={panel === "numbers"}
           onToggleNumbers={toggleNumbers}
           compressOpen={panel === "compress"}

@@ -66,6 +66,8 @@ interface MobileBarProps {
   /** Privacy x-ray (spec 015). */
   xrayOpen?: boolean;
   onToggleXray?: () => void;
+  /** Spec 018: choose another version to compare with. */
+  onCompare?: () => void;
   /** Page numbers, headers and footers (spec 022). */
   numbersOpen?: boolean;
   onToggleNumbers?: () => void;
@@ -96,6 +98,7 @@ export function MobileBar({
   onToggleNumbers,
   xrayOpen = false,
   onToggleXray,
+  onCompare,
   compressOpen = false,
   onToggleCompress,
   protectOpen = false,
@@ -233,6 +236,21 @@ export function MobileBar({
                         ◎
                       </span>
                       <span>{t("xray.button")}</span>
+                    </button>
+                  )}
+                  {onCompare && (
+                    <button
+                      type="button"
+                      className="sheet-item"
+                      onClick={() => {
+                        setSheet(null);
+                        onCompare();
+                      }}
+                    >
+                      <span className="sheet-icon" aria-hidden="true">
+                        ⇄
+                      </span>
+                      <span>{t("compare.button")}</span>
                     </button>
                   )}
                   {onToggleNumbers && (
