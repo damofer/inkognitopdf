@@ -63,6 +63,7 @@
   .field-panel :is(button, input, select),
   .thumbnails button,
   .sign-panel :is(button, select, input:not([type="checkbox"], [type="radio"])),
+  .sign-panel .sign-check,
   .ocr-panel :is(button, select, input:not([type="checkbox"], [type="radio"])),
   .scan-view :is(button, select, .open-button) {
     min-height: 44px;

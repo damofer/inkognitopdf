@@ -15,6 +15,17 @@ export const sign = {
   "sign.dateDmy": "dd/mm/aaaa",
   "sign.dateIso": "aaaa-mm-dd",
   "sign.placeDate": "Colocar fecha",
+  // Spec 019: initials on every page and the date with the signature.
+  "sign.initialsEverywhere": "En todas las páginas",
+  "sign.initialsEverywhereHint":
+    "Poner las iniciales abajo a la derecha de cada página que aún no las tenga",
+  "sign.initialsPlaced": (n: number) =>
+    n === 0
+      ? "Todas las páginas ya tenían iniciales."
+      : n === 1
+        ? "Iniciales puestas en 1 página."
+        : `Iniciales puestas en ${n} páginas.`,
+  "sign.autoDate": "Poner la fecha bajo la firma",
   "sign.createSignature": "Crear firma",
   "sign.createInitials": "Crear iniciales",
   "sign.draw": "Dibujar",

@@ -73,6 +73,8 @@ import { NumberingPanel } from "../numbering/NumberingPanel";
 import { XrayPanel } from "../xray/XrayPanel";
 import { canShareFiles, sharePdf } from "./share";
 import { isPristine } from "../model/document";
+import { initialsOnEveryPage } from "../model/initials";
+import { assetAspect } from "../sign/SignaturePreview";
 import type { CompareInput } from "../compare/CompareView";
 import type { PrivacyKind } from "../engine/privacy";
 import { NumberingPreview } from "../numbering/NumberingPreview";
@@ -2347,6 +2349,27 @@ export function EditorView({
             // On a phone the panel covers the page: close it to place.
             if (mobile) setSignOpen(false);
           }}
+          onInitialsEverywhere={
+            state.pages.length > 1
+              ? (asset) => {
+                  const items = initialsOnEveryPage(
+                    state,
+                    asset,
+                    assetAspect(asset),
+                    () => newId("signature"),
+                  );
+                  if (items.length > 0)
+                    dispatch(
+                      items.map((item) => ({ kind: "addItem" as const, item })),
+                    );
+                  track("initials_all", {
+                    pages: pagesBucket(state.pages.length),
+                  });
+                  setToast(t("sign.initialsPlaced", items.length));
+                  if (mobile) setSignOpen(false);
+                }
+              : undefined
+          }
           onClose={() => setSignOpen(false)}
         >
           <IdentityPicker

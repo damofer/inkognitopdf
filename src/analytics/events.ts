@@ -80,6 +80,7 @@ const EVENTS = {
   share_pdf: [],
   compare_pdf: ["pages"],
   compare_report: [],
+  initials_all: ["pages"],
   unlock_pdf: [],
   add_image: [],
   create_field: [],

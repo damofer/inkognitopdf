@@ -17,6 +17,16 @@ export const sign: typeof es = {
   "sign.dateDmy": "dd/mm/yyyy",
   "sign.dateIso": "yyyy-mm-dd",
   "sign.placeDate": "Place date",
+  "sign.initialsEverywhere": "On every page",
+  "sign.initialsEverywhereHint":
+    "Put the initials at the bottom right of every page that has none yet",
+  "sign.initialsPlaced": (n: number) =>
+    n === 0
+      ? "Every page already had initials."
+      : n === 1
+        ? "Initials placed on 1 page."
+        : `Initials placed on ${n} pages.`,
+  "sign.autoDate": "Add the date under the signature",
   "sign.createSignature": "Create signature",
   "sign.createInitials": "Create initials",
   "sign.draw": "Draw",

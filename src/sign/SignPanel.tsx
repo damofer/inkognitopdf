@@ -47,10 +47,22 @@ const initialsOf = (name: string) =>
     .map((w) => w[0]!.toUpperCase())
     .join("");
 
+/** Spec 019: whether the date goes under the signature, kept per device. */
+const AUTO_DATE_KEY = "inkognito.autoDate";
+function readAutoDate(): boolean {
+  try {
+    return localStorage.getItem(AUTO_DATE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 interface SignPanelProps {
   adopted: Adopted;
   onAdopted: (adopted: Adopted) => void;
   onPlace: (placing: Placing) => void;
+  /** Spec 019: the initials on every page at once (documents of 2+ pages). */
+  onInitialsEverywhere?: (asset: SignatureAsset) => void;
   onClose: () => void;
   /** Saving section (visual or digital), provided by the editor. */
   children?: ReactNode;
@@ -60,6 +72,7 @@ export function SignPanel({
   adopted,
   onAdopted,
   onPlace,
+  onInitialsEverywhere,
   onClose,
   children,
 }: SignPanelProps) {
@@ -68,6 +81,15 @@ export function SignPanel({
   const [remember, setRemember] = useState(false);
   const [format, setFormat] = useState<DateFormat>("dmy");
   const [name, setName] = useState("");
+  const [autoDate, setAutoDate] = useState(readAutoDate);
+  const changeAutoDate = (on: boolean) => {
+    setAutoDate(on);
+    try {
+      localStorage.setItem(AUTO_DATE_KEY, on ? "1" : "0");
+    } catch {
+      // Without storage the choice lasts while the panel is open.
+    }
+  };
 
   // Signatures remembered on this device (CA4).
   useEffect(() => {
@@ -157,11 +179,29 @@ export function SignPanel({
                   className="primary"
                   disabled={!asset}
                   onClick={() =>
-                    asset && onPlace({ kind: "signature", role, asset })
+                    asset &&
+                    onPlace({
+                      kind: "signature",
+                      role,
+                      asset,
+                      ...(role === "signature" && autoDate
+                        ? { date: formatDate(new Date(), format) }
+                        : {}),
+                    })
                   }
                 >
                   {t(PLACE_LABEL[role])}
                 </button>
+                {role === "initials" && onInitialsEverywhere && (
+                  <button
+                    type="button"
+                    title={t("sign.initialsEverywhereHint")}
+                    disabled={!asset}
+                    onClick={() => asset && onInitialsEverywhere(asset)}
+                  >
+                    {t("sign.initialsEverywhere")}
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -174,6 +214,14 @@ export function SignPanel({
           onChange={(e) => void setRemembered(e.currentTarget.checked)}
         />
         {t("sign.rememberOnDevice")}
+      </label>
+      <label className="sign-check">
+        <input
+          type="checkbox"
+          checked={autoDate}
+          onChange={(e) => changeAutoDate(e.currentTarget.checked)}
+        />
+        {t("sign.autoDate")}
       </label>
       <div className="sign-row">
         <select

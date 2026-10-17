@@ -162,7 +162,13 @@ const FREE_TEXT_WIDTH = 200;
 
 /** A signature, initials or a fixed text (the date) waiting to be placed. */
 export type Placing =
-  | { kind: "signature"; role: SignatureRole; asset: SignatureAsset }
+  | {
+      kind: "signature";
+      role: SignatureRole;
+      asset: SignatureAsset;
+      /** Spec 019: the date written under the signature. */
+      date?: string;
+    }
   | { kind: "text"; text: string }
   /** A field for a signer of a signing plan (spec 004, HU6). */
   | { kind: "field"; field: SignFieldType; signerId: string };
@@ -667,23 +673,47 @@ export function EditLayer(props: EditLayerProps) {
         width = maxWidth;
         height = width / aspect;
       }
-      dispatch({
-        kind: "addItem",
-        item: {
-          kind: "signature",
-          id,
-          pageId: entry.id,
-          role: placing.role,
-          asset: placing.asset,
-          rect: geometry.rectToPdf({
-            x: p.x - width / 2,
-            y: p.y - height / 2,
-            width,
-            height,
-          }),
-          rotate: pageRotation,
+      const ops: Operation[] = [
+        {
+          kind: "addItem",
+          item: {
+            kind: "signature",
+            id,
+            pageId: entry.id,
+            role: placing.role,
+            asset: placing.asset,
+            rect: geometry.rectToPdf({
+              x: p.x - width / 2,
+              y: p.y - height / 2,
+              width,
+              height,
+            }),
+            rotate: pageRotation,
+          },
         },
-      });
+      ];
+      // Spec 019: the date under the signature, in the same step.
+      if (placing.date) {
+        const style = { ...props.textStyle, size: 10 };
+        const size = style.size * geometry.scale;
+        const lineHeight = size * style.lineHeight;
+        ops.push({
+          kind: "addItem",
+          item: {
+            kind: "text",
+            id: newId("text"),
+            pageId: entry.id,
+            at: geometry.toPdf({
+              x: p.x - width / 2,
+              y: p.y + height / 2 + 4 + baselineOffset(size, lineHeight),
+            }),
+            text: placing.date,
+            style,
+            rotate: pageRotation,
+          },
+        });
+      }
+      dispatch(ops);
     }
     props.onPlaced?.();
     onSelect(id);
