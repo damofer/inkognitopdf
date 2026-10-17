@@ -26,6 +26,7 @@ import {
   type ScanRequest,
 } from "./protocol";
 import { toScanImage } from "./scanImage";
+import { sharpen } from "./sharpen";
 
 declare const self: DedicatedWorkerGlobalScope;
 
@@ -67,7 +68,8 @@ async function encodeJpeg(image: Rgba, quality: number): Promise<Uint8Array> {
 
 /**
  * The page of a photo rectified for `quad` and `paper` (and straightened if
- * curved, spec 029), reused while they hold.
+ * curved, spec 029), brought into focus if blurred (spec 031), reused while
+ * they hold.
  */
 function rectified(
   id: string,
@@ -80,10 +82,8 @@ function rectified(
   const key = JSON.stringify([quad, paper, straighten]);
   let cached = pages.get(id);
   if (!cached || cached.key !== key) {
-    cached = {
-      key,
-      page: rectify(photo, quad, paper, undefined, straighten),
-    };
+    const page = rectify(photo, quad, paper, undefined, straighten);
+    cached = { key, page: { ...page, image: sharpen(page.image) } };
     pages.set(id, cached);
   }
   return cached.page;

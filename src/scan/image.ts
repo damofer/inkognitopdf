@@ -116,26 +116,35 @@ export function blur(src: Gray, sigma: number): Gray {
   const k = kernel(sigma);
   const r = (k.length - 1) / 2;
   const { width: w, height: h } = src;
+  const d = src.data;
   const tmp = new Float32Array(w * h);
-  for (let y = 0; y < h; y++)
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
     for (let x = 0; x < w; x++) {
       let s = 0;
-      for (let i = -r; i <= r; i++) {
-        const xx = Math.min(w - 1, Math.max(0, x + i));
-        s += src.data[y * w + xx]! * k[i + r]!;
-      }
-      tmp[y * w + x] = s;
+      if (x >= r && x < w - r)
+        for (let i = 0, j = row + x - r; i < k.length; i++, j++)
+          s += d[j]! * k[i]!;
+      else
+        for (let i = -r; i <= r; i++) {
+          const xx = Math.min(w - 1, Math.max(0, x + i));
+          s += d[row + xx]! * k[i + r]!;
+        }
+      tmp[row + x] = s;
     }
+  }
+  // Row by row, so the vertical pass reads memory in order.
   const out = gray(w, h);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      let s = 0;
-      for (let i = -r; i <= r; i++) {
-        const yy = Math.min(h - 1, Math.max(0, y + i));
-        s += tmp[yy * w + x]! * k[i + r]!;
-      }
-      out.data[y * w + x] = s;
+  const acc = new Float64Array(w);
+  for (let y = 0; y < h; y++) {
+    acc.fill(0);
+    for (let i = -r; i <= r; i++) {
+      const base = Math.min(h - 1, Math.max(0, y + i)) * w;
+      const kv = k[i + r]!;
+      for (let x = 0; x < w; x++) acc[x]! += tmp[base + x]! * kv;
     }
+    out.data.set(acc, y * w);
+  }
   return out;
 }
 
@@ -236,4 +245,69 @@ export function rotatePixels<T extends Float32Array | Uint8ClampedArray>(
       for (let c = 0; c < channels; c++) out[di + c] = data[si + c]!;
     }
   return { data: out, width: ow, height: oh };
+}
+
+/** Box blur of radius `r` along rows, then columns; edges are clamped. */
+function boxPass(
+  src: Float32Array,
+  w: number,
+  h: number,
+  r: number,
+): Float32Array {
+  if (r < 1) return src;
+  const n = 2 * r + 1;
+  const tmp = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    let s = 0;
+    for (let i = -r; i <= r; i++)
+      s += src[row + Math.min(w - 1, Math.max(0, i))]!;
+    for (let x = 0; x < w; x++) {
+      tmp[row + x] = s / n;
+      s +=
+        src[row + Math.min(w - 1, x + r + 1)]! - src[row + Math.max(0, x - r)]!;
+    }
+  }
+  const out = new Float32Array(w * h);
+  const acc = new Float64Array(w);
+  for (let i = -r; i <= r; i++) {
+    const base = Math.min(h - 1, Math.max(0, i)) * w;
+    for (let x = 0; x < w; x++) acc[x]! += tmp[base + x]!;
+  }
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    for (let x = 0; x < w; x++) out[row + x] = acc[x]! / n;
+    const add = Math.min(h - 1, y + r + 1) * w;
+    const drop = Math.max(0, y - r) * w;
+    for (let x = 0; x < w; x++) acc[x]! += tmp[add + x]! - tmp[drop + x]!;
+  }
+  return out;
+}
+
+/**
+ * Close to `blur` (three box blurs, Kovesi's "Fast almost-Gaussian
+ * filtering", 2010) in a time that does not grow with `sigma`.
+ */
+export function fastBlur(src: Gray, sigma: number): Gray {
+  const ideal = Math.sqrt((12 * sigma * sigma) / 3 + 1);
+  let lower = Math.floor(ideal);
+  if (lower % 2 === 0) lower--;
+  const upper = lower + 2;
+  const m = Math.round(
+    (12 * sigma * sigma - 3 * lower * lower - 12 * lower - 9) /
+      (-4 * lower - 4),
+  );
+  let data = src.data;
+  for (let i = 0; i < 3; i++)
+    data = boxPass(
+      data,
+      src.width,
+      src.height,
+      ((i < m ? lower : upper) - 1) / 2,
+    );
+  return {
+    width: src.width,
+    height: src.height,
+    data: data === src.data ? data.slice() : data,
+  };
 }
