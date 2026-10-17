@@ -15,6 +15,14 @@ export const app = {
   "app.sourceCodeHint": "Código abierto en GitHub (se abre en otra pestaña)",
   "app.description":
     "Editor de PDF open source que procesa tus documentos en tu dispositivo.",
+  "draft.title": "Tienes trabajo sin guardar",
+  "draft.detail": (name: string, when: string) =>
+    `«${name}», editado ${when}. Está guardado solo en este dispositivo.`,
+  "draft.resume": "Retomar",
+  "draft.discard": "Descartar",
+  "draft.resuming": (name: string) => `Recuperando «${name}»…`,
+  "draft.failed": (reason: string) =>
+    `No se pudo recuperar el trabajo sin guardar: ${reason}`,
   "lang.label": "Idioma",
   // Each language is named in itself, in both dictionaries.
   "lang.es": "Español",

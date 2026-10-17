@@ -26,6 +26,15 @@ test.beforeAll(async () => {
     "hoja-3.jpg": { seed: 603, width: 2400, height: 1800 },
     "girada.jpg": { seed: 604, width: 2400, height: 1800, exifRotated: true },
     "12mp.jpg": { seed: 605, width: 4000, height: 3000 },
+    // Spec 029: a page of an open book.
+    "libro.jpg": {
+      seed: 606,
+      width: 2400,
+      height: 1800,
+      tilt: 15,
+      curl: 30,
+      curlShape: "spine",
+    },
   });
 });
 
@@ -340,4 +349,29 @@ test("009 CA9: with OCR checked, the scan opens in the editor with its text", as
   await expect(page.getByTestId("scanned-notice")).toHaveCount(0);
   // Not marked while the OCR panel is closed.
   await expect(page.getByTestId("ocr-low")).toHaveCount(0);
+});
+
+test("spec 029, CA5: a curved sheet is straightened, and can be left flat", async ({
+  page,
+}) => {
+  await page.goto("/app/");
+  await openScanner(page, ["libro.jpg", "hoja-1.jpg"]);
+  await page.getByRole("button", { name: "Continuar" }).click();
+  const straighten = scanner(page).getByRole("button", {
+    name: "Enderezar curvatura",
+  });
+  await expect(straighten).toHaveAttribute("aria-pressed", "true");
+  const result = page.locator("img.scan-result");
+  const curved = await result.getAttribute("src");
+  await straighten.click();
+  await expect(straighten).toHaveAttribute("aria-pressed", "false");
+  await expect(result).not.toHaveAttribute("src", curved!);
+  await straighten.click();
+  await expect(straighten).toHaveAttribute("aria-pressed", "true");
+
+  // A flat sheet has no such button.
+  await page.locator(".scan-thumb").nth(1).click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(result).toHaveAttribute("data-mode", "bw");
+  await expect(straighten).toHaveCount(0);
 });

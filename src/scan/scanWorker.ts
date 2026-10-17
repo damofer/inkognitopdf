@@ -65,14 +65,25 @@ async function encodeJpeg(image: Rgba, quality: number): Promise<Uint8Array> {
   return new Uint8Array(await blob.arrayBuffer());
 }
 
-/** The page of a photo rectified for `quad` and `paper`, reused while they hold. */
-function rectified(id: string, quad: Quad, paper: PaperSize): Rectified {
+/**
+ * The page of a photo rectified for `quad` and `paper` (and straightened if
+ * curved, spec 029), reused while they hold.
+ */
+function rectified(
+  id: string,
+  quad: Quad,
+  paper: PaperSize,
+  straighten = false,
+): Rectified {
   const photo = photos.get(id);
   if (!photo) throw new ScanError("scan.photoGone");
-  const key = JSON.stringify([quad, paper]);
+  const key = JSON.stringify([quad, paper, straighten]);
   let cached = pages.get(id);
   if (!cached || cached.key !== key) {
-    cached = { key, page: rectify(photo, quad, paper) };
+    cached = {
+      key,
+      page: rectify(photo, quad, paper, undefined, straighten),
+    };
     pages.set(id, cached);
   }
   return cached.page;
@@ -120,11 +131,8 @@ async function handle(req: ScanRequest): Promise<{
   }
   const t0 = performance.now();
   // The rectified page is reused while only the mode or the rotation change.
-  const page = enhance(
-    rectified(req.id, req.quad, req.paper).image,
-    req.mode,
-    req.quarters,
-  );
+  const flat = rectified(req.id, req.quad, req.paper, req.straighten);
+  const page = enhance(flat.image, req.mode, req.quarters);
   const scan = await toScanImage(page, encodeJpeg);
   const scale = Math.min(
     1,
@@ -136,7 +144,7 @@ async function handle(req: ScanRequest): Promise<{
     resizeQuality: "high",
   });
   return {
-    result: { preview, scan, ms: performance.now() - t0 },
+    result: { preview, scan, ms: performance.now() - t0, curved: flat.curved },
     transfer: [preview, scan.data.buffer],
   };
 }

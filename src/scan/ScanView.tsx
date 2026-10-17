@@ -34,8 +34,10 @@ interface Shot {
   quad: Quad;
   mode: ScanMode;
   quarters: number;
+  /** Spec 029: straighten the sheet if it is curved. */
+  straighten: boolean;
   /** Rendered result for the current quad, mode and rotation. */
-  result?: { url: string; scan: ScanImage; key: string };
+  result?: { url: string; scan: ScanImage; key: string; curved: boolean };
   step: "crop" | "result";
   /** Taken with the live camera (spec 020). */
   live?: boolean;
@@ -48,7 +50,7 @@ const MODES = [
 ] as const satisfies readonly { mode: ScanMode; label: MessageKey }[];
 
 const renderKey = (s: Shot, paper: PaperSize) =>
-  JSON.stringify([s.quad, s.mode, s.quarters, paper]);
+  JSON.stringify([s.quad, s.mode, s.quarters, paper, s.straighten]);
 
 async function bitmapUrl(bitmap: ImageBitmap): Promise<string> {
   const canvas = document.createElement("canvas");
@@ -275,6 +277,7 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       // 027); a sheet becomes a photocopy.
       mode: idCard ? (shotsRef.current[0]?.mode ?? "original") : "bw",
       quarters: 0,
+      straighten: true,
       step: live && autoDetect && detected ? "result" : "crop",
       live,
     };
@@ -358,10 +361,14 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       shot.mode,
       shot.quarters,
       paper,
+      shot.straighten,
     );
     const url = await bitmapUrl(result.preview);
     result.preview.close();
-    const next = { ...shot, result: { url, scan: result.scan, key } };
+    const next = {
+      ...shot,
+      result: { url, scan: result.scan, key, curved: result.curved },
+    };
     const old = shotsRef.current.find((s) => s.id === shot.id)?.result?.url;
     setShots((all) =>
       all.map((s) => (s.id === shot.id ? { ...s, result: next.result } : s)),
@@ -409,7 +416,15 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
       stale = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shot?.id, shot?.step, shot?.mode, shot?.quarters, shot?.quad, paper]);
+  }, [
+    shot?.id,
+    shot?.step,
+    shot?.mode,
+    shot?.quarters,
+    shot?.quad,
+    shot?.straighten,
+    paper,
+  ]);
 
   const remove = (index: number) => {
     const s = shots[index];
@@ -546,6 +561,11 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
   const rotate = (quarters: number) =>
     shot &&
     update(shot.id, (s) => ({ ...s, quarters: (s.quarters + quarters) % 4 }));
+  // Spec 029: only for a sheet found curved (or one the user set flat).
+  const canStraighten =
+    !!shot && !idCard && (!shot.straighten || !!shot.result?.curved);
+  const toggleStraighten = () =>
+    shot && update(shot.id, (s) => ({ ...s, straighten: !s.straighten }));
 
   const modeButtons = shot && (
     <span
@@ -746,6 +766,18 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
               >
                 <ScanIcon name="rotateRight" />
               </button>
+              {canStraighten && (
+                <button
+                  type="button"
+                  className="scan-icon"
+                  aria-label={t("scan.straighten")}
+                  title={t("scan.straightenHint")}
+                  aria-pressed={shot.straighten}
+                  onClick={toggleStraighten}
+                >
+                  <ScanIcon name="curve" />
+                </button>
+              )}
               <button
                 type="button"
                 className="scan-icon"
@@ -1119,6 +1151,16 @@ export function ScanView({ onClose, onAdd, onOpen }: ScanViewProps) {
               >
                 ⟳
               </button>
+              {canStraighten && (
+                <button
+                  type="button"
+                  title={t("scan.straightenHint")}
+                  aria-pressed={shot.straighten}
+                  onClick={toggleStraighten}
+                >
+                  {t("scan.straighten")}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => update(shot.id, (s) => ({ ...s, step: "crop" }))}
@@ -1202,6 +1244,13 @@ const ICON_PATHS = {
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <circle cx="8.5" cy="10" r="1.5" />
       <path d="m21 16-5-5-9 8" />
+    </>
+  ),
+  curve: (
+    <>
+      <path d="M4 7c5-3 11-3 16 0" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
     </>
   ),
   rotateLeft: (

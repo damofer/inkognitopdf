@@ -12,8 +12,8 @@ import { ConsentNotice } from "./analytics/ConsentNotice";
 import { track, watchConsent } from "./analytics/analytics";
 import { filesBucket, pagesBucket, sizeBucket } from "./analytics/events";
 import { reopenConsent } from "./analytics/consent";
-import { EditorView } from "./editor/EditorView";
-import { useT } from "./i18n";
+import { EditorView, type Resumed } from "./editor/EditorView";
+import { locale, useT } from "./i18n";
 import { LangSwitch } from "./LangSwitch";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { Icon } from "./icons";
@@ -29,6 +29,7 @@ import { SupportPanel } from "./support/SupportPanel";
 import { PasswordPrompt } from "./protect/PasswordPrompt";
 import { unlock, type AskPassword } from "./storage/unlock";
 import { onLaunch, takeShared, wasShared } from "./storage/incoming";
+import { clearDraft, readDraft, type Draft } from "./storage/draft";
 
 // Templates (spec 021) load only when opened: their catalog is code.
 const TemplatesView = lazy(() =>
@@ -50,10 +51,22 @@ type State =
       password: string | null;
       /** The file only restricted permissions and opened without them. */
       restricted: boolean;
+      /** Resumed from the work kept on this device (spec 028). */
+      resumed?: Resumed;
     }
   | { status: "error"; message: string };
 
 let nextOpenId = 1;
+
+/** "hace 5 minutos", "ayer"…: how long ago, in the interface language. */
+function ago(time: number, now = Date.now()): string {
+  const format = new Intl.RelativeTimeFormat(locale(), { numeric: "auto" });
+  const minutes = Math.round((time - now) / 60_000);
+  if (minutes > -60) return format.format(Math.min(minutes, 0), "minute");
+  const hours = Math.round(minutes / 60);
+  if (hours > -24) return format.format(hours, "hour");
+  return format.format(Math.round(hours / 24), "day");
+}
 /** Shared PDFs are taken once, even when effects run twice (StrictMode). */
 let sharedTaken = false;
 
@@ -93,6 +106,61 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Spec 028: work not saved when the app was closed, offered on the start
+  // screen. Not when the app opens to receive shared PDFs.
+  const [draft, setDraft] = useState<Draft | null>(null);
+  useEffect(() => {
+    if (wasShared()) return;
+    let live = true;
+    readDraft()
+      .then((found) => {
+        if (live) setDraft(found);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  const discardDraft = () => {
+    setDraft(null);
+    void clearDraft().catch(() => {});
+  };
+  const resumeDraft = async (found: Draft) => {
+    setDraft(null);
+    setState({
+      status: "loading",
+      label: t("draft.resuming", found.file?.name ?? t("app.newDocument")),
+    });
+    try {
+      performance.mark("pdfcraft:open-start");
+      const file = found.file
+        ? createPdfFile(found.file.name, found.file.bytes)
+        : null;
+      const doc = file ? await loadDocument(file) : null;
+      setState({
+        status: "ready",
+        file,
+        doc,
+        initial: found.state,
+        openId: nextOpenId++,
+        password: null,
+        restricted: found.restricted,
+        resumed: {
+          fileId: found.fileId,
+          signers: found.signers,
+          planMode: found.planMode,
+        },
+      });
+    } catch (cause) {
+      setState({
+        status: "error",
+        message: t(
+          "draft.failed",
+          cause instanceof Error ? cause.message : String(cause),
+        ),
+      });
+    }
+  };
   /** Scanned pages waiting to be added to the open document. */
   const [incoming, setIncoming] = useState<{
     seq: number;
@@ -408,6 +476,37 @@ export function App() {
       <main className="app-main">
         {state.status === "empty" && (
           <div className="start">
+            {draft && (
+              <section
+                className="draft-offer"
+                role="region"
+                aria-label={t("draft.title")}
+              >
+                <Icon name="undo" size={22} />
+                <div className="draft-text">
+                  <strong>{t("draft.title")}</strong>
+                  <span>
+                    {t(
+                      "draft.detail",
+                      draft.file?.name ?? t("app.newDocument"),
+                      ago(draft.savedAt),
+                    )}
+                  </span>
+                </div>
+                <div className="draft-actions">
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => void resumeDraft(draft)}
+                  >
+                    {t("draft.resume")}
+                  </button>
+                  <button type="button" onClick={discardDraft}>
+                    {t("draft.discard")}
+                  </button>
+                </div>
+              </section>
+            )}
             <p className="hint">{t("app.emptyHint")}</p>
             {/* The main ways to start, on phones and desktops alike. */}
             <div className="start-actions">
@@ -448,6 +547,7 @@ export function App() {
             password={state.password}
             restricted={state.restricted}
             askPassword={askPassword}
+            resumed={state.resumed ?? null}
           />
         )}
         {scanning && (

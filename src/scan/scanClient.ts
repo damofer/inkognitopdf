@@ -56,8 +56,17 @@ export class ScanClient {
     mode: ScanMode,
     quarters: number,
     paper: PaperSize,
+    straighten: boolean,
   ): Promise<RenderResult> {
-    return this.call({ op: "render", id, quad, mode, quarters, paper });
+    return this.call({
+      op: "render",
+      id,
+      quad,
+      mode,
+      quarters,
+      paper,
+      straighten,
+    });
   }
 
   /** Spec 020: the page in a reduced camera frame. */

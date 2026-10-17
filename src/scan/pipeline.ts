@@ -4,6 +4,7 @@
  */
 import { readableCopy, readableGray } from "./darkAreas";
 import { detectPage } from "./detect";
+import { cameraPose, findCurl, flatRatio, warpCurled } from "./dewarp";
 import {
   grayToRgba,
   bitmapToRgba,
@@ -82,23 +83,43 @@ export interface Rectified {
   image: Rgba;
   widthPt: number;
   heightPt: number;
+  /** Spec 029: the sheet was curved and has been straightened. */
+  curved: boolean;
 }
 
-/** The page inside `quad`, flattened, at SCAN_PPI. */
+/**
+ * The page inside `quad`, flattened, at SCAN_PPI. With `straighten`, a sheet
+ * that is not flat has its lines of text straightened too (spec 029); ID
+ * cards are rigid and never are.
+ */
 export function rectify(
   photo: Rgba,
   quad: Quad,
   paper: PaperSize = "auto",
   ppi = SCAN_PPI,
+  straighten = true,
 ): Rectified {
   const ratio = aspectRatio(quad, photo.width, photo.height);
-  const { widthPt, heightPt } = pageSize(ratio, paper);
+  const frame = insetQuad(quad);
+  const curl =
+    straighten && paper !== "card" ? findCurl(photo, frame, ratio) : null;
+  const camera = curl
+    ? cameraPose(quad, frame, ratio, photo.width, photo.height)
+    : null;
+  const { widthPt, heightPt } = pageSize(
+    curl && camera ? flatRatio(curl, ratio, camera.height) : ratio,
+    paper,
+  );
   const width = Math.round((widthPt / 72) * ppi);
   const height = Math.round((heightPt / 72) * ppi);
   return {
-    image: warp(photo, insetQuad(quad), width, height),
+    image:
+      curl && camera
+        ? warpCurled(photo, frame, curl, ratio, camera, width, height)
+        : warp(photo, frame, width, height),
     widthPt,
     heightPt,
+    curved: !!curl,
   };
 }
 

@@ -87,26 +87,7 @@ export function aspectRatio(
   const [tl, tr, br, bl] = quad;
   const fallback =
     (dist(tl, tr) + dist(bl, br)) / (dist(tl, bl) + dist(tr, br));
-  const cx = imageWidth / 2;
-  const cy = imageHeight / 2;
-  const v = (p: Point): [number, number, number] => [p.x - cx, p.y - cy, 1];
-  const m1 = v(tl);
-  const m2 = v(tr);
-  const m3 = v(bl);
-  const m4 = v(br);
-  const cross = (a: number[], b: number[]) => [
-    a[1]! * b[2]! - a[2]! * b[1]!,
-    a[2]! * b[0]! - a[0]! * b[2]!,
-    a[0]! * b[1]! - a[1]! * b[0]!,
-  ];
-  const dot = (a: number[], b: number[]) =>
-    a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!;
-  const k2 = dot(cross(m1, m4), m3) / dot(cross(m2, m4), m3);
-  const k3 = dot(cross(m1, m4), m2) / dot(cross(m3, m4), m2);
-  const n2 = m2.map((c, i) => k2 * c - m1[i]!);
-  const n3 = m3.map((c, i) => k3 * c - m1[i]!);
-  const [a1, a2, a3] = n2 as [number, number, number];
-  const [b1, b2, b3] = n3 as [number, number, number];
+  const [a1, a2, a3, b1, b2, b3] = sideVectors(quad, imageWidth, imageHeight);
   // Nearly affine: the vanishing points are at infinity, so f is unknown but
   // the ratio is the orthographic one.
   const scale = Math.max(imageWidth, imageHeight);
@@ -123,6 +104,60 @@ export function aspectRatio(
   return ratio;
 }
 
+/**
+ * Focal length, in photo pixels, of the camera that saw a rectangle as
+ * `quad` (same method as `aspectRatio`), or null when the photo is too close
+ * to fronto-parallel to tell.
+ */
+export function focalLength(
+  quad: Quad,
+  imageWidth: number,
+  imageHeight: number,
+): number | null {
+  const [a1, a2, a3, b1, b2, b3] = sideVectors(quad, imageWidth, imageHeight);
+  const scale = Math.max(imageWidth, imageHeight);
+  if (Math.abs(a3 * b3) * scale * scale < 1e-6 * Math.abs(a1 * b1 + a2 * b2))
+    return null;
+  const f2 = -(a1 * b1 + a2 * b2) / (a3 * b3);
+  return f2 > 0 && Number.isFinite(f2) ? Math.sqrt(f2) : null;
+}
+
+/**
+ * The page's horizontal and vertical side directions in camera coordinates,
+ * up to the focal length (Zhang & He): [a1, a2, a3, b1, b2, b3].
+ */
+function sideVectors(
+  quad: Quad,
+  imageWidth: number,
+  imageHeight: number,
+): [number, number, number, number, number, number] {
+  const [tl, tr, br, bl] = quad;
+  const cx = imageWidth / 2;
+  const cy = imageHeight / 2;
+  const v = (p: Point): [number, number, number] => [p.x - cx, p.y - cy, 1];
+  const m1 = v(tl);
+  const m2 = v(tr);
+  const m3 = v(bl);
+  const m4 = v(br);
+  const cross = (a: number[], b: number[]) => [
+    a[1]! * b[2]! - a[2]! * b[1]!,
+    a[2]! * b[0]! - a[0]! * b[2]!,
+    a[0]! * b[1]! - a[1]! * b[0]!,
+  ];
+  const dot = (a: number[], b: number[]) =>
+    a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!;
+  const k2 = dot(cross(m1, m4), m3) / dot(cross(m2, m4), m3);
+  const k3 = dot(cross(m1, m4), m2) / dot(cross(m3, m4), m2);
+  return [
+    k2 * m2[0] - m1[0],
+    k2 * m2[1] - m1[1],
+    k2 * m2[2] - m1[2],
+    k3 * m3[0] - m1[0],
+    k3 * m3[1] - m1[1],
+    k3 * m3[2] - m1[2],
+  ];
+}
+
 /** Output size in pixels for `quad`: its longest side, with the real aspect ratio. */
 export function outputSize(
   quad: Quad,
@@ -136,6 +171,40 @@ export function outputSize(
   if (w / ratio >= h)
     return { width: Math.round(w), height: Math.round(w / ratio) };
   return { width: Math.round(h * ratio), height: Math.round(h) };
+}
+
+/**
+ * Bilinear sample of `src` at (`fx`, `fy`) (pixel centres at integers,
+ * clamped to the image) into `out` at byte offset `o`, opaque.
+ */
+export function sampleInto(
+  src: Rgba,
+  fx: number,
+  fy: number,
+  out: Uint8ClampedArray,
+  o: number,
+): void {
+  const sw = src.width;
+  const sh = src.height;
+  const d = src.data;
+  fx = Math.min(Math.max(fx, 0), sw - 1);
+  fy = Math.min(Math.max(fy, 0), sh - 1);
+  const x0 = Math.floor(fx);
+  const y0 = Math.floor(fy);
+  const x1 = Math.min(x0 + 1, sw - 1);
+  const y1 = Math.min(y0 + 1, sh - 1);
+  const ax = fx - x0;
+  const ay = fy - y0;
+  const i00 = (y0 * sw + x0) * 4;
+  const i10 = (y0 * sw + x1) * 4;
+  const i01 = (y1 * sw + x0) * 4;
+  const i11 = (y1 * sw + x1) * 4;
+  for (let c = 0; c < 3; c++) {
+    const top = d[i00 + c]! * (1 - ax) + d[i10 + c]! * ax;
+    const bottom = d[i01 + c]! * (1 - ax) + d[i11 + c]! * ax;
+    out[o + c] = top * (1 - ay) + bottom * ay;
+  }
+  out[o + 3] = 255;
 }
 
 /** Pixels of `quad` in `src` rectified to `width` × `height` (bilinear). */
@@ -154,39 +223,18 @@ export function warp(
   const h = homography(target, quad);
   if (!h) throw new ScanError("scan.invalidQuad");
   const out = new Uint8ClampedArray(width * height * 4);
-  const sw = src.width;
-  const sh = src.height;
-  const d = src.data;
   for (let y = 0; y < height; y++) {
     const py = y + 0.5;
     for (let x = 0; x < width; x++) {
       const px = x + 0.5;
       const w = h[6] * px + h[7] * py + h[8];
-      const fx = Math.min(
-        Math.max((h[0] * px + h[1] * py + h[2]) / w - 0.5, 0),
-        sw - 1,
+      sampleInto(
+        src,
+        (h[0] * px + h[1] * py + h[2]) / w - 0.5,
+        (h[3] * px + h[4] * py + h[5]) / w - 0.5,
+        out,
+        (y * width + x) * 4,
       );
-      const fy = Math.min(
-        Math.max((h[3] * px + h[4] * py + h[5]) / w - 0.5, 0),
-        sh - 1,
-      );
-      const x0 = Math.floor(fx);
-      const y0 = Math.floor(fy);
-      const x1 = Math.min(x0 + 1, sw - 1);
-      const y1 = Math.min(y0 + 1, sh - 1);
-      const ax = fx - x0;
-      const ay = fy - y0;
-      const i00 = (y0 * sw + x0) * 4;
-      const i10 = (y0 * sw + x1) * 4;
-      const i01 = (y1 * sw + x0) * 4;
-      const i11 = (y1 * sw + x1) * 4;
-      const o = (y * width + x) * 4;
-      for (let c = 0; c < 3; c++) {
-        const top = d[i00 + c]! * (1 - ax) + d[i10 + c]! * ax;
-        const bottom = d[i01 + c]! * (1 - ax) + d[i11 + c]! * ax;
-        out[o + c] = top * (1 - ay) + bottom * ay;
-      }
-      out[o + 3] = 255;
     }
   }
   return { width, height, data: out };

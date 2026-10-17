@@ -13,6 +13,8 @@ export type ScanRequest =
       mode: ScanMode;
       quarters: number;
       paper: PaperSize;
+      /** Spec 029: straighten a curved sheet. */
+      straighten: boolean;
     }
   | { op: "drop"; id: string }
   /** Spec 020: a reduced camera frame, to follow the page live. */
@@ -52,6 +54,8 @@ export interface RenderResult {
   scan: ScanImage;
   /** Milliseconds spent in the worker. */
   ms: number;
+  /** Spec 029: the sheet was curved and has been straightened. */
+  curved: boolean;
 }
 
 export type ScanResponse =

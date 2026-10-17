@@ -55,6 +55,7 @@ import { DEFAULT_TEXT_STYLE } from "./itemOps";
 import { textBoxes, type TextBox } from "./textBoxes";
 import { toolHint, TOOLS, type Tool } from "./tools";
 import { useEditor } from "./useEditor";
+import { useAutosave } from "./useAutosave";
 import { track, trackOnce } from "../analytics/analytics";
 import { filesBucket, pagesBucket } from "../analytics/events";
 import { featureOf } from "../analytics/features";
@@ -106,6 +107,15 @@ interface EditorViewProps {
   restricted?: boolean;
   /** Asks for the password of encrypted PDFs being inserted. */
   askPassword?: AskPassword;
+  /** The document comes from the work kept on this device (spec 028). */
+  resumed?: Resumed | null;
+}
+
+/** What a resumed document brings besides its edit state (spec 028). */
+export interface Resumed {
+  fileId: string | null;
+  signers: PlanSigner[];
+  planMode: PlanMode;
 }
 
 /** Panels of the pages column (specs 013, 014 and 022): one open at a time. */
@@ -422,10 +432,28 @@ export function EditorView({
   password = null,
   restricted = false,
   askPassword = async () => null,
+  resumed = null,
 }: EditorViewProps) {
   const t = useT();
   const editor = useEditor(initial);
   const { state, dispatch } = editor;
+  // Several signers (spec 004, HU6): the plan being prepared.
+  const [planSigners, setPlanSigners] = useState<PlanSigner[]>(
+    () => resumed?.signers ?? [],
+  );
+  const [planMode, setPlanMode] = useState<PlanMode>(
+    () => resumed?.planMode ?? "pades",
+  );
+  // Spec 028: changes not saved yet are kept on this device.
+  const { markSaved } = useAutosave({
+    file,
+    state,
+    restricted,
+    signers: planSigners,
+    planMode,
+    enabled: password === null,
+    resumed,
+  });
   const appliedSeq = useRef(incoming?.seq ?? 0);
 
   // Scanned pages go at the end, as one undoable step.
@@ -450,7 +478,9 @@ export function EditorView({
       if (event) trackOnce(scope, event);
     }
   }, [state.items, scope]);
-  const trackSave = () =>
+  // Every save of the whole document goes through here (spec 028: saved).
+  const trackSave = () => {
+    markSaved(state);
     track("save_document", {
       pages: pagesBucket(state.pages.length),
       source: file
@@ -459,6 +489,7 @@ export function EditorView({
           ? "scan"
           : "blank",
     });
+  };
   const [ocrOpen, setOcrOpen] = useState(false);
   const [signOpen, setSignOpen] = useState(false);
   // Phone layout (spec 007): page thumbnails as a strip, help collapsed.
@@ -521,10 +552,7 @@ export function EditorView({
       live = false;
     };
   }, [openedFile, rootsVersion]);
-  // Several signers (spec 004, HU6): the plan being prepared...
-  const [planSigners, setPlanSigners] = useState<PlanSigner[]>([]);
-  const [planMode, setPlanMode] = useState<PlanMode>("pades");
-  // ...and the plan of the opened file, with the file as last signed here.
+  // Several signers (spec 004, HU6): the plan of the opened file, with the file as last signed here.
   const [filePlan, setFilePlan] = useState<{
     plan: SigningPlan;
     status: SignerStatus[];
@@ -1182,6 +1210,7 @@ export function EditorView({
         `${baseName} (${t("compress.suffix")}).pdf`,
         "application/pdf",
       );
+      markSaved(state);
       if (built.warnings.length > 0) setNotice(built.warnings.join(" "));
     } catch (cause) {
       setNotice(

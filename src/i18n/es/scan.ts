@@ -35,6 +35,9 @@ export const scan = {
   "scan.rotateLeft": "Girar a la izquierda",
   "scan.rotateRight": "Girar a la derecha",
   "scan.adjustEdges": "Ajustar bordes",
+  "scan.straighten": "Enderezar curvatura",
+  "scan.straightenHint":
+    "La hoja estaba curvada y se han enderezado sus renglones. Suelta el botón para dejarla como hoja plana.",
 
   "scan.pages": "Páginas escaneadas",
   "scan.thumb": (page: number, name: string) => `Página ${page}: ${name}`,

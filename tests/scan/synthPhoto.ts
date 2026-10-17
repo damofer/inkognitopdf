@@ -148,6 +148,13 @@ export interface PhotoOptions {
   /** No page at all (only background). */
   empty?: boolean;
   page?: TestPage;
+  /**
+   * Spec 029: the sheet bent across its width, as the largest slope of its
+   * surface, degrees. "arch": raised in the middle (a rolled sheet); "spine":
+   * rising from the left edge and flat on the right (a page of an open book).
+   */
+  curl?: number;
+  curlShape?: "arch" | "spine";
 }
 
 export interface Photo {
@@ -182,10 +189,28 @@ export function synthPhoto(options: PhotoOptions): Photo {
   const distance = (f * ph) / (H * fill);
   const offX = (next() * 2 - 1) * 0.06 * W;
   const offY = (next() * 2 - 1) * 0.05 * H;
+  // Spec 029: a bent sheet keeps its size, so a page x is an arc length
+  // along the surface: across, then towards the camera.
+  const across = new Float64Array(pw + 1);
+  const lift = new Float64Array(pw + 1);
+  const curl = ((options.curl ?? 0) * Math.PI) / 180;
+  for (let s = 1; s <= pw; s++) {
+    const t = (s - 0.5) / pw;
+    const angle =
+      options.curlShape === "spine"
+        ? curl * (1 - t) ** 2
+        : curl * Math.cos(Math.PI * t);
+    across[s] = across[s - 1]! + Math.cos(angle);
+    lift[s] = lift[s - 1]! + Math.sin(angle);
+  }
+  const at = (table: Float64Array, s: number) => {
+    const i = Math.min(pw - 1, Math.max(0, Math.floor(s)));
+    return table[i]! + (table[i + 1]! - table[i]!) * (s - i);
+  };
   const camera = (px: number, py: number) => {
-    let x = px - pw / 2;
+    let x = at(across, px) - across[pw]! / 2;
     let y = py - ph / 2;
-    let z = 0;
+    let z = -at(lift, px);
     // Spin, then tilt about x, then about y.
     [x, y] = [x * cosz - y * sinz, x * sinz + y * cosz];
     [y, z] = [y * cosx - z * sinx, y * sinx + z * cosx];
@@ -203,6 +228,7 @@ export function synthPhoto(options: PhotoOptions): Photo {
     camera(pw, ph),
     camera(0, ph),
   ];
+  const curved = curl !== 0 ? pageMap(camera, pw, ph, W, H) : null;
   const toPage = homography(corners, [
     { x: 0, y: 0 },
     { x: pw, y: 0 },
@@ -234,7 +260,9 @@ export function synthPhoto(options: PhotoOptions): Photo {
       let rgb: number[];
       const p = options.empty
         ? null
-        : project(toPage, { x: x + 0.5, y: y + 0.5 });
+        : curved
+          ? { x: curved.x[y * W + x]!, y: curved.y[y * W + x]! }
+          : project(toPage, { x: x + 0.5, y: y + 0.5 });
       if (p && p.x >= 0 && p.y >= 0 && p.x < pw && p.y < ph) {
         const fx = Math.min(p.x - 0.5, pw - 1);
         const fy = Math.min(p.y - 0.5, ph - 1);
@@ -261,4 +289,59 @@ export function synthPhoto(options: PhotoOptions): Photo {
       data[o + 3] = 255;
     }
   return { photo: { width: W, height: H, data }, corners, page };
+}
+
+/**
+ * Spec 029: page coordinates of each photo pixel (NaN off the page) for a
+ * page that is not a plane, by projecting a fine mesh of the page and
+ * filling its triangles.
+ */
+function pageMap(
+  camera: (px: number, py: number) => { x: number; y: number },
+  pw: number,
+  ph: number,
+  W: number,
+  H: number,
+): { x: Float32Array; y: Float32Array } {
+  const mx = new Float32Array(W * H).fill(NaN);
+  const my = new Float32Array(W * H).fill(NaN);
+  const step = 4;
+  const cols = Math.ceil(pw / step) + 1;
+  const rows = Math.ceil(ph / step) + 1;
+  const nodes: { x: number; y: number; px: number; py: number }[] = [];
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      const px = Math.min(pw, c * step);
+      const py = Math.min(ph, r * step);
+      nodes.push({ ...camera(px, py), px, py });
+    }
+  const fill = (a: (typeof nodes)[0], b: typeof a, c: typeof a) => {
+    const det = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+    if (Math.abs(det) < 1e-9) return;
+    const x0 = Math.max(0, Math.floor(Math.min(a.x, b.x, c.x)));
+    const x1 = Math.min(W - 1, Math.ceil(Math.max(a.x, b.x, c.x)));
+    const y0 = Math.max(0, Math.floor(Math.min(a.y, b.y, c.y)));
+    const y1 = Math.min(H - 1, Math.ceil(Math.max(a.y, b.y, c.y)));
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++) {
+        const qx = x + 0.5;
+        const qy = y + 0.5;
+        const l1 = ((b.y - c.y) * (qx - c.x) + (c.x - b.x) * (qy - c.y)) / det;
+        const l2 = ((c.y - a.y) * (qx - c.x) + (a.x - c.x) * (qy - c.y)) / det;
+        const l3 = 1 - l1 - l2;
+        if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
+        mx[y * W + x] = l1 * a.px + l2 * b.px + l3 * c.px;
+        my[y * W + x] = l1 * a.py + l2 * b.py + l3 * c.py;
+      }
+  };
+  for (let r = 0; r + 1 < rows; r++)
+    for (let c = 0; c + 1 < cols; c++) {
+      const a = nodes[r * cols + c]!;
+      const b = nodes[r * cols + c + 1]!;
+      const d = nodes[(r + 1) * cols + c]!;
+      const e = nodes[(r + 1) * cols + c + 1]!;
+      fill(a, b, e);
+      fill(a, e, d);
+    }
+  return { x: mx, y: my };
 }

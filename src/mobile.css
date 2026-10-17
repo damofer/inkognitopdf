@@ -31,6 +31,47 @@
   border-radius: 12px;
 }
 
+/* Spec 028: the work not saved when the app was closed, offered first. */
+.draft-offer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 40em;
+  padding: 14px 16px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--radius-lg);
+  color: var(--text);
+}
+
+.draft-offer > svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.draft-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.draft-text span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.draft-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.draft-actions button {
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 10px;
+}
+
 /* Phone layout (spec 007). The width matches MOBILE_QUERY in useMobile.ts. */
 @media (max-width: 760px) {
   .app {
@@ -77,6 +118,23 @@
   }
 
   /* Start screen. */
+  .draft-offer {
+    flex-wrap: wrap;
+    width: min(360px, 100%);
+  }
+
+  .draft-text {
+    flex: 1;
+  }
+
+  .draft-actions {
+    width: 100%;
+  }
+
+  .draft-actions button {
+    flex: 1;
+  }
+
   .start-actions {
     display: grid;
     gap: 10px;

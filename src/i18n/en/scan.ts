@@ -37,6 +37,9 @@ export const scan: typeof es = {
   "scan.rotateLeft": "Rotate left",
   "scan.rotateRight": "Rotate right",
   "scan.adjustEdges": "Adjust edges",
+  "scan.straighten": "Straighten curve",
+  "scan.straightenHint":
+    "The sheet was curved and its lines have been straightened. Release the button to keep it as a flat sheet.",
 
   "scan.pages": "Scanned pages",
   "scan.thumb": (page: number, name: string) => `Page ${page}: ${name}`,
