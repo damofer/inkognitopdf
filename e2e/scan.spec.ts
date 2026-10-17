@@ -8,7 +8,7 @@ import {
   type PDFDict,
   type PDFRawStream,
 } from "pdf-lib";
-import { firstPage, openFixture } from "./helpers";
+import { firstPage, openFixture, openMenu } from "./helpers";
 import { writePhotos, type PhotoFiles } from "./scanPhotos";
 
 let photos: PhotoFiles;
@@ -165,6 +165,7 @@ test("CA9: scanned pages are added to the open document and can be undone", asyn
   page,
 }) => {
   await openFixture(page, "two-pages.pdf");
+  await openMenu(page);
   await openScanner(page, ["hoja-1.jpg"]);
   await scanner(page)
     .getByRole("button", { name: "Añadir al documento" })

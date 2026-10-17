@@ -1,6 +1,7 @@
 // Donations: the "Apoyar" panel in the app (header and phone menu) and the
 // section on the landing. Screenshots go to docs/screenshots/support/.
 import { expect, test, type Locator } from "@playwright/test";
+import { openMenu } from "./helpers";
 
 const DIR = "docs/screenshots/support";
 
@@ -23,6 +24,7 @@ test("the panel opens from the header and closes with Escape", async ({
   page,
 }) => {
   await page.goto("/app/");
+  await openMenu(page);
   await page.getByRole("button", { name: "Apoyar" }).click();
   const panel = page.getByRole("dialog", { name: "Apoya InkognitoPDF" });
   await expect(panel).toBeVisible();
@@ -39,6 +41,7 @@ test("the panel opens from the header and closes with Escape", async ({
   await expect(panel).toBeHidden();
 
   // In English, Ko-fi comes first.
+  await openMenu(page);
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page.getByRole("button", { name: "Support" }).click();
   const english = page.getByRole("dialog", { name: "Support InkognitoPDF" });
@@ -91,6 +94,7 @@ test.describe("phone", () => {
 
 test("the app menu links to the source code on GitHub", async ({ page }) => {
   await page.goto("/app/");
+  await openMenu(page);
   const link = page.getByRole("link", { name: "Código fuente" });
   await expect(link).toHaveAttribute(
     "href",
@@ -98,6 +102,7 @@ test("the app menu links to the source code on GitHub", async ({ page }) => {
   );
   await expect(link).toHaveAttribute("target", "_blank");
   await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  await openMenu(page);
   await page.getByRole("button", { name: "English", exact: true }).click();
   await expect(page.getByRole("link", { name: "Source code" })).toBeVisible();
 });

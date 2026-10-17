@@ -18,6 +18,7 @@ InkognitoPDF is distributed under the Apache License 2.0. The app includes or se
 | asn1js                                                                                                                                 | 3.0.10          | BSD-3-Clause | Signatures: ASN.1 encoding (pkijs dependency)                    |
 | pvtsutils 1.3.6, pvutils 1.2.0, @noble/hashes 1.8.0 (MIT); bytestreamjs 2.0.1 (BSD-3-Clause); tslib 2.8.1 (0BSD)                       | —               | various      | Dependencies of pkijs and asn1js                                 |
 | @firebase/app, @firebase/analytics                                                                                                     | 0.16.3, 0.10.25 | Apache-2.0   | Optional usage measurement, in a chunk loaded only after consent |
+| Lucide icons (paths adapted in `src/icons.tsx`)                                                                                        | —               | ISC          | Interface line icons                                             |
 | @firebase/util 1.15.3, @firebase/logger 0.5.2, @firebase/component 0.7.5, @firebase/installations 0.6.24 (Apache-2.0); idb 7.1.1 (ISC) | —               | various      | Dependencies of @firebase/analytics                              |
 
 Usage measurement is active only if the visitor accepts it. Then the Firebase SDK downloads Google's `gtag.js` (it is not included in or redistributed with the app) and sends the events of the closed list in `src/analytics/events.ts`. Without consent, there is no request to Google.

@@ -149,4 +149,11 @@ export const sign = {
   "sign.importRoot": "Importar certificado raíz",
   "sign.badCertificateFile":
     "El archivo no es un certificado válido (.cer, .crt o .pem).",
+  // Spec 025: signing in two steps.
+  "sign.steps": "Pasos para firmar",
+  "sign.stepPlace": "1 · Colocar",
+  "sign.stepSave": "2 · Firmar y guardar",
+  "sign.next": "Siguiente: firmar y guardar",
+  "sign.back": "Volver a colocar",
+  "sign.certificateOptions": "Certificado",
 };

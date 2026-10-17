@@ -189,86 +189,94 @@ export function IdentityPicker({
               )}
             </div>
           )}
-          <div className="sign-row">
-            <button type="button" onClick={() => setAdding("new")}>
-              {t("sign.createOwnCertificate")}
-            </button>
-            <button type="button" onClick={() => setAdding("p12")}>
-              {t("sign.importP12")}
-            </button>
-          </div>
-          {adding === "new" && (
-            <div className="sign-sub">
-              <input
-                type="text"
-                aria-label={t("sign.signerName")}
-                placeholder={t("sign.fullName")}
-                value={name}
-                onChange={(e) => setName(e.currentTarget.value)}
-              />
-              <input
-                type="email"
-                aria-label={t("sign.emailOptional")}
-                placeholder={t("sign.emailOptional")}
-                value={email}
-                onChange={(e) => setEmail(e.currentTarget.value)}
-              />
-              <select
-                aria-label={t("sign.algorithm")}
-                value={algorithm}
-                onChange={(e) =>
-                  setAlgorithm(e.currentTarget.value as KeyAlgorithm)
-                }
-              >
-                {/* i18n-ignore: algorithm name, the same in every language */}
-                <option value="ECDSA">ECDSA P-256</option>
-                <option value="RSA">{t("sign.rsaLegacy")}</option>
-              </select>
-              <p className="sign-note">{t("sign.selfSignedNote")}</p>
-              <button
-                type="button"
-                disabled={!name.trim()}
-                onClick={() => void create()}
-              >
-                {t("sign.createCertificate")}
+          {/* Spec 025: the certificate details stay folded once there is
+              one to sign with. */}
+          <details
+            className="sign-advanced"
+            open={identities.length === 0 || adding !== null}
+          >
+            <summary>{t("sign.certificateOptions")}</summary>
+            <div className="sign-row">
+              <button type="button" onClick={() => setAdding("new")}>
+                {t("sign.createOwnCertificate")}
+              </button>
+              <button type="button" onClick={() => setAdding("p12")}>
+                {t("sign.importP12")}
               </button>
             </div>
-          )}
-          {adding === "p12" && (
-            <div className="sign-sub">
-              <input
-                type="file"
-                accept=".p12,.pfx,application/x-pkcs12"
-                aria-label={t("sign.p12File")}
-                onChange={(e) => setP12(e.currentTarget.files?.[0] ?? null)}
-              />
-              <input
-                type="password"
-                aria-label={t("sign.filePassword")}
-                placeholder={t("sign.password")}
-                autoComplete="off"
-                value={password}
-                onChange={(e) => setPassword(e.currentTarget.value)}
-              />
-              <button
-                type="button"
-                disabled={!p12}
-                onClick={() => void importFile()}
-              >
-                {t("sign.import")}
-              </button>
-            </div>
-          )}
-          {adding && (
-            <label className="sign-check">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.currentTarget.checked)}
-              />
-              {t("sign.rememberCertificate")}
-            </label>
-          )}
+            {adding === "new" && (
+              <div className="sign-sub">
+                <input
+                  type="text"
+                  aria-label={t("sign.signerName")}
+                  placeholder={t("sign.fullName")}
+                  value={name}
+                  onChange={(e) => setName(e.currentTarget.value)}
+                />
+                <input
+                  type="email"
+                  aria-label={t("sign.emailOptional")}
+                  placeholder={t("sign.emailOptional")}
+                  value={email}
+                  onChange={(e) => setEmail(e.currentTarget.value)}
+                />
+                <select
+                  aria-label={t("sign.algorithm")}
+                  value={algorithm}
+                  onChange={(e) =>
+                    setAlgorithm(e.currentTarget.value as KeyAlgorithm)
+                  }
+                >
+                  {/* i18n-ignore: algorithm name, the same in every language */}
+                  <option value="ECDSA">ECDSA P-256</option>
+                  <option value="RSA">{t("sign.rsaLegacy")}</option>
+                </select>
+                <p className="sign-note">{t("sign.selfSignedNote")}</p>
+                <button
+                  type="button"
+                  disabled={!name.trim()}
+                  onClick={() => void create()}
+                >
+                  {t("sign.createCertificate")}
+                </button>
+              </div>
+            )}
+            {adding === "p12" && (
+              <div className="sign-sub">
+                <input
+                  type="file"
+                  accept=".p12,.pfx,application/x-pkcs12"
+                  aria-label={t("sign.p12File")}
+                  onChange={(e) => setP12(e.currentTarget.files?.[0] ?? null)}
+                />
+                <input
+                  type="password"
+                  aria-label={t("sign.filePassword")}
+                  placeholder={t("sign.password")}
+                  autoComplete="off"
+                  value={password}
+                  onChange={(e) => setPassword(e.currentTarget.value)}
+                />
+                <button
+                  type="button"
+                  disabled={!p12}
+                  onClick={() => void importFile()}
+                >
+                  {t("sign.import")}
+                </button>
+              </div>
+            )}
+            {adding && (
+              <label className="sign-check">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.currentTarget.checked)}
+                />
+                {t("sign.rememberCertificate")}
+              </label>
+            )}
+          </details>
         </>
       )}
       {offerAudit && (

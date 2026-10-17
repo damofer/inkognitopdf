@@ -164,9 +164,9 @@ for (const device of [
       const bar = page.getByRole("navigation", {
         name: "Categorías de herramientas",
       });
-      await bar.getByRole("button", { name: "Formularios" }).click();
+      await bar.getByRole("button", { name: "Más" }).click();
       await page
-        .getByRole("dialog", { name: "Formularios" })
+        .getByRole("dialog", { name: "Más" })
         .getByRole("button", { name: "Campos" })
         .click();
       const box = (await firstPage(page).boundingBox())!;

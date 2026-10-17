@@ -5,7 +5,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { firstPage, fixture, saveAndRead, textRuns } from "./helpers";
+import { firstPage, fixture, openTask, saveAndRead, textRuns } from "./helpers";
 
 const DIR = "docs/screenshots/page-numbers";
 
@@ -49,6 +49,7 @@ test("«Página 1 de N» at the bottom: preview, apply and real text", async ({
   page,
 }) => {
   await open(page, report);
+  await openTask(page, "Páginas");
   await page.getByRole("button", { name: "Numerar", exact: true }).click();
   // The default is the number alone, at the bottom center.
   await expect(firstPage(page).locator(".numbering-stamp")).toHaveText("1");
@@ -91,6 +92,7 @@ test("Bates with the cover left out, header and footer, undo", async ({
   page,
 }) => {
   await open(page, report);
+  await openTask(page, "Páginas");
   await page.getByRole("button", { name: "Numerar", exact: true }).click();
   const p = panel(page);
   await p.getByRole("button", { name: "Vaciar" }).click();
@@ -136,6 +138,7 @@ test("a rotated page gets its number at the bottom as shown", async ({
   page,
 }) => {
   await open(page, fixture("rotated-page.pdf"));
+  await openTask(page, "Páginas");
   await page.getByRole("button", { name: "Numerar", exact: true }).click();
   await panel(page).getByRole("button", { name: "Aplicar" }).click();
   const stamp = (await firstPage(page)
@@ -157,14 +160,14 @@ test.describe("phone", () => {
     hasTouch: true,
   });
 
-  test("«Numerar» is in the Edit sheet and fits", async ({ page }) => {
+  test("«Numerar» is in the Pages sheet and fits", async ({ page }) => {
     await open(page, report);
     await page
       .getByRole("navigation", { name: "Categorías de herramientas" })
-      .getByRole("button", { name: "Editar" })
+      .getByRole("button", { name: "Páginas" })
       .click();
     await page
-      .getByRole("dialog", { name: "Editar" })
+      .getByRole("dialog", { name: "Páginas" })
       .getByRole("button", { name: "Numerar" })
       .click();
     const p = panel(page);

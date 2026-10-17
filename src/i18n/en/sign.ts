@@ -150,4 +150,11 @@ export const sign: typeof es = {
   "sign.importRoot": "Import root certificate",
   "sign.badCertificateFile":
     "The file is not a valid certificate (.cer, .crt or .pem).",
+  // Spec 025: signing in two steps.
+  "sign.steps": "Signing steps",
+  "sign.stepPlace": "1 · Place",
+  "sign.stepSave": "2 · Sign and save",
+  "sign.next": "Next: sign and save",
+  "sign.back": "Back to placing",
+  "sign.certificateOptions": "Certificate",
 };

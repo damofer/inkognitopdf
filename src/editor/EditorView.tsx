@@ -61,7 +61,8 @@ import { featureOf } from "../analytics/features";
 import { useT, type MessageKey } from "../i18n";
 import { useMobile, useTouch } from "../useMobile";
 import { Toast } from "../Toast";
-import { MobileBar } from "./MobileBar";
+import { CATEGORY_TOOLS, MobileBar } from "./MobileBar";
+import { Icon, type IconName } from "../icons";
 import { RedactOptions } from "./RedactOptions";
 import { SplitPanel, type SplitMode } from "./SplitPanel";
 import { CompressPanel, type CompressOutcome } from "../protect/CompressPanel";
@@ -346,6 +347,71 @@ const isTyping = (target: EventTarget | null) =>
 /** Documents opened in this tab: each one counts its features once. */
 let openedDocuments = 0;
 
+/** The tasks of the desktop bar (spec 025), the same as the phone sheets. */
+type Task = "edit" | "annotate" | "sign" | "forms" | "pages" | "review";
+
+const TASKS: { id: Task; icon: IconName }[] = [
+  { id: "edit", icon: "edit" },
+  { id: "annotate", icon: "annotate" },
+  { id: "sign", icon: "sign" },
+  { id: "forms", icon: "formField" },
+  { id: "pages", icon: "pages" },
+  { id: "review", icon: "review" },
+];
+
+/** Tools shown in each task; «select» is in all of them. */
+const TASK_TOOLS: Record<Task, Tool[]> = {
+  edit: CATEGORY_TOOLS.edit,
+  annotate: ["select", ...CATEGORY_TOOLS.annotate],
+  sign: ["select"],
+  forms: ["select", ...CATEGORY_TOOLS.forms],
+  pages: ["select"],
+  review: ["select"],
+};
+
+/** The task a tool belongs to, to follow tools chosen by other means. */
+const taskOf = (tool: Tool): Task | null =>
+  CATEGORY_TOOLS.annotate.includes(tool)
+    ? "annotate"
+    : CATEGORY_TOOLS.forms.includes(tool)
+      ? "forms"
+      : CATEGORY_TOOLS.edit.includes(tool) && tool !== "select"
+        ? "edit"
+        : null;
+
+/** A button of the task bar (spec 025): icon and label. */
+function TaskButton({
+  icon,
+  label,
+  onClick,
+  pressed,
+  title,
+  disabled,
+  className,
+}: {
+  icon: IconName;
+  label: string;
+  onClick: () => void;
+  pressed?: boolean;
+  title?: string;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`tool-button${className ? ` ${className}` : ""}`}
+      aria-pressed={pressed}
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <Icon name={icon} />
+      <span className="tool-label">{label}</span>
+    </button>
+  );
+}
+
 export function EditorView({
   file,
   doc,
@@ -507,6 +573,7 @@ export function EditorView({
         : null,
   );
   const [tool, setTool] = useState<Tool>("select");
+  const [task, setTask] = useState<Task>("edit");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [textStyle, setTextStyle] = useState<TextStyle>(DEFAULT_TEXT_STYLE);
   const [annotationColor, setAnnotationColor] = useState("#d9480f");
@@ -770,6 +837,8 @@ export function EditorView({
   };
 
   const chooseTool = (next: Tool) => {
+    const owner = taskOf(next);
+    if (owner && !TASK_TOOLS[task].includes(next)) setTask(owner);
     setDraft(null);
     if (next !== "select") setSelectedId(null);
     if (next === "image") {
@@ -930,8 +999,25 @@ export function EditorView({
   };
 
   const [panel, setPanel] = useState<PagesPanel | null>(null);
-  const togglePanel = (which: PagesPanel) =>
-    setPanel((open) => (open === which ? null : which));
+  /** Spec 025: one panel at a time, docked at the right on desktops. */
+  const closeSides = () => {
+    setSignOpen(false);
+    setOcrOpen(false);
+    setXrayOpen(false);
+    setPanel(null);
+    setSignaturesOpen(false);
+    setSignAsOpen(false);
+  };
+  /** Opens a panel and closes the others, or closes it if it was open. */
+  const toggleSide = (open: boolean, set: (open: boolean) => void) => {
+    closeSides();
+    set(!open);
+  };
+  const togglePanel = (which: PagesPanel) => {
+    const open = panel === which;
+    closeSides();
+    if (!open) setPanel(which);
+  };
   const closePanel = () => setPanel(null);
   const splitOpen = panel === "split";
   const [splitting, setSplitting] = useState(false);
@@ -1724,7 +1810,7 @@ export function EditorView({
         aria-label={t("editor.undo")}
         title={t("editor.undoHint")}
       >
-        ↶
+        <Icon name="undo" />
       </button>
       <button
         type="button"
@@ -1733,7 +1819,7 @@ export function EditorView({
         aria-label={t("editor.redo")}
         title={t("editor.redoHint")}
       >
-        ↷
+        <Icon name="redo" />
       </button>
       <button
         type="button"
@@ -1743,6 +1829,7 @@ export function EditorView({
         // Spec 017: on a phone, the share icon needs the room of « PDF».
         aria-label={mobile && canShare ? t("editor.savePdf") : undefined}
       >
+        {!mobile && <Icon name="download" size={18} />}
         {saving
           ? t("editor.saving")
           : mobile && canShare
@@ -1760,16 +1847,12 @@ export function EditorView({
           disabled={sharing}
         >
           {mobile ? (
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-              <circle cx="18" cy="5" r="2.5" />
-              <circle cx="6" cy="12" r="2.5" />
-              <circle cx="18" cy="19" r="2.5" />
-              <path d="M8.2 10.9l7.6-4.6M8.2 13.1l7.6 4.6" />
-            </svg>
-          ) : sharing ? (
-            t("share.preparing")
+            <Icon name="share" />
           ) : (
-            t("share.button")
+            <>
+              <Icon name="share" size={18} />
+              {sharing ? t("share.preparing") : t("share.button")}
+            </>
           )}
         </button>
       )}
@@ -1802,50 +1885,9 @@ export function EditorView({
     />
   );
 
+  // Spec 025: the document actions moved to the Pages and Review tasks.
   const thumbnailsHeader = (
     <div className="thumbnails-header">
-      <button
-        type="button"
-        title={t("organize.insertHint")}
-        disabled={inserting || !onReplaceBase}
-        onClick={chooseInsert}
-      >
-        {inserting ? t("organize.inserting") : t("organize.insert")}
-      </button>
-      <button
-        type="button"
-        title={t("organize.splitHint")}
-        aria-pressed={splitOpen}
-        onClick={() => togglePanel("split")}
-      >
-        {t("organize.split")}
-      </button>
-      <button
-        type="button"
-        title={t("numbering.hint")}
-        className={state.numbering ? "protected" : undefined}
-        aria-pressed={panel === "numbers"}
-        onClick={toggleNumbers}
-      >
-        {t("numbering.button")}
-      </button>
-      <button
-        type="button"
-        title={t("compress.hint")}
-        aria-pressed={panel === "compress"}
-        onClick={() => togglePanel("compress")}
-      >
-        {t("compress.button")}
-      </button>
-      <button
-        type="button"
-        title={t("protect.hint")}
-        className={protection ? "protected" : undefined}
-        aria-pressed={panel === "protect"}
-        onClick={() => togglePanel("protect")}
-      >
-        {t("protect.button")}
-      </button>
       <small>{t("organize.dragHint")}</small>
     </div>
   );
@@ -2103,178 +2145,215 @@ export function EditorView({
     </>
   );
 
-  const toolbar = (
-    <>
-      <span className="toolbar-group">
-        {historyButtons}
-        <button
-          type="button"
-          aria-pressed={signOpen}
-          title={t("editor.signHint")}
-          onClick={() => setSignOpen((o) => !o)}
-        >
-          {t("editor.sign")}
-        </button>
-        <button
-          type="button"
-          aria-pressed={ocrOpen}
-          title={t("editor.ocrHint")}
-          onClick={() => setOcrOpen((o) => !o)}
-        >
-          {t("editor.ocr")}
-        </button>
-        <button
-          type="button"
-          aria-pressed={xrayOpen}
-          title={t("xray.hint")}
-          onClick={() => setXrayOpen((o) => !o)}
-        >
-          {t("xray.button")}
-        </button>
-        <button
-          type="button"
-          title={t("compare.hint")}
-          disabled={preparingCompare}
-          onClick={() => compareInputRef.current?.click()}
-        >
-          {preparingCompare ? t("compare.loading") : t("compare.button")}
-        </button>
-      </span>
-      <span
-        className="toolbar-group tools"
-        role="group"
-        aria-label={t("editor.tools")}
-      >
-        {TOOLS.map(({ tool: id, label, icon }) => (
+  const chooseCompare = () => compareInputRef.current?.click();
+
+  const chooseTask = (next: Task) => {
+    if (next === "sign") {
+      // The Sign tab opens the signing panel; a second click closes it.
+      setTask("sign");
+      toggleSide(task === "sign" && signOpen, setSignOpen);
+    } else {
+      if (task === "sign") setSignOpen(false);
+      setTask(next);
+    }
+    if (!TASK_TOOLS[next].includes(tool) && tool !== "place")
+      chooseTool("select");
+  };
+
+  const taskTools = (
+    <span
+      className={`toolbar-group tools${task === "annotate" ? " compact" : ""}`}
+      role="group"
+      aria-label={t("editor.tools")}
+    >
+      {TOOLS.filter(({ tool: id }) => TASK_TOOLS[task].includes(id)).map(
+        ({ tool: id, label, icon }) => (
           <button
             key={id}
             type="button"
+            className="tool-button"
             aria-pressed={tool === id}
             aria-label={label}
             title={label}
             onClick={() => chooseTool(id)}
           >
-            <span aria-hidden="true">{icon}</span>
+            <Icon name={icon} />
+            <span className="tool-label" aria-hidden="true">
+              {label}
+            </span>
           </button>
-        ))}
-      </span>
-      {options}
-      {flattenCheck}
+        ),
+      )}
+    </span>
+  );
+
+  const taskActions = (
+    <>
+      {task === "sign" && (
+        <span className="toolbar-group task-note">{t("tasks.signHint")}</span>
+      )}
+      {task === "pages" && (
+        <span className="toolbar-group">
+          <TaskButton
+            icon="insert"
+            label={inserting ? t("organize.inserting") : t("organize.insert")}
+            title={t("organize.insertHint")}
+            disabled={inserting || !onReplaceBase}
+            onClick={chooseInsert}
+          />
+          {onScan && (
+            <TaskButton
+              icon="scan"
+              label={t("mobile.scanPages")}
+              onClick={onScan}
+            />
+          )}
+          <TaskButton
+            icon="split"
+            label={t("organize.split")}
+            title={t("organize.splitHint")}
+            pressed={splitOpen}
+            onClick={() => togglePanel("split")}
+          />
+          <TaskButton
+            icon="numbers"
+            label={t("numbering.button")}
+            title={t("numbering.hint")}
+            pressed={panel === "numbers"}
+            className={state.numbering ? "protected" : undefined}
+            onClick={() => {
+              if (panel !== "numbers") closeSides();
+              toggleNumbers();
+            }}
+          />
+        </span>
+      )}
+      {task === "review" && (
+        <>
+          <span className="toolbar-group">
+            <TaskButton
+              icon="xray"
+              label={t("xray.button")}
+              title={t("xray.hint")}
+              pressed={xrayOpen}
+              onClick={() => toggleSide(xrayOpen, setXrayOpen)}
+            />
+            <TaskButton
+              icon="compare"
+              label={
+                preparingCompare ? t("compare.loading") : t("compare.button")
+              }
+              title={t("compare.hint")}
+              disabled={preparingCompare}
+              onClick={chooseCompare}
+            />
+            <TaskButton
+              icon="ocr"
+              label={t("editor.ocr")}
+              title={t("editor.ocrHint")}
+              pressed={ocrOpen}
+              onClick={() => toggleSide(ocrOpen, setOcrOpen)}
+            />
+          </span>
+          <span
+            className="toolbar-group"
+            role="group"
+            aria-label={t("tasks.protect")}
+          >
+            <TaskButton
+              icon="protect"
+              label={t("protect.button")}
+              title={t("protect.hint")}
+              pressed={panel === "protect"}
+              className={protection ? "protected" : undefined}
+              onClick={() => togglePanel("protect")}
+            />
+            <TaskButton
+              icon="compress"
+              label={t("compress.button")}
+              title={t("compress.hint")}
+              pressed={panel === "compress"}
+              onClick={() => togglePanel("compress")}
+            />
+          </span>
+        </>
+      )}
     </>
   );
 
-  return (
+  const taskHint = (id: Task) =>
+    id === "review" ? t("tasks.reviewHint") : undefined;
+
+  // Spec 025, desktop: the tasks and the save actions above, the tools of
+  // the task and their options below.
+  const topBar = (
+    <div className="task-bar">
+      <div className="task-tabs" role="group" aria-label={t("tasks.label")}>
+        {TASKS.map(({ id, icon }) => (
+          <button
+            key={id}
+            type="button"
+            className="task-tab"
+            aria-pressed={id === "sign" ? signOpen : task === id}
+            title={taskHint(id)}
+            onClick={() => chooseTask(id)}
+          >
+            <Icon name={icon} size={18} />
+            {t(`tasks.${id}`)}
+          </button>
+        ))}
+      </div>
+      <span className="task-actions">{historyButtons}</span>
+    </div>
+  );
+
+  const toolbar = (
     <>
-      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-      {(notice || editor.error) && (
-        <div className="notice" role="status">
-          <span>{editor.error ?? notice}</span>
-          <button
-            type="button"
-            aria-label={t("editor.closeNotice")}
-            onClick={() => {
-              setNotice(null);
-              editor.clearError();
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
-      {confirmOverwrite && (
-        <div
-          className="notice warning"
-          role="alertdialog"
-          aria-label={t("editor.signatures")}
-        >
-          <span>{t("editor.overwriteSigned")}</span>
-          <button
-            type="button"
-            onClick={() =>
-              void (confirmOverwrite === "share" ? share(true) : save(true))
-            }
-          >
-            {confirmOverwrite === "share"
-              ? t("share.now")
-              : t("editor.saveAnyway")}
-          </button>
-          <button type="button" onClick={() => setConfirmOverwrite(null)}>
-            {t("editor.cancel")}
-          </button>
-        </div>
-      )}
-      {shareReady && (
-        <div
-          className="notice"
-          role="alertdialog"
-          aria-label={t("share.readyTitle")}
-        >
-          <span>{t("share.ready", shareReady.name)}</span>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => void shareBuilt(shareReady)}
-          >
-            {t("share.now")}
-          </button>
-          <button type="button" onClick={() => setShareReady(null)}>
-            {t("share.cancel")}
-          </button>
-        </div>
-      )}
-      {signatures.length > 0 && !signaturesOpen && (
-        <div className="notice" role="status" data-testid="signed-notice">
-          <span>
-            {signatures.length === 1
-              ? t("editor.oneSignature")
-              : t("editor.manySignatures", signatures.length)}{" "}
-            {signatures.some(
-              (s) => s.integrity !== "valid" || s.laterChanges === "modified",
-            )
-              ? t("editor.someInvalid")
-              : t("editor.allIntact")}
-          </span>
-          <button type="button" onClick={() => setSignaturesOpen(true)}>
-            {t("editor.viewSignatures")}
-          </button>
-        </div>
-      )}
+      {taskTools}
+      {taskActions}
+      {options}
+      {(task === "forms" || tool === "formField") && flattenCheck}
+    </>
+  );
+
+  // The tool's help: a row on phones; on desktops a note over the pages
+  // that fades away (spec 025).
+  const hint = (
+    <p
+      key={tool}
+      className={`tool-hint${tool === "whiteout" ? " warning" : ""}${
+        mobile && !hintOpen ? " collapsed" : ""
+      }`}
+      role="note"
+      title={mobile && !hintOpen ? t("mobile.showHint") : undefined}
+      onClick={
+        mobile ? () => setHintOpenFor(hintOpen ? null : tool) : undefined
+      }
+    >
+      {toolHint(tool, touch)}
+    </p>
+  );
+
+  // Spec 025: the open panel, docked at the right on desktops; on phones
+  // the same panels are sheets from the bottom edge.
+  const dockOpen =
+    signaturesOpen ||
+    (signAsOpen && !!filePlan) ||
+    signOpen ||
+    ocrOpen ||
+    xrayOpen ||
+    splitOpen ||
+    (panel === "numbers" && !!numberingDraft) ||
+    panel === "compress" ||
+    panel === "protect";
+  const dock = dockOpen && (
+    <>
       {signaturesOpen && (
         <SignaturesPanel
           reports={signatures}
           onRootsChanged={() => setRootsVersion((v) => v + 1)}
           onClose={() => setSignaturesOpen(false)}
         />
-      )}
-      {filePlan && !signAsOpen && (
-        <div className="notice" role="status" data-testid="plan-notice">
-          <span>
-            {filePlan.status.every((s) => s.done)
-              ? t("editor.planDone", filePlan.status.length)
-              : t(
-                  "editor.planPending",
-                  filePlan.status
-                    .filter((s) => s.canSign)
-                    .map((s) => s.signer.name)
-                    .join(", "),
-                )}
-          </span>
-          {filePlan.status.some((s) => s.canSign) && (
-            <button
-              type="button"
-              className="primary"
-              onClick={() => {
-                setSignOpen(false);
-                setSignAsId(
-                  filePlan.status.find((s) => s.canSign)?.signer.id ?? null,
-                );
-                setSignAsOpen(true);
-              }}
-            >
-              {t("editor.signAs")}
-            </button>
-          )}
-        </div>
       )}
       {signAsOpen && filePlan && (
         <SignAsPanel
@@ -2288,53 +2367,6 @@ export function EditorView({
           onSign={(id, texts, identity) => void signAs(id, texts, identity)}
           onClose={() => setSignAsOpen(false)}
         />
-      )}
-      {needOcr && !ocrOpen && (
-        <div className="notice compact" role="status" data-testid="need-ocr">
-          <span>{mobile ? t("editor.needOcrShort") : t("editor.needOcr")}</span>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => {
-              setNeedOcr(false);
-              setOcrOpen(true);
-            }}
-          >
-            {t("editor.recognizeText")}
-          </button>
-          <button
-            type="button"
-            aria-label={t("editor.closeNotice")}
-            onClick={() => setNeedOcr(false)}
-          >
-            ×
-          </button>
-        </div>
-      )}
-      {looksScanned && !hasOcr && !ocrOpen && !scannedDismissed && !needOcr && (
-        <div
-          className="notice compact"
-          role="status"
-          data-testid="scanned-notice"
-        >
-          <span>
-            {mobile ? t("editor.looksScannedShort") : t("editor.looksScanned")}
-          </span>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => setOcrOpen(true)}
-          >
-            {t("editor.recognizeText")}
-          </button>
-          <button
-            type="button"
-            aria-label={t("editor.closeScannedNotice")}
-            onClick={() => setScannedDismissed(true)}
-          >
-            ×
-          </button>
-        </div>
       )}
       {signOpen && (
         <SignPanel
@@ -2370,6 +2402,25 @@ export function EditorView({
                 }
               : undefined
           }
+          prepare={
+            <PlanEditor
+              signers={planSigners}
+              onSigners={setPlanSigners}
+              mode={planMode}
+              onMode={setPlanMode}
+              placed={placedFields}
+              onPlaceField={(signerId, field) => {
+                setDraft(null);
+                setSelectedId(null);
+                setPendingImage(null);
+                setPlacing({ kind: "field", field, signerId });
+                setTool("place");
+                if (mobile) setSignOpen(false);
+              }}
+              onPrepare={(withAudit) => void preparePlanFile(withAudit)}
+              busy={signing}
+            />
+          }
           onClose={() => setSignOpen(false)}
         >
           <IdentityPicker
@@ -2378,23 +2429,6 @@ export function EditorView({
             onSave={(mode, identity, options) =>
               void saveSigned(mode, identity, options)
             }
-          />
-          <PlanEditor
-            signers={planSigners}
-            onSigners={setPlanSigners}
-            mode={planMode}
-            onMode={setPlanMode}
-            placed={placedFields}
-            onPlaceField={(signerId, field) => {
-              setDraft(null);
-              setSelectedId(null);
-              setPendingImage(null);
-              setPlacing({ kind: "field", field, signerId });
-              setTool("place");
-              if (mobile) setSignOpen(false);
-            }}
-            onPrepare={(withAudit) => void preparePlanFile(withAudit)}
-            busy={signing}
           />
         </SignPanel>
       )}
@@ -2471,6 +2505,172 @@ export function EditorView({
           onClose={closePanel}
         />
       )}
+    </>
+  );
+
+  return (
+    <>
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+      {(notice || editor.error) && (
+        <div className="notice" role="status">
+          <span>{editor.error ?? notice}</span>
+          <button
+            type="button"
+            aria-label={t("editor.closeNotice")}
+            onClick={() => {
+              setNotice(null);
+              editor.clearError();
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {confirmOverwrite && (
+        <div
+          className="notice warning"
+          role="alertdialog"
+          aria-label={t("editor.signatures")}
+        >
+          <span>{t("editor.overwriteSigned")}</span>
+          <button
+            type="button"
+            onClick={() =>
+              void (confirmOverwrite === "share" ? share(true) : save(true))
+            }
+          >
+            {confirmOverwrite === "share"
+              ? t("share.now")
+              : t("editor.saveAnyway")}
+          </button>
+          <button type="button" onClick={() => setConfirmOverwrite(null)}>
+            {t("editor.cancel")}
+          </button>
+        </div>
+      )}
+      {shareReady && (
+        <div
+          className="notice"
+          role="alertdialog"
+          aria-label={t("share.readyTitle")}
+        >
+          <span>{t("share.ready", shareReady.name)}</span>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => void shareBuilt(shareReady)}
+          >
+            {t("share.now")}
+          </button>
+          <button type="button" onClick={() => setShareReady(null)}>
+            {t("share.cancel")}
+          </button>
+        </div>
+      )}
+      {signatures.length > 0 && !signaturesOpen && (
+        <div className="notice" role="status" data-testid="signed-notice">
+          <span>
+            {signatures.length === 1
+              ? t("editor.oneSignature")
+              : t("editor.manySignatures", signatures.length)}{" "}
+            {signatures.some(
+              (s) => s.integrity !== "valid" || s.laterChanges === "modified",
+            )
+              ? t("editor.someInvalid")
+              : t("editor.allIntact")}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              closeSides();
+              setSignaturesOpen(true);
+            }}
+          >
+            {t("editor.viewSignatures")}
+          </button>
+        </div>
+      )}
+      {filePlan && !signAsOpen && (
+        <div className="notice" role="status" data-testid="plan-notice">
+          <span>
+            {filePlan.status.every((s) => s.done)
+              ? t("editor.planDone", filePlan.status.length)
+              : t(
+                  "editor.planPending",
+                  filePlan.status
+                    .filter((s) => s.canSign)
+                    .map((s) => s.signer.name)
+                    .join(", "),
+                )}
+          </span>
+          {filePlan.status.some((s) => s.canSign) && (
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                setSignOpen(false);
+                setSignAsId(
+                  filePlan.status.find((s) => s.canSign)?.signer.id ?? null,
+                );
+                setSignAsOpen(true);
+              }}
+            >
+              {t("editor.signAs")}
+            </button>
+          )}
+        </div>
+      )}
+      {needOcr && !ocrOpen && (
+        <div className="notice compact" role="status" data-testid="need-ocr">
+          <span>{mobile ? t("editor.needOcrShort") : t("editor.needOcr")}</span>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              setNeedOcr(false);
+              closeSides();
+              setOcrOpen(true);
+            }}
+          >
+            {t("editor.recognizeText")}
+          </button>
+          <button
+            type="button"
+            aria-label={t("editor.closeNotice")}
+            onClick={() => setNeedOcr(false)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {looksScanned && !hasOcr && !ocrOpen && !scannedDismissed && !needOcr && (
+        <div
+          className="notice compact"
+          role="status"
+          data-testid="scanned-notice"
+        >
+          <span>
+            {mobile ? t("editor.looksScannedShort") : t("editor.looksScanned")}
+          </span>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              closeSides();
+              setOcrOpen(true);
+            }}
+          >
+            {t("editor.recognizeText")}
+          </button>
+          <button
+            type="button"
+            aria-label={t("editor.closeScannedNotice")}
+            onClick={() => setScannedDismissed(true)}
+          >
+            ×
+          </button>
+        </div>
+      )}
       {selectedField && (
         <FieldPanel
           key={selectedField.id}
@@ -2479,18 +2679,7 @@ export function EditorView({
           onChange={updateSelectedField}
         />
       )}
-      <p
-        className={`tool-hint${tool === "whiteout" ? " warning" : ""}${
-          mobile && !hintOpen ? " collapsed" : ""
-        }`}
-        role="note"
-        title={mobile && !hintOpen ? t("mobile.showHint") : undefined}
-        onClick={
-          mobile ? () => setHintOpenFor(hintOpen ? null : tool) : undefined
-        }
-      >
-        {toolHint(tool, touch)}
-      </p>
+      {mobile && hint}
       {imageInput}
       {insertInput}
       <input
@@ -2521,6 +2710,11 @@ export function EditorView({
       <Viewer
         doc={doc}
         pages={state.pages}
+        topBar={mobile ? null : topBar}
+        aside={dock || null}
+        floating={!mobile}
+        // The default tool needs no note over the page.
+        pagesNote={mobile || tool === "select" ? null : hint}
         toolbar={
           mobile ? (
             <span className="toolbar-group">{historyButtons}</span>
@@ -2549,9 +2743,9 @@ export function EditorView({
           tool={tool}
           onTool={chooseTool}
           signOpen={signOpen}
-          onToggleSign={() => setSignOpen((o) => !o)}
+          onToggleSign={() => toggleSide(signOpen, setSignOpen)}
           ocrOpen={ocrOpen}
-          onToggleOcr={() => setOcrOpen((o) => !o)}
+          onToggleOcr={() => toggleSide(ocrOpen, setOcrOpen)}
           onScan={onScan ?? null}
           thumbsOpen={thumbsOpen}
           onToggleThumbs={() => setThumbsOpen((o) => !o)}
@@ -2560,10 +2754,13 @@ export function EditorView({
           splitOpen={splitOpen}
           onToggleSplit={() => togglePanel("split")}
           xrayOpen={xrayOpen}
-          onToggleXray={() => setXrayOpen((o) => !o)}
+          onToggleXray={() => toggleSide(xrayOpen, setXrayOpen)}
           onCompare={() => compareInputRef.current?.click()}
           numbersOpen={panel === "numbers"}
-          onToggleNumbers={toggleNumbers}
+          onToggleNumbers={() => {
+            if (panel !== "numbers") closeSides();
+            toggleNumbers();
+          }}
           compressOpen={panel === "compress"}
           onToggleCompress={() => togglePanel("compress")}
           protectOpen={panel === "protect"}

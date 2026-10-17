@@ -15,6 +15,10 @@ import { reopenConsent } from "./analytics/consent";
 import { EditorView } from "./editor/EditorView";
 import { useT } from "./i18n";
 import { LangSwitch } from "./LangSwitch";
+import { ThemeSwitch } from "./ThemeSwitch";
+import { Icon } from "./icons";
+import { useDark } from "./theme";
+import { useMobile } from "./useMobile";
 import type { Item, PageEntry } from "./model/document";
 import { ScanView } from "./scan/ScanView";
 import { A4, initialState, type EditorState } from "./model/document";
@@ -77,6 +81,17 @@ export function App() {
   const closeSupport = useCallback(() => setSupportOpen(false), []);
   // Phone layout (spec 007): the header actions live in an overflow menu.
   const [menuOpen, setMenuOpen] = useState(false);
+  const mobile = useMobile();
+  const dark = useDark();
+  // Escape closes the menu.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** Scanned pages waiting to be added to the open document. */
   const [incoming, setIncoming] = useState<{
@@ -271,21 +286,11 @@ export function App() {
         <h1 className="brand">
           {/* A new tab, so going to the home page never closes the open document. */}
           <a href="/" target="_blank" rel="noopener" title={t("app.home")}>
-            <picture>
-              <source
-                media="(max-width: 760px) and (prefers-color-scheme: dark)"
-                srcSet="/brand/mark-dark.svg"
-              />
-              <source
-                media="(max-width: 760px)"
-                srcSet="/brand/mark-light.svg"
-              />
-              <source
-                media="(prefers-color-scheme: dark)"
-                srcSet="/brand/logo-dark.svg"
-              />
-              <img src="/brand/logo-light.svg" alt={BRAND} height={32} />
-            </picture>
+            <img
+              src={`/brand/${mobile ? "mark" : "logo"}-${dark ? "dark" : "light"}.svg`}
+              alt={BRAND}
+              height={32}
+            />
           </a>
         </h1>
         {state.status === "ready" && (
@@ -293,20 +298,38 @@ export function App() {
             {state.file?.name ?? t("app.newDocument")}
           </span>
         )}
+        <button
+          type="button"
+          className="menu-button"
+          aria-label={t("mobile.menu")}
+          title={t("menu.label")}
+          aria-expanded={menuOpen}
+          aria-controls="app-menu"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          <Icon name="more" size={22} />
+        </button>
+        {menuOpen && (
+          <div
+            className="menu-backdrop"
+            aria-hidden="true"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
+        {/* Spec 025: everything but the document in one menu. It stays in the
+            page while closed, so the file input keeps working. */}
         <div
           id="app-menu"
           className={`header-actions${menuOpen ? " open" : ""}`}
           onClick={(e) => {
-            if ((e.target as HTMLElement).closest("button, input, a"))
-              setMenuOpen(false);
+            const target = e.target as HTMLElement;
+            if (target.closest(".lang-switch, .theme-switch")) return;
+            if (target.closest("button, input, a")) setMenuOpen(false);
           }}
         >
-          <small className="build-id" title={t("app.version")}>
-            {/* i18n-ignore: development build marker */}
-            {import.meta.env.DEV ? "dev " : ""}
-            {__BUILD_ID__}
-          </small>
-          <label className="open-button">
+          <p className="menu-title">{t("menu.new")}</p>
+          <label className="open-button menu-item">
+            <Icon name="open" />
             {t("app.openPdf")}
             <input
               ref={fileInputRef}
@@ -321,65 +344,66 @@ export function App() {
               }}
             />
           </label>
-          {/* A short label where the header is tight: it also holds Templates. */}
+          <button type="button" className="menu-item" onClick={startBlank}>
+            <Icon name="blank" />
+            {t("app.blankDocument")}
+          </button>
           <button
             type="button"
-            aria-label={t("app.blankDocument")}
-            onClick={startBlank}
+            className="menu-item"
+            onClick={() => setScanning(true)}
           >
-            <span className="label-long">{t("app.blankDocument")}</span>
-            <span className="label-short" aria-hidden="true">
-              {t("app.blankShort")}
-            </span>
-          </button>
-          <button type="button" onClick={() => setScanning(true)}>
+            <Icon name="scan" />
             {t("app.scan")}
           </button>
-          <button type="button" onClick={() => setTemplating(true)}>
+          <button
+            type="button"
+            className="menu-item"
+            onClick={() => setTemplating(true)}
+          >
+            <Icon name="templates" />
             {t("templates.button")}
           </button>
-          <LangSwitch />
-          <button type="button" onClick={reopenConsent}>
+          <p className="menu-title">{t("menu.preferences")}</p>
+          <div className="menu-row">
+            <Icon name="language" />
+            <span>{t("lang.label")}</span>
+            <LangSwitch />
+          </div>
+          <div className="menu-row">
+            <Icon name={dark ? "moon" : "sun"} />
+            <span>{t("theme.label")}</span>
+            <ThemeSwitch />
+          </div>
+          <p className="menu-title">{t("menu.about")}</p>
+          <button type="button" className="menu-item" onClick={reopenConsent}>
+            <Icon name="privacy" />
             {t("privacy.menu")}
           </button>
           <button
             type="button"
-            className="support-button"
+            className="menu-item support-button"
             onClick={() => setSupportOpen(true)}
           >
+            <Icon name="support" />
             {t("support.button")}
           </button>
           <a
-            className="source-link"
+            className="menu-item source-link"
             href={SOURCE_URL}
             target="_blank"
             rel="noopener noreferrer"
             title={t("app.sourceCodeHint")}
           >
+            <Icon name="code" />
             {t("app.sourceCode")}
           </a>
+          <small className="build-id" title={t("app.version")}>
+            {/* i18n-ignore: development build marker */}
+            {import.meta.env.DEV ? "dev " : ""}
+            {__BUILD_ID__}
+          </small>
         </div>
-        <button
-          type="button"
-          className="menu-button"
-          aria-label={t("mobile.menu")}
-          aria-expanded={menuOpen}
-          aria-controls="app-menu"
-          onClick={() => setMenuOpen((o) => !o)}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="5" r="2" />
-            <circle cx="12" cy="12" r="2" />
-            <circle cx="12" cy="19" r="2" />
-          </svg>
-        </button>
-        {menuOpen && (
-          <div
-            className="menu-backdrop"
-            aria-hidden="true"
-            onClick={() => setMenuOpen(false)}
-          />
-        )}
       </header>
       <main className="app-main">
         {state.status === "empty" && (

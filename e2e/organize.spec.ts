@@ -2,7 +2,14 @@
 // desktop and on a phone. Screenshots go to docs/screenshots/merge-split/.
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { firstPage, fixture, openPdf, saveAndRead, textRuns } from "./helpers";
+import {
+  firstPage,
+  fixture,
+  openPdf,
+  openTask,
+  saveAndRead,
+  textRuns,
+} from "./helpers";
 
 const DIR = "docs/screenshots/merge-split";
 
@@ -73,6 +80,7 @@ test("opening several PDFs at once merges them in order", async ({ page }) => {
 test("insert a PDF at the end, undo it, drag a page down", async ({ page }) => {
   await openTwoPages(page);
   const chooser = page.waitForEvent("filechooser");
+  await openTask(page, "Páginas");
   await page.getByRole("button", { name: "Insertar PDF" }).click();
   await (await chooser).setFiles(fixture("simple-text.pdf"));
   await expect(page.getByText("Se añadió 1 página al final.")).toBeVisible();
@@ -131,6 +139,7 @@ test("split by ranges into a ZIP, or extract the chosen pages", async ({
   page,
 }) => {
   await openTwoPages(page);
+  await openTask(page, "Páginas");
   await page.getByRole("button", { name: "Dividir", exact: true }).click();
   const panel = page.getByRole("dialog", { name: "Dividir o extraer páginas" });
   const go = panel.getByRole("button", { name: /^Descargar/ });
@@ -182,13 +191,13 @@ test.describe("phone", () => {
     hasTouch: true,
   });
 
-  test("insert and split are in the Edit sheet and fit", async ({ page }) => {
+  test("insert and split are in the Pages sheet and fit", async ({ page }) => {
     await openTwoPages(page);
     const bar = page.getByRole("navigation", {
       name: "Categorías de herramientas",
     });
-    await bar.getByRole("button", { name: "Editar" }).click();
-    const sheet = page.getByRole("dialog", { name: "Editar" });
+    await bar.getByRole("button", { name: "Páginas" }).click();
+    const sheet = page.getByRole("dialog", { name: "Páginas" });
     await expect(
       sheet.getByRole("button", { name: "Insertar PDF" }),
     ).toBeVisible();
@@ -199,7 +208,7 @@ test.describe("phone", () => {
     await (await chooser).setFiles(fixture("simple-text.pdf"));
     await expect(page.getByText("Se añadió 1 página al final.")).toBeVisible();
 
-    await bar.getByRole("button", { name: "Editar" }).click();
+    await bar.getByRole("button", { name: "Páginas" }).click();
     await sheet.getByRole("button", { name: "Dividir" }).click();
     const panel = page.getByRole("dialog", {
       name: "Dividir o extraer páginas",

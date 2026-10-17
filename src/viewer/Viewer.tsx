@@ -12,12 +12,21 @@ import { PageView } from "./PageView";
 import { Thumbnail } from "./Thumbnail";
 import { clampZoom, fitWidth, formatZoom, zoomIn, zoomOut } from "./zoom";
 import { useT } from "../i18n";
+import { Icon } from "../icons";
 
 interface ViewerProps {
   doc: PDFDocumentProxy | null;
   pages: PageEntry[];
   /** Extra controls shown at the start of the toolbar (editing tools). */
   toolbar?: ReactNode;
+  /** A bar above the toolbar: the task tabs and the save actions (spec 025). */
+  topBar?: ReactNode;
+  /** Panels docked at the right of the pages (spec 025). */
+  aside?: ReactNode;
+  /** Desktop (spec 025): zoom and page number float over the pages, and
+   * this note (the tool's help) floats at their top. */
+  floating?: boolean;
+  pagesNote?: ReactNode;
   renderOverlay?: (entry: PageEntry, geometry: PageGeometry) => ReactNode;
   renderPageActions?: (entry: PageEntry, index: number) => ReactNode;
   /** Class added to the pages area, e.g. the active tool for cursors. */
@@ -56,6 +65,10 @@ export function Viewer({
   doc,
   pages,
   toolbar,
+  topBar,
+  aside,
+  floating = false,
+  pagesNote,
   renderOverlay,
   renderPageActions,
   pagesClassName,
@@ -354,39 +367,59 @@ export function Viewer({
     setZoom(fitWidth(width, scrollRef.current?.clientWidth ?? 800));
   };
 
+  const zoomControls = (
+    <>
+      <span className="toolbar-group zoom-group">
+        <button
+          type="button"
+          onClick={() => setZoom(zoomOut)}
+          aria-label={t("viewer.zoomOut")}
+        >
+          −
+        </button>
+        <output className="zoom-value" aria-label={t("viewer.zoom")}>
+          {formatZoom(zoom)}
+        </output>
+        <button
+          type="button"
+          onClick={() => setZoom(zoomIn)}
+          aria-label={t("viewer.zoomIn")}
+        >
+          +
+        </button>
+        {floating ? (
+          // In the floating pill the button is an icon, to keep it small.
+          <button
+            type="button"
+            className="fit-button"
+            onClick={fit}
+            aria-label={t("viewer.fitWidth")}
+            title={t("viewer.fitWidth")}
+          >
+            <Icon name="fitWidth" size={18} />
+          </button>
+        ) : (
+          <button type="button" className="fit-button" onClick={fit}>
+            {t("viewer.fitWidth")}
+          </button>
+        )}
+      </span>
+      <span className="page-indicator" aria-live="polite">
+        {t("viewer.pageOf", shownPage, pages.length)}
+      </span>
+    </>
+  );
+
   return (
     <div className={`viewer${thumbnailsOpen ? " thumbs-open" : ""}`}>
+      {topBar}
       <div
         className="viewer-toolbar"
         role="toolbar"
         aria-label={t("viewer.toolbar")}
       >
         {toolbar}
-        <span className="toolbar-group">
-          <button
-            type="button"
-            onClick={() => setZoom(zoomOut)}
-            aria-label={t("viewer.zoomOut")}
-          >
-            −
-          </button>
-          <output className="zoom-value" aria-label={t("viewer.zoom")}>
-            {formatZoom(zoom)}
-          </output>
-          <button
-            type="button"
-            onClick={() => setZoom(zoomIn)}
-            aria-label={t("viewer.zoomIn")}
-          >
-            +
-          </button>
-          <button type="button" className="fit-button" onClick={fit}>
-            {t("viewer.fitWidth")}
-          </button>
-        </span>
-        <span className="page-indicator" aria-live="polite">
-          {t("viewer.pageOf", shownPage, pages.length)}
-        </span>
+        {!floating && zoomControls}
       </div>
       {belowToolbar}
       <div className="viewer-body">
@@ -410,24 +443,29 @@ export function Viewer({
             />
           ))}
         </nav>
-        <div className={`pages ${pagesClassName ?? ""}`} ref={scrollRef}>
-          <div className="pages-inner" ref={innerRef}>
-            {pages.map((entry, i) => (
-              <PageView
-                key={entry.id}
-                doc={doc}
-                entry={entry}
-                pageNumber={i + 1}
-                zoom={zoom}
-                onRendered={handleRendered}
-              >
-                {renderOverlay
-                  ? (geometry) => renderOverlay(entry, geometry)
-                  : undefined}
-              </PageView>
-            ))}
+        <div className="pages-area">
+          <div className={`pages ${pagesClassName ?? ""}`} ref={scrollRef}>
+            <div className="pages-inner" ref={innerRef}>
+              {pages.map((entry, i) => (
+                <PageView
+                  key={entry.id}
+                  doc={doc}
+                  entry={entry}
+                  pageNumber={i + 1}
+                  zoom={zoom}
+                  onRendered={handleRendered}
+                >
+                  {renderOverlay
+                    ? (geometry) => renderOverlay(entry, geometry)
+                    : undefined}
+                </PageView>
+              ))}
+            </div>
           </div>
+          {floating && pagesNote}
+          {floating && <div className="view-pill">{zoomControls}</div>}
         </div>
+        {aside && <aside className="dock">{aside}</aside>}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import type { IconName } from "../icons";
 
 export type Tool =
   | "select"
@@ -27,35 +28,36 @@ export type Tool =
 export interface ToolButton {
   tool: Tool;
   readonly label: string;
-  icon: string;
+  /** Line icon (spec 025): each tool has the icon of its own name. */
+  icon: IconName;
 }
 
-const button = (tool: Exclude<Tool, "place">, icon: string): ToolButton => ({
+const button = (tool: Exclude<Tool, "place">): ToolButton => ({
   tool,
-  icon,
+  icon: tool,
   get label() {
     return t(`tools.${tool}`);
   },
 });
 
 export const TOOLS: ToolButton[] = [
-  button("select", "⬉"),
-  button("text", "T"),
-  button("editText", "T✎"),
-  button("image", "🖼"),
-  button("whiteout", "▭"),
-  button("redact", "▬"),
-  button("highlight", "🖍"),
-  button("underline", "U̲"),
-  button("strikeout", "S̶"),
-  button("note", "🗨"),
-  button("freeText", "A▭"),
-  button("ink", "✎"),
-  button("line", "╱"),
-  button("arrow", "↗"),
-  button("square", "□"),
-  button("circle", "◯"),
-  button("formField", "☑"),
+  button("select"),
+  button("text"),
+  button("editText"),
+  button("image"),
+  button("whiteout"),
+  button("redact"),
+  button("highlight"),
+  button("underline"),
+  button("strikeout"),
+  button("note"),
+  button("freeText"),
+  button("ink"),
+  button("line"),
+  button("arrow"),
+  button("square"),
+  button("circle"),
+  button("formField"),
 ];
 
 /** Hint of each tool, read in the current language. */

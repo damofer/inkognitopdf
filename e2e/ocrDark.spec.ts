@@ -11,7 +11,7 @@ import {
   darkPhotoJpeg,
   PHOTO_BOX,
 } from "../tests/ocr/darkCover";
-import { firstPage, saveAndRead, textRuns } from "./helpers";
+import { firstPage, openTask, saveAndRead, textRuns } from "./helpers";
 
 const OUT = "docs/screenshots/ocr-dark";
 let cover: string;
@@ -59,6 +59,7 @@ for (const [mode, file] of [
       .click();
     await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
 
+    await openTask(page, "Revisar");
     await page.getByRole("button", { name: "OCR", exact: true }).click();
     await panel(page).getByLabel("Idioma").selectOption("spa");
     const started = Date.now();

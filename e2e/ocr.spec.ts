@@ -4,7 +4,14 @@ import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { TEST_LINES } from "../tests/scan/synthPhoto";
 import { writeScannedPdf } from "./scannedPdf";
-import { firstPage, fixture, openPdf, saveAndRead, textRuns } from "./helpers";
+import {
+  firstPage,
+  fixture,
+  openPdf,
+  openTask,
+  saveAndRead,
+  textRuns,
+} from "./helpers";
 import { writePhotos } from "./scanPhotos";
 
 let scannedPdf: string;
@@ -114,6 +121,7 @@ test("CA5, CA7: recognized text is selectable and opens as scanned text; OCR aga
   test.setTimeout(240_000);
   const outside = await offline(page);
   await openScanned(page);
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "OCR", exact: true }).click();
   await panel(page).getByLabel("Rango de páginas").fill("1");
   await recognize(page);
@@ -162,6 +170,7 @@ test("CA5, CA7: recognized text is selectable and opens as scanned text; OCR aga
   expect(await textRuns(saved.bytes, 2)).toEqual([]);
 
   // CA5: a second run replaces the layer instead of adding another.
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "OCR", exact: true }).click();
   await panel(page).getByLabel("Rango de páginas").fill("1");
   await recognize(page);

@@ -21,6 +21,7 @@ import { signEngine } from "./signEngine";
 import { support } from "./support";
 import { templates } from "./templates";
 import { tools } from "./tools";
+import { ui } from "./ui";
 import { viewer } from "./viewer";
 import { xray } from "./xray";
 
@@ -46,6 +47,7 @@ export const es = {
   ...support,
   ...templates,
   ...tools,
+  ...ui,
   ...viewer,
   ...xray,
 };

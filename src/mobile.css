@@ -1,19 +1,4 @@
-/* Header actions: in a row on wide screens, in the overflow menu on phones
-   (spec 007). */
-.header-actions {
-  display: contents;
-}
-
-.app-header > .file-name {
-  order: 2;
-}
-
-.header-actions > .lang-switch {
-  order: 3;
-}
-
-.menu-button,
-.menu-backdrop,
+/* The bottom bar is only for phones (spec 007). */
 .mobile-bar {
   display: none;
 }
@@ -87,70 +72,8 @@
   }
 
   .menu-button {
-    display: grid;
-    place-items: center;
-    flex: none;
-    margin-left: auto;
     width: 44px;
     height: 44px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-  }
-
-  .menu-button svg {
-    width: 22px;
-    height: 22px;
-    fill: currentColor;
-  }
-
-  .header-actions {
-    display: none;
-  }
-
-  .header-actions.open {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 8px;
-    z-index: 80;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    width: min(280px, calc(100vw - 16px));
-    padding: 10px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: var(--surface);
-    box-shadow: 0 12px 32px rgb(0 0 0 / 0.25);
-  }
-
-  .header-actions.open > :is(button, .open-button, .source-link) {
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    text-align: left;
-  }
-
-  .header-actions.open > .build-id {
-    order: 4;
-    padding: 4px 6px 0;
-  }
-
-  .header-actions.open > .lang-switch {
-    margin: 4px 0 0;
-    align-self: stretch;
-  }
-
-  .header-actions.open > .lang-switch button {
-    flex: 1;
-  }
-
-  .menu-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 70;
   }
 
   /* Start screen. */
@@ -509,6 +432,11 @@
 
   .sheet-options .toolbar-group {
     border-right: 0;
+  }
+
+  /* The dock (spec 025) is only a place in the page on desktops. */
+  .dock {
+    display: contents;
   }
 
   /* Panels become sheets from the bottom edge. */
@@ -910,31 +838,5 @@
     padding-bottom: max(8px, env(safe-area-inset-bottom));
     background: var(--surface);
     border-top: 1px solid var(--border);
-  }
-}
-
-/* Header labels: the short one where the header row is tight (spec 021 adds
-   Templates to it). */
-.label-short {
-  display: none;
-}
-
-@media (min-width: 761px) and (max-width: 1439px) {
-  .header-actions .label-long {
-    display: none;
-  }
-
-  .header-actions .label-short {
-    display: inline;
-  }
-}
-
-@media (min-width: 761px) and (max-width: 1099px) {
-  .app-header {
-    gap: 8px;
-  }
-
-  .header-actions > :is(button, .open-button, .source-link) {
-    padding-inline: 6px;
   }
 }

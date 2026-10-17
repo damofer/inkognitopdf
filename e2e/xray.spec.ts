@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { scanPrivacy } from "../src/engine/privacy";
 import { leaky } from "../tests/privacyFixture";
-import { firstPage, fixture, saveAndRead } from "./helpers";
+import { firstPage, fixture, openTask, saveAndRead } from "./helpers";
 
 const DIR = "docs/screenshots/xray";
 
@@ -43,6 +43,7 @@ test("the report, the earlier version, cleaning and then saving", async ({
   page,
 }) => {
   await open(page, file);
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "Radiografía" }).click();
   await expect(panel(page).getByRole("status")).toHaveText(
     "Este PDF esconde 10 cosas que no se ven.",
@@ -110,6 +111,7 @@ test("the report, the earlier version, cleaning and then saving", async ({
 
 test("a plain document has nothing hidden", async ({ page }) => {
   await open(page, fixture("two-pages.pdf"));
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "Radiografía" }).click();
   await expect(panel(page).getByRole("status")).toHaveText(
     /No encontramos nada|Este PDF esconde/,
@@ -123,14 +125,14 @@ test.describe("phone", () => {
     hasTouch: true,
   });
 
-  test("the x-ray is in the Edit sheet and fits", async ({ page }) => {
+  test("the x-ray is in the More sheet and fits", async ({ page }) => {
     await open(page, file);
     await page
       .getByRole("navigation", { name: "Categorías de herramientas" })
-      .getByRole("button", { name: "Editar" })
+      .getByRole("button", { name: "Más" })
       .click();
     await page
-      .getByRole("dialog", { name: "Editar" })
+      .getByRole("dialog", { name: "Más" })
       .getByRole("button", { name: "Radiografía" })
       .click();
     await expect(panel(page).getByRole("status")).toContainText(

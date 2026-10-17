@@ -13,6 +13,7 @@ import {
   firstPage,
   fixture,
   openFixture,
+  openTask,
   saveAndRead,
   textRuns,
 } from "./helpers";
@@ -114,6 +115,7 @@ test("a protected PDF asks for its password and is saved with it", async ({
   );
 
   // Removing it saves an open file.
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "Contraseña", exact: true }).click();
   const panel = page.getByRole("dialog", { name: "Proteger con contraseña" });
   await expect(panel).toContainText("se guardará protegido");
@@ -140,6 +142,7 @@ test("set a password with restrictions, honestly explained", async ({
   page,
 }) => {
   await openFixture(page, "two-pages.pdf");
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "Contraseña", exact: true }).click();
   const panel = page.getByRole("dialog", { name: "Proteger con contraseña" });
   await expect(panel).toContainText("son orientativos");
@@ -174,6 +177,7 @@ test("compress: sizes before and after, and a smaller file", async ({
   await page.getByTestId("open-pdf").setInputFiles(files.photo);
   await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
   const before = (await readFile(files.photo)).length;
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "Comprimir", exact: true }).click();
   const panel = page.getByRole("dialog", { name: "Comprimir PDF" });
   await expect(panel).toContainText("Tamaño del archivo abierto");
@@ -195,7 +199,7 @@ test.describe("phone", () => {
     hasTouch: true,
   });
 
-  test("compress and password are in the Edit sheet and fit", async ({
+  test("compress and password are in the More sheet and fit", async ({
     page,
   }) => {
     await page.goto("/app/");
@@ -208,9 +212,9 @@ test.describe("phone", () => {
       ["Comprimir", "Comprimir PDF"],
       ["Contraseña", "Proteger con contraseña"],
     ]) {
-      await bar.getByRole("button", { name: "Editar" }).click();
+      await bar.getByRole("button", { name: "Más" }).click();
       await page
-        .getByRole("dialog", { name: "Editar" })
+        .getByRole("dialog", { name: "Más" })
         .getByRole("button", { name: item })
         .click();
       const panel = page.getByRole("dialog", { name: title });

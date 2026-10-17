@@ -5,6 +5,7 @@ import "pdfjs-dist/web/pdf_viewer.css";
 import "./styles.css";
 import "./mobile.css";
 import { App } from "./App";
+import { applyTheme } from "./theme";
 
 // Caches the app shell so it keeps working offline (PWA). Only in production
 // builds: in development a service worker left by a build served on the same
@@ -14,6 +15,9 @@ else
   void navigator.serviceWorker
     ?.getRegistrations()
     .then((all) => Promise.all(all.map((r) => r.unregister())));
+
+// The theme chosen in the menu (spec 025), before the first paint.
+applyTheme();
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root element");

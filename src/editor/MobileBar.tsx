@@ -1,12 +1,15 @@
 // Phone layout (spec 007): a bottom bar with the tool categories. Each
 // category opens a sheet with its tools; "Sign" opens the signing panel.
+// Spec 025: the same tasks as the desktop tabs; «More» holds review,
+// protection and forms.
 import { useState, type ReactNode } from "react";
 import { useT } from "../i18n";
+import { Icon, type IconName } from "../icons";
 import { TOOLS, type Tool } from "./tools";
 
-type Category = "edit" | "annotate" | "forms" | "sign" | "scan";
+type Category = "edit" | "annotate" | "sign" | "pages" | "more";
 
-const CATEGORY_TOOLS: Record<"edit" | "annotate" | "forms", Tool[]> = {
+export const CATEGORY_TOOLS: Record<"edit" | "annotate" | "forms", Tool[]> = {
   edit: ["select", "text", "editText", "image", "whiteout", "redact"],
   annotate: [
     "highlight",
@@ -23,27 +26,12 @@ const CATEGORY_TOOLS: Record<"edit" | "annotate" | "forms", Tool[]> = {
   forms: ["formField"],
 };
 
-const ICONS: Record<Category, ReactNode> = {
-  edit: <path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" />,
-  annotate: (
-    <>
-      <path d="M4 20h16" />
-      <path d="M6 16 15.5 6.5l3 3L9 19H6z" />
-    </>
-  ),
-  forms: (
-    <>
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-      <path d="m8 12 3 3 5-6" />
-    </>
-  ),
-  sign: <path d="M3 17c3-6 5-8 5-4s-1 6 2 2 4-6 4-2 2 3 4 0M3 21h18" />,
-  scan: (
-    <>
-      <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
-      <path d="M8 12h8" />
-    </>
-  ),
+const ICONS: Record<Category, IconName> = {
+  edit: "edit",
+  annotate: "annotate",
+  sign: "sign",
+  pages: "pages",
+  more: "moreHorizontal",
 };
 
 interface MobileBarProps {
@@ -111,17 +99,21 @@ export function MobileBar({
   const label: Record<Category, string> = {
     edit: t("mobile.edit"),
     annotate: t("mobile.annotate"),
-    forms: t("mobile.forms"),
     sign: t("mobile.sign"),
-    scan: t("mobile.scanOcr"),
+    pages: t("mobile.pages"),
+    more: t("mobile.more"),
   };
   const active: Category | null = signOpen
     ? "sign"
-    : ocrOpen
-      ? "scan"
-      : ((Object.keys(CATEGORY_TOOLS) as (keyof typeof CATEGORY_TOOLS)[]).find(
-          (c) => c !== "edit" && CATEGORY_TOOLS[c].includes(tool),
-        ) ?? (tool === "select" || tool === "place" ? null : "edit"));
+    : ocrOpen || xrayOpen || compressOpen || protectOpen || tool === "formField"
+      ? "more"
+      : splitOpen || numbersOpen || thumbsOpen
+        ? "pages"
+        : CATEGORY_TOOLS.annotate.includes(tool)
+          ? "annotate"
+          : tool === "select" || tool === "place"
+            ? null
+            : "edit";
 
   const open = (category: Category) => {
     if (category === "sign") {
@@ -132,26 +124,44 @@ export function MobileBar({
     setSheet((s) => (s === category ? null : category));
   };
 
+  /** A button of a sheet: closes the sheet, then acts. */
+  const item = (
+    key: string,
+    icon: IconName,
+    text: string,
+    act: () => void,
+    pressed?: boolean,
+    className = "sheet-item",
+  ) => (
+    <button
+      key={key}
+      type="button"
+      className={className}
+      aria-pressed={pressed}
+      onClick={() => {
+        setSheet(null);
+        act();
+      }}
+    >
+      <span className="sheet-icon">
+        <Icon name={icon} size={24} />
+      </span>
+      <span>{text}</span>
+    </button>
+  );
+
   const toolButton = (id: Tool) => {
     const entry = TOOLS.find((b) => b.tool === id)!;
-    return (
-      <button
-        key={id}
-        type="button"
-        className="sheet-item"
-        aria-pressed={tool === id}
-        onClick={() => {
-          onTool(id);
-          setSheet(null);
-        }}
-      >
-        <span className="sheet-icon" aria-hidden="true">
-          {entry.icon}
-        </span>
-        <span>{entry.label}</span>
-      </button>
-    );
+    return item(id, entry.icon, entry.label, () => onTool(id), tool === id);
   };
+
+  const section = (title: string, items: ReactNode[]) =>
+    items.some(Boolean) && (
+      <section className="sheet-section" key={title}>
+        <h3>{title}</h3>
+        <div className="sheet-grid">{items}</div>
+      </section>
+    );
 
   return (
     <>
@@ -170,178 +180,97 @@ export function MobileBar({
                 aria-label={t("mobile.close")}
                 onClick={() => setSheet(null)}
               >
-                ×
+                <Icon name="close" />
               </button>
             </header>
-            <div className="sheet-grid">
-              {sheet === "edit" && (
-                <>
-                  {CATEGORY_TOOLS.edit.map(toolButton)}
-                  <button
-                    type="button"
-                    className="sheet-item"
-                    aria-pressed={thumbsOpen}
-                    onClick={() => {
-                      onToggleThumbs();
-                      setSheet(null);
-                    }}
-                  >
-                    <span className="sheet-icon" aria-hidden="true">
-                      ▤
-                    </span>
-                    <span>{t("mobile.pages")}</span>
-                  </button>
-                  {onInsertPdf && (
-                    <button
-                      type="button"
-                      className="sheet-item"
-                      onClick={() => {
-                        setSheet(null);
-                        onInsertPdf();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        ⊕
-                      </span>
-                      <span>{t("organize.insert")}</span>
-                    </button>
+            {sheet === "edit" && (
+              <div className="sheet-grid">
+                {CATEGORY_TOOLS.edit.map(toolButton)}
+              </div>
+            )}
+            {sheet === "annotate" && (
+              <div className="sheet-grid">
+                {CATEGORY_TOOLS.annotate.map(toolButton)}
+              </div>
+            )}
+            {sheet === "pages" && (
+              <div className="sheet-grid">
+                {item(
+                  "thumbs",
+                  "thumbnails",
+                  t("mobile.thumbnails"),
+                  onToggleThumbs,
+                  thumbsOpen,
+                )}
+                {onInsertPdf &&
+                  item("insert", "insert", t("organize.insert"), onInsertPdf)}
+                {onScan && item("scan", "scan", t("mobile.scanPages"), onScan)}
+                {onToggleSplit &&
+                  item(
+                    "split",
+                    "split",
+                    t("organize.split"),
+                    onToggleSplit,
+                    splitOpen,
                   )}
-                  {onToggleSplit && (
-                    <button
-                      type="button"
-                      className="sheet-item"
-                      aria-pressed={splitOpen}
-                      onClick={() => {
-                        setSheet(null);
-                        onToggleSplit();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        ✂
-                      </span>
-                      <span>{t("organize.split")}</span>
-                    </button>
+                {onToggleNumbers &&
+                  item(
+                    "numbers",
+                    "numbers",
+                    t("numbering.button"),
+                    onToggleNumbers,
+                    numbersOpen,
                   )}
-                  {onToggleXray && (
-                    <button
-                      type="button"
-                      className="sheet-item"
-                      aria-pressed={xrayOpen}
-                      onClick={() => {
-                        setSheet(null);
-                        onToggleXray();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        ◎
-                      </span>
-                      <span>{t("xray.button")}</span>
-                    </button>
-                  )}
-                  {onCompare && (
-                    <button
-                      type="button"
-                      className="sheet-item"
-                      onClick={() => {
-                        setSheet(null);
-                        onCompare();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        ⇄
-                      </span>
-                      <span>{t("compare.button")}</span>
-                    </button>
-                  )}
-                  {onToggleNumbers && (
-                    <button
-                      type="button"
-                      className="sheet-item"
-                      aria-pressed={numbersOpen}
-                      onClick={() => {
-                        setSheet(null);
-                        onToggleNumbers();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        #
-                      </span>
-                      <span>{t("numbering.button")}</span>
-                    </button>
-                  )}
-                  {onToggleCompress && (
-                    <button
-                      type="button"
-                      className="sheet-item"
-                      aria-pressed={compressOpen}
-                      onClick={() => {
-                        setSheet(null);
-                        onToggleCompress();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        ⇲
-                      </span>
-                      <span>{t("compress.button")}</span>
-                    </button>
-                  )}
-                  {onToggleProtect && (
-                    <button
-                      type="button"
-                      className={`sheet-item${protectActive ? " protected" : ""}`}
-                      aria-pressed={protectOpen}
-                      onClick={() => {
-                        setSheet(null);
-                        onToggleProtect();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        ⚿
-                      </span>
-                      <span>{t("protect.button")}</span>
-                    </button>
-                  )}
-                </>
-              )}
-              {sheet === "annotate" && CATEGORY_TOOLS.annotate.map(toolButton)}
-              {sheet === "forms" && CATEGORY_TOOLS.forms.map(toolButton)}
-              {sheet === "scan" && (
-                <>
-                  {onScan && (
-                    <button
-                      type="button"
-                      className="sheet-item"
-                      onClick={() => {
-                        setSheet(null);
-                        onScan();
-                      }}
-                    >
-                      <span className="sheet-icon" aria-hidden="true">
-                        ⎚
-                      </span>
-                      <span>{t("mobile.scanPages")}</span>
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="sheet-item"
-                    aria-pressed={ocrOpen}
-                    onClick={() => {
-                      setSheet(null);
-                      onToggleOcr();
-                    }}
-                  >
-                    <span className="sheet-icon" aria-hidden="true">
-                      {/* i18n-ignore: icon, hidden from screen readers */}
-                      Aa
-                    </span>
-                    <span>{t("mobile.recognizeText")}</span>
-                  </button>
-                </>
-              )}
-            </div>
-            {sheet === "forms" && formOptions && (
-              <div className="sheet-options">{formOptions}</div>
+              </div>
+            )}
+            {sheet === "more" && (
+              <>
+                {section(t("mobile.review"), [
+                  onToggleXray &&
+                    item(
+                      "xray",
+                      "xray",
+                      t("xray.button"),
+                      onToggleXray,
+                      xrayOpen,
+                    ),
+                  onCompare &&
+                    item("compare", "compare", t("compare.button"), onCompare),
+                  item(
+                    "ocr",
+                    "ocr",
+                    t("mobile.recognizeText"),
+                    onToggleOcr,
+                    ocrOpen,
+                  ),
+                ])}
+                {section(t("mobile.protect"), [
+                  onToggleProtect &&
+                    item(
+                      "protect",
+                      "protect",
+                      t("protect.button"),
+                      onToggleProtect,
+                      protectOpen,
+                      `sheet-item${protectActive ? " protected" : ""}`,
+                    ),
+                  onToggleCompress &&
+                    item(
+                      "compress",
+                      "compress",
+                      t("compress.button"),
+                      onToggleCompress,
+                      compressOpen,
+                    ),
+                ])}
+                {section(
+                  t("mobile.forms"),
+                  CATEGORY_TOOLS.forms.map(toolButton),
+                )}
+                {formOptions && (
+                  <div className="sheet-options">{formOptions}</div>
+                )}
+              </>
             )}
           </div>
         </>
@@ -356,9 +285,7 @@ export function MobileBar({
             className={active === category ? "active" : undefined}
             onClick={() => open(category)}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              {ICONS[category]}
-            </svg>
+            <Icon name={ICONS[category]} size={24} />
             <span>{label[category]}</span>
           </button>
         ))}

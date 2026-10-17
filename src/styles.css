@@ -144,25 +144,71 @@
 :root {
   --bg: #f4f5f7;
   --surface: #ffffff;
+  /* Hover and pressed backgrounds, panels inside panels (spec 025). */
+  --surface-2: #eef0f3;
   --text: #1d2330;
   --muted: #5d6576;
   --accent: #1f7a5c;
+  --accent-soft: #e3f2ec;
+  --on-accent: #ffffff;
   --border: #d6d9e0;
+  --border-strong: #c3c8d1;
+  --danger: #c92a2a;
+  --warning: #8a4b00;
+  --success: #16a34a;
   --page-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+  --panel-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  --radius: 8px;
+  --radius-lg: 12px;
+  /* Width of the panel docked at the right of the editor (spec 025). */
+  --dock-width: 360px;
   color-scheme: light dark;
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Dark colors: the system's choice unless the menu says light (spec 025),
+   or the menu's choice. Both blocks hold the same values. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #181b21;
     --surface: #23272f;
+    --surface-2: #2d323c;
     --text: #e8eaee;
     --muted: #a3a9b6;
     --accent: #4cc39a;
+    --accent-soft: #1d3a30;
+    --on-accent: #0f1a15;
     --border: #3a3f4a;
+    --border-strong: #4a505c;
+    --danger: #ff8a80;
+    --warning: #f6d58c;
+    --success: #4ade80;
     --page-shadow: 0 1px 4px rgb(0 0 0 / 0.6);
+    --panel-shadow: 0 6px 24px rgb(0 0 0 / 0.5);
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #181b21;
+  --surface: #23272f;
+  --surface-2: #2d323c;
+  --text: #e8eaee;
+  --muted: #a3a9b6;
+  --accent: #4cc39a;
+  --accent-soft: #1d3a30;
+  --on-accent: #0f1a15;
+  --border: #3a3f4a;
+  --border-strong: #4a505c;
+  --danger: #ff8a80;
+  --warning: #f6d58c;
+  --success: #4ade80;
+  --page-shadow: 0 1px 4px rgb(0 0 0 / 0.6);
+  --panel-shadow: 0 6px 24px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 * {
@@ -187,7 +233,7 @@ button,
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 4px 10px;
   cursor: pointer;
 }
@@ -195,6 +241,107 @@ button,
 button:hover:not(:disabled),
 .open-button:hover {
   border-color: var(--accent);
+}
+
+/* Form controls with the app's look instead of the browser's (spec 025).
+   :where() keeps them weaker than any class rule, and the fields drawn on
+   the PDF pages (.form-control) keep their own look. */
+:where(
+  select,
+  input:is(
+    [type="text"],
+    [type="number"],
+    [type="email"],
+    [type="password"],
+    [type="search"],
+    [type="url"],
+    [type="tel"],
+    [type="date"]
+  )
+):where(:not(.form-control)) {
+  font: inherit;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  min-height: 34px;
+  padding: 4px 10px;
+}
+
+:where(select):where(:not(.form-control)) {
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a8291' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  cursor: pointer;
+}
+
+:where(select, input, textarea):where(:not(.form-control)):focus-visible,
+:where(button, .open-button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+:where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  margin: 0 2px 0 0;
+  vertical-align: middle;
+}
+
+:where(input[type="color"]) {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  padding: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 5px;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border: 0;
+  border-radius: 5px;
+}
+
+:where(fieldset) {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px;
+  margin: 0;
+  min-width: 0;
+}
+
+:where(legend) {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+:where(details) > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Line icons (src/icons.tsx). */
+.icon {
+  flex: none;
+  vertical-align: middle;
 }
 
 button:disabled {
@@ -205,7 +352,7 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 button[aria-pressed="true"] {
@@ -267,31 +414,129 @@ button[aria-pressed="true"] {
   width: auto;
 }
 
-.header-actions .source-link {
-  display: inline-flex;
-  align-items: center;
-  font: inherit;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 10px;
-  text-decoration: none;
-}
-
-.header-actions .source-link:hover {
-  border-color: var(--accent);
-}
-
 .open-button input {
   display: none;
 }
 
 .file-name {
-  color: var(--muted);
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Spec 025: one menu («⋯») for opening, preferences and the project, on
+   every screen size. */
+.menu-button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.menu-button:hover:not(:disabled),
+.menu-button[aria-expanded="true"] {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+}
+
+.header-actions {
+  display: none;
+}
+
+.header-actions.open {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 8px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: min(300px, calc(100vw - 16px));
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.25);
+}
+
+.menu-title {
+  margin: 8px 10px 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.menu-title:first-child {
+  margin-top: 2px;
+}
+
+.header-actions .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  text-decoration: none;
+  font: inherit;
+}
+
+.header-actions .menu-item:hover {
+  background: var(--surface-2);
+}
+
+.header-actions .menu-item .icon {
+  color: var(--muted);
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 4px 0 10px;
+}
+
+.menu-row > .icon {
+  color: var(--muted);
+}
+
+.menu-row > span {
+  flex: 1;
+}
+
+.header-actions .build-id {
+  padding: 8px 10px 2px;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+}
+
+.app-header {
+  position: relative;
 }
 
 .app-main {
@@ -330,14 +575,259 @@ button[aria-pressed="true"] {
   border-bottom: 1px solid var(--border);
 }
 
+/* Spec 025: the tasks and the save actions on top; the tools of the task,
+   their options and the zoom below. */
+.task-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px 6px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.task-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.task-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.task-tab:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.task-tab[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+
+.task-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.task-actions > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+/* Undo and redo: icons; then share; the main action last. */
+.task-actions > button:not(.primary, .share-button) {
+  width: 36px;
+  justify-content: center;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.task-actions > button:not(.primary, .share-button):hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.task-actions > .share-button {
+  order: 1;
+}
+
+.task-actions > .primary {
+  order: 2;
+  padding: 0 14px;
+}
+
+.tool-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-color: transparent;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.tool-button:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--surface-2);
+}
+
+.tool-button[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tools.compact .tool-label {
+  display: none;
+}
+
+.tools.compact .tool-button {
+  width: 36px;
+  justify-content: center;
+  padding: 0;
+}
+
+.task-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.viewer-toolbar .zoom-group {
+  margin-left: auto;
+}
+
+/* Spec 025, desktop: zoom and page number in a pill over the pages, and the
+   tool's help as a note at their top that fades away. */
+.pages-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.view-pill {
+  /* Bottom right, clear of the page's centre where people click to place. */
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px 4px 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 92%, transparent);
+  color: var(--surface);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.2);
+  white-space: nowrap;
+}
+
+.view-pill .zoom-group {
+  margin: 0;
+  padding-right: 4px;
+  border-right: 1px solid color-mix(in srgb, var(--surface) 30%, transparent);
+}
+
+.view-pill button {
+  min-height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+}
+
+.view-pill button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--surface) 18%, transparent);
+}
+
+.view-pill .page-indicator {
+  padding: 0 8px;
+  color: inherit;
+  font-size: 0.9rem;
+}
+
+.view-pill .zoom-value {
+  min-width: 3.6em;
+  font-size: 0.9rem;
+}
+
+.pages-area > .tool-hint {
+  /* Read-only: clicks go through to the page, also once it has faded. */
+  pointer-events: none;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  max-width: min(640px, calc(100% - 32px));
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+  text-align: center;
+  pointer-events: none;
+  animation: hint-fade 7s ease forwards;
+}
+
+.pages-area > .tool-hint.warning {
+  animation: none;
+}
+
+@keyframes hint-fade {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pages-area > .tool-hint {
+    animation: none;
+  }
+}
+
+/* Spec 025: the open panel is docked at the right of the pages instead of
+   floating over them. Phones keep sheets from the bottom edge. */
+.dock {
+  flex: none;
+  width: var(--dock-width);
+  overflow-y: auto;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+@media (min-width: 761px) {
+  .dock > :is(.sign-panel, .ocr-panel, .split-panel) {
+    position: static;
+    z-index: auto;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 16px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
 .zoom-value {
   min-width: 4.5em;
   text-align: center;
 }
 
 .page-indicator {
-  margin-left: auto;
+  margin-left: 4px;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .viewer-body {
@@ -495,9 +985,13 @@ button[aria-pressed="true"] {
 }
 
 @media (prefers-color-scheme: dark) {
-  .tool-hint.warning {
+  :root:not([data-theme="light"]) .tool-hint.warning {
     color: #f6d58c;
   }
+}
+
+:root[data-theme="dark"] .tool-hint.warning {
+  color: #f6d58c;
 }
 
 .tools button {
@@ -1310,6 +1804,7 @@ button[aria-pressed="true"] {
 }
 
 .thumbnails-header button.protected::before,
+.tool-button.protected .tool-label::before,
 .sheet-item.protected .sheet-icon::after {
   content: "●" / "";
   color: var(--accent);
@@ -1488,6 +1983,53 @@ button[aria-pressed="true"] {
   box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
   display: grid;
   gap: 10px;
+}
+
+/* Spec 025: signing in two steps. */
+.sign-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.sign-steps button {
+  min-height: 34px;
+  border: 0;
+  border-top: 3px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: left;
+  padding: 6px 0 0;
+}
+
+.sign-steps button[aria-pressed="true"] {
+  border-top-color: var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sign-next {
+  min-height: 40px;
+}
+
+.sign-back {
+  justify-self: start;
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+  padding-inline: 0;
+}
+
+.sign-advanced {
+  display: grid;
+  gap: 8px;
+}
+
+.sign-advanced[open] > summary {
+  margin-bottom: 4px;
 }
 
 .sign-panel header {
@@ -1851,21 +2393,27 @@ button[aria-pressed="true"] {
   user-select: text;
 }
 
-/* ES / EN switch (spec 006). */
-.lang-switch {
+/* ES / EN switch (spec 006) and light / dark theme (spec 025). */
+.lang-switch,
+.theme-switch {
   display: flex;
   flex-shrink: 0;
-  margin-left: auto;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
 }
 
-.lang-switch button {
+.lang-switch button,
+.theme-switch button {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 30px;
   margin: 0;
   border: 0;
-  border-radius: 0;
-  padding: 4px 8px;
+  border-radius: 6px;
+  padding: 2px 8px;
   background: transparent;
   color: var(--muted);
   font: inherit;
@@ -1873,9 +2421,11 @@ button[aria-pressed="true"] {
   cursor: pointer;
 }
 
-.lang-switch button[aria-pressed="true"] {
-  background: var(--accent);
-  color: var(--surface);
+.lang-switch button[aria-pressed="true"],
+.theme-switch button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
 }
 
 /* Short confirmation that goes away by itself (spec 009). */
@@ -2159,9 +2709,13 @@ button.danger {
 }
 
 @media (prefers-color-scheme: dark) {
-  .dialog-warning {
+  :root:not([data-theme="light"]) .dialog-warning {
     color: #ff8a80;
   }
+}
+
+:root[data-theme="dark"] .dialog-warning {
+  color: #ff8a80;
 }
 
 /* Donations ("Apoyar"). */

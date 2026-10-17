@@ -99,3 +99,56 @@ export function makePng(width: number, height: number): Buffer {
     chunk("IEND", Buffer.alloc(0)),
   ]);
 }
+
+const ANNOTATE_TOOLS = [
+  "Resaltar",
+  "Subrayar",
+  "Tachar",
+  "Nota",
+  "Texto libre",
+  "Dibujar",
+  "Línea",
+  "Flecha",
+  "Rectángulo",
+  "Elipse",
+  "Highlight",
+  "Underline",
+  "Strikethrough",
+  "Note",
+  "Free text",
+  "Draw",
+  "Line",
+  "Arrow",
+  "Rectangle",
+  "Ellipse",
+];
+
+/**
+ * Spec 025: the desktop toolbar shows only the tools of the chosen task.
+ * Opens the task (Anotar or Formularios) that holds the tool `name`; the
+ * tools of Editar are there from the start.
+ */
+export async function showTool(page: Page, name: string) {
+  const tasks = page.getByRole("group", { name: /^(Tareas|Tasks)$/ });
+  if (ANNOTATE_TOOLS.includes(name))
+    await tasks.getByRole("button", { name: /^(Anotar|Annotate)$/ }).click();
+  else if (name === "Campos" || name === "Fields")
+    await tasks.getByRole("button", { name: /^(Formularios|Forms)$/ }).click();
+}
+
+/** Spec 025: the header actions live in the «⋯» menu. Opens it. */
+export async function openMenu(page: Page) {
+  const menu = page.locator("#app-menu");
+  if (!(await menu.isVisible()))
+    await page.getByRole("button", { name: /^(Menú|Menu)$/ }).click();
+  await expect(menu).toBeVisible();
+  return menu;
+}
+
+/** Spec 025: opens a task of the desktop bar (Páginas, Revisar…). */
+export async function openTask(page: Page, name: string) {
+  await page
+    .getByRole("group", { name: /^(Tareas|Tasks)$/ })
+    .getByRole("button", { name, exact: true })
+    .click();
+}

@@ -5,7 +5,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { PDFDocument, PDFName, type PDFDict, type PDFRawStream } from "pdf-lib";
-import { firstPage, saveAndRead, textRuns } from "./helpers";
+import { firstPage, openTask, saveAndRead, textRuns } from "./helpers";
 import { writeScannedPdf } from "./scannedPdf";
 import { writePhotos, type PhotoFiles } from "./scanPhotos";
 
@@ -29,6 +29,7 @@ const textbox = (page: Page) =>
   page.getByRole("textbox", { name: "Texto", exact: true });
 
 async function recognizeFirstPage(page: Page) {
+  await openTask(page, "Revisar");
   await page.getByRole("button", { name: "OCR", exact: true }).click();
   await panel(page).getByLabel("Rango de páginas").fill("1");
   await panel(page).getByLabel("Idioma").selectOption("spa");
@@ -41,6 +42,7 @@ async function recognizeFirstPage(page: Page) {
 }
 
 async function editTextTool(page: Page) {
+  await openTask(page, "Editar");
   await page
     .getByRole("group", { name: "Herramientas de edición" })
     .getByRole("button", { name: "Editar texto", exact: true })

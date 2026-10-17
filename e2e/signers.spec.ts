@@ -70,10 +70,13 @@ async function signAs(page: Page, name: string, wave: number) {
   const select = panel.getByRole("combobox", { name: "Certificado" });
   const nameField = panel.getByLabel("Nombre del firmante");
   await expect(select.or(nameField).first()).toBeVisible();
-  if (await select.isVisible())
+  if (await select.isVisible()) {
+    // Spec 025: the certificate options are folded under «Certificado».
+    await panel.locator("summary", { hasText: "Certificado" }).click();
     await panel
       .getByRole("button", { name: "Crear certificado propio" })
       .click();
+  }
   await nameField.fill(name);
   await panel
     .getByRole("button", { name: "Crear certificado", exact: true })
@@ -209,6 +212,9 @@ test("CA10: a single digital signer can add the audit page", async ({
   await page.getByRole("button", { name: "Usar" }).click();
   await panel.getByRole("button", { name: "Colocar firma" }).click();
   await clickPage(page, 0.6, 0.8);
+  await panel
+    .getByRole("button", { name: "Siguiente: firmar y guardar" })
+    .click();
   await panel.getByLabel("Nombre del firmante").fill("Ana Uno");
   await panel
     .getByRole("button", { name: "Crear certificado", exact: true })

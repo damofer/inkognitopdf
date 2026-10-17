@@ -8,6 +8,7 @@ import {
   openPdf,
   saveAndRead,
   textRuns,
+  showTool,
 } from "./helpers";
 
 const A4_HEIGHT = 841.89;
@@ -194,6 +195,7 @@ test("CA4: highlight, drawing, line and shapes are saved as standard annotations
   await openFixture(page, "simple-text.pdf");
   const target = firstPage(page);
 
+  await showTool(page, "Resaltar");
   await tool(page, "Resaltar").click();
   const line = target.locator(".textLayer span", {
     hasText: "El rapido zorro",

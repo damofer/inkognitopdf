@@ -18,6 +18,7 @@ import {
   openPdf,
   saveAndRead,
   textRuns,
+  showTool,
 } from "./helpers";
 
 const FIXTURE = "forms-annotations.pdf";
@@ -157,6 +158,7 @@ test("CA5: fields created on the page are saved as AcroForm fields", async ({
 }) => {
   await openFixture(page, FIXTURE);
   const target = firstPage(page);
+  await showTool(page, "Campos");
   await tool(page, "Campos").click();
   await page.getByLabel("Tipo de campo").selectOption("text");
   await page.getByLabel("Fuente del campo").selectOption("Courier");
@@ -206,6 +208,7 @@ test("CA6: flattening turns the fields into page content", async ({ page }) => {
   const target = firstPage(page);
   await target.getByRole("textbox", { name: "codigo" }).fill("PLANO-7");
   await page.locator(".app-header").click({ position: { x: 2, y: 2 } });
+  await showTool(page, "Campos");
   await page.getByLabel("Aplanar formulario").check();
 
   const { bytes } = await saveAndRead(page);
@@ -223,6 +226,7 @@ test("CA7: underline, strikeout, note, free text and arrow are saved as annotati
   await openFixture(page, FIXTURE);
   const target = await secondPage(page);
 
+  await showTool(page, "Subrayar");
   await tool(page, "Subrayar").click();
   await markLine(page, target, "Segunda linea");
   await tool(page, "Tachar").click();

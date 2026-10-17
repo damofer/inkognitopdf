@@ -2,6 +2,7 @@
 // the landing and the app, and reads well on phones. Screenshots go to
 // docs/screenshots/consent/ (the "before" ones were taken from the live site).
 import { expect, test, type Page } from "@playwright/test";
+import { openMenu } from "./helpers";
 
 // No answer yet (the config answers it for the other tests).
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -52,6 +53,7 @@ test("answered in the app, the landing does not ask again", async ({
   await expect(landingNotice(page)).toBeHidden();
   // The choice can still be changed from «Privacidad».
   await page.goto("/app/");
+  await openMenu(page);
   await page.getByRole("button", { name: "Privacidad" }).click();
   await expect(appNotice(page)).toBeVisible();
 });

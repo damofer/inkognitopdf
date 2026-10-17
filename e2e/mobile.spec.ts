@@ -64,7 +64,10 @@ for (const size of SIZES) {
       await expect(menu.getByRole("button", { name: "English" })).toBeVisible();
       await touchTargets(page);
       await shot(page, size, "menu");
+      // The language changes in place; the menu stays open until closed.
       await menu.getByRole("button", { name: "English" }).click();
+      await expect(menu.getByText("Blank document")).toBeVisible();
+      await page.keyboard.press("Escape");
       await expect(menu).toBeHidden();
       await expect(
         page.getByRole("button", { name: "Open PDF", exact: true }),
@@ -96,13 +99,7 @@ for (const size of SIZES) {
       const bar = page.getByRole("navigation", {
         name: "Categorías de herramientas",
       });
-      for (const name of [
-        "Editar",
-        "Anotar",
-        "Formularios",
-        "Firmar",
-        "Escanear",
-      ])
+      for (const name of ["Editar", "Anotar", "Firmar", "Páginas", "Más"])
         await expect(bar.getByRole("button", { name })).toBeVisible();
 
       await bar.getByRole("button", { name: "Anotar" }).click();
@@ -136,11 +133,11 @@ for (const size of SIZES) {
       await panel.getByRole("button", { name: "Cerrar firma" }).click();
       await expect(panel).toBeHidden();
 
-      // Pages strip, from the edit sheet.
-      await bar.getByRole("button", { name: "Editar" }).click();
+      // Pages strip, from the pages sheet.
+      await bar.getByRole("button", { name: "Páginas" }).click();
       await page
-        .getByRole("dialog", { name: "Editar" })
-        .getByRole("button", { name: "Páginas" })
+        .getByRole("dialog", { name: "Páginas" })
+        .getByRole("button", { name: "Miniaturas" })
         .click();
       await expect(page.locator(".thumbnails")).toBeVisible();
       await noHorizontalScroll(page);

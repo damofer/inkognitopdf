@@ -64,8 +64,11 @@ interface SignPanelProps {
   /** Spec 019: the initials on every page at once (documents of 2+ pages). */
   onInitialsEverywhere?: (asset: SignatureAsset) => void;
   onClose: () => void;
-  /** Saving section (visual or digital), provided by the editor. */
+  /** Saving section (visual or digital), provided by the editor: the second
+   * step (spec 025). */
   children?: ReactNode;
+  /** Preparing the document for other signers, under the first step. */
+  prepare?: ReactNode;
 }
 
 export function SignPanel({
@@ -75,9 +78,12 @@ export function SignPanel({
   onInitialsEverywhere,
   onClose,
   children,
+  prepare,
 }: SignPanelProps) {
   const t = useT();
   const [creating, setCreating] = useState<SignatureRole | null>(null);
+  // Spec 025: first place the signature, then save the document signed.
+  const [step, setStep] = useState<"place" | "save">("place");
   const [remember, setRemember] = useState(false);
   const [format, setFormat] = useState<DateFormat>("dmy");
   const [name, setName] = useState("");
@@ -157,98 +163,139 @@ export function SignPanel({
           ×
         </button>
       </header>
-      <div className="sign-slots">
-        {(["signature", "initials"] as const).map((role) => {
-          const asset = adopted[role];
-          return (
-            <div key={role} className="sign-slot">
-              <span className="sign-slot-label">{t(ROLE_LABEL[role])}</span>
-              <div className="sign-slot-art" data-testid={`adopted-${role}`}>
-                {asset ? (
-                  <SignatureArt asset={asset} />
-                ) : (
-                  <em>{t("sign.notCreated")}</em>
-                )}
-              </div>
-              <div className="sign-row">
-                <button type="button" onClick={() => setCreating(role)}>
-                  {asset ? t("sign.change") : t("sign.create")}
-                </button>
-                <button
-                  type="button"
-                  className="primary"
-                  disabled={!asset}
-                  onClick={() =>
-                    asset &&
-                    onPlace({
-                      kind: "signature",
-                      role,
-                      asset,
-                      ...(role === "signature" && autoDate
-                        ? { date: formatDate(new Date(), format) }
-                        : {}),
-                    })
-                  }
-                >
-                  {t(PLACE_LABEL[role])}
-                </button>
-                {role === "initials" && onInitialsEverywhere && (
-                  <button
-                    type="button"
-                    title={t("sign.initialsEverywhereHint")}
-                    disabled={!asset}
-                    onClick={() => asset && onInitialsEverywhere(asset)}
-                  >
-                    {t("sign.initialsEverywhere")}
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <label className="sign-check">
-        <input
-          type="checkbox"
-          checked={remember}
-          onChange={(e) => void setRemembered(e.currentTarget.checked)}
-        />
-        {t("sign.rememberOnDevice")}
-      </label>
-      <label className="sign-check">
-        <input
-          type="checkbox"
-          checked={autoDate}
-          onChange={(e) => changeAutoDate(e.currentTarget.checked)}
-        />
-        {t("sign.autoDate")}
-      </label>
-      <div className="sign-row">
-        <select
-          aria-label={t("sign.dateFormat")}
-          value={format}
-          onChange={(e) => setFormat(e.currentTarget.value as DateFormat)}
-        >
-          {DATE_FORMATS.map((f) => (
-            <option key={f} value={f}>
-              {f === "dmy"
-                ? t("sign.dateDmy")
-                : f === "iso"
-                  ? t("sign.dateIso")
-                  : formatDate(new Date(2026, 9, 14), "long")}
-            </option>
-          ))}
-        </select>
+      <div className="sign-steps" role="group" aria-label={t("sign.steps")}>
         <button
           type="button"
-          onClick={() =>
-            onPlace({ kind: "text", text: formatDate(new Date(), format) })
-          }
+          aria-pressed={step === "place"}
+          onClick={() => setStep("place")}
         >
-          {t("sign.placeDate")}
+          {t("sign.stepPlace")}
+        </button>
+        <button
+          type="button"
+          aria-pressed={step === "save"}
+          onClick={() => setStep("save")}
+        >
+          {t("sign.stepSave")}
         </button>
       </div>
-      {children}
+      {step === "save" ? (
+        <>
+          {children}
+          <button
+            type="button"
+            className="sign-back"
+            onClick={() => setStep("place")}
+          >
+            {t("sign.back")}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="sign-slots">
+            {(["signature", "initials"] as const).map((role) => {
+              const asset = adopted[role];
+              return (
+                <div key={role} className="sign-slot">
+                  <span className="sign-slot-label">{t(ROLE_LABEL[role])}</span>
+                  <div
+                    className="sign-slot-art"
+                    data-testid={`adopted-${role}`}
+                  >
+                    {asset ? (
+                      <SignatureArt asset={asset} />
+                    ) : (
+                      <em>{t("sign.notCreated")}</em>
+                    )}
+                  </div>
+                  <div className="sign-row">
+                    <button type="button" onClick={() => setCreating(role)}>
+                      {asset ? t("sign.change") : t("sign.create")}
+                    </button>
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={!asset}
+                      onClick={() =>
+                        asset &&
+                        onPlace({
+                          kind: "signature",
+                          role,
+                          asset,
+                          ...(role === "signature" && autoDate
+                            ? { date: formatDate(new Date(), format) }
+                            : {}),
+                        })
+                      }
+                    >
+                      {t(PLACE_LABEL[role])}
+                    </button>
+                    {role === "initials" && onInitialsEverywhere && (
+                      <button
+                        type="button"
+                        title={t("sign.initialsEverywhereHint")}
+                        disabled={!asset}
+                        onClick={() => asset && onInitialsEverywhere(asset)}
+                      >
+                        {t("sign.initialsEverywhere")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <label className="sign-check">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => void setRemembered(e.currentTarget.checked)}
+            />
+            {t("sign.rememberOnDevice")}
+          </label>
+          <label className="sign-check">
+            <input
+              type="checkbox"
+              checked={autoDate}
+              onChange={(e) => changeAutoDate(e.currentTarget.checked)}
+            />
+            {t("sign.autoDate")}
+          </label>
+          <div className="sign-row">
+            <select
+              aria-label={t("sign.dateFormat")}
+              value={format}
+              onChange={(e) => setFormat(e.currentTarget.value as DateFormat)}
+            >
+              {DATE_FORMATS.map((f) => (
+                <option key={f} value={f}>
+                  {f === "dmy"
+                    ? t("sign.dateDmy")
+                    : f === "iso"
+                      ? t("sign.dateIso")
+                      : formatDate(new Date(2026, 9, 14), "long")}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() =>
+                onPlace({ kind: "text", text: formatDate(new Date(), format) })
+              }
+            >
+              {t("sign.placeDate")}
+            </button>
+          </div>
+          {prepare}
+          <button
+            type="button"
+            className="primary sign-next"
+            onClick={() => setStep("save")}
+          >
+            {t("sign.next")}
+          </button>
+        </>
+      )}
     </section>
   );
 }

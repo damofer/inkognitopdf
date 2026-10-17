@@ -227,7 +227,10 @@ test("CA7, CA8, CA11, CA12, CA13: sign digitally, verify in the app and with Ope
   const placed = firstPage(page).locator(".item-signature");
   await expect(placed).toHaveCount(1);
 
-  // A self-signed identity made on the device.
+  // A self-signed identity made on the device, in the second step.
+  await panel(page)
+    .getByRole("button", { name: "Siguiente: firmar y guardar" })
+    .click();
   await panel(page).getByLabel("Nombre del firmante").fill("Ana Pérez");
   await panel(page).getByLabel("Correo (opcional)").fill("ana@example.com");
   await panel(page)

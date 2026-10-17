@@ -158,17 +158,17 @@ test.describe("phone", () => {
     hasTouch: true,
   });
 
-  test("compare is in the Edit sheet and the versions stack", async ({
+  test("compare is in the More sheet and the versions stack", async ({
     page,
   }) => {
     await openV2(page);
     await page
       .getByRole("navigation", { name: "Categorías de herramientas" })
-      .getByRole("button", { name: "Editar" })
+      .getByRole("button", { name: "Más" })
       .click();
     const chooser = page.waitForEvent("filechooser");
     await page
-      .getByRole("dialog", { name: "Editar" })
+      .getByRole("dialog", { name: "Más" })
       .getByRole("button", { name: "Comparar" })
       .click();
     await (await chooser).setFiles(v1);

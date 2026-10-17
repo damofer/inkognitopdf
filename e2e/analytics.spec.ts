@@ -1,7 +1,7 @@
 // Spec 011: usage measurement only with consent, and never with document data.
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { fixture, firstPage, saveAndRead } from "./helpers";
+import { fixture, firstPage, saveAndRead, openMenu } from "./helpers";
 
 // No answer yet to the measurement question (the config answers it for the
 // other tests).
@@ -153,6 +153,7 @@ test("rejecting later stops measuring", async ({ page }) => {
     .click();
   await expect.poll(() => requests.length).toBeGreaterThan(0);
   // «Privacidad» in the menu asks again.
+  await openMenu(page);
   await page.getByRole("button", { name: "Privacidad" }).click();
   await page
     .getByTestId("consent")
@@ -160,6 +161,7 @@ test("rejecting later stops measuring", async ({ page }) => {
     .click();
   await expect(page.getByTestId("consent")).toHaveCount(0);
   const before = requests.length;
+  await openMenu(page);
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page.waitForTimeout(500);
   expect(requests.length).toBe(before);
