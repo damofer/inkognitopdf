@@ -1,4 +1,5 @@
 import type { Box, Point, Rect, Rotation } from "./geometry";
+import type { Numbering } from "./numbering";
 import type { SignatureAsset, SignatureRole, SignFieldType } from "./signature";
 
 /**
@@ -293,6 +294,11 @@ export type Item =
 export interface EditorState {
   pages: PageEntry[];
   items: Item[];
+  /**
+   * Page numbers, headers and footers (spec 022): a setting of the whole
+   * document, so the count follows the order of the pages.
+   */
+  numbering?: Numbering;
 }
 
 export interface OriginalPageInfo {
@@ -324,6 +330,7 @@ export function isPristine(
 ): boolean {
   return (
     state.items.length === 0 &&
+    !state.numbering &&
     state.pages.length === originalPageCount &&
     state.pages.every(
       (p, i) =>

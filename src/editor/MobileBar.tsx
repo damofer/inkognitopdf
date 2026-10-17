@@ -63,6 +63,9 @@ interface MobileBarProps {
   onInsertPdf?: (() => void) | null;
   splitOpen?: boolean;
   onToggleSplit?: () => void;
+  /** Page numbers, headers and footers (spec 022). */
+  numbersOpen?: boolean;
+  onToggleNumbers?: () => void;
   /** Compress and password panels (spec 014). */
   compressOpen?: boolean;
   onToggleCompress?: () => void;
@@ -86,6 +89,8 @@ export function MobileBar({
   onInsertPdf = null,
   splitOpen = false,
   onToggleSplit,
+  numbersOpen = false,
+  onToggleNumbers,
   compressOpen = false,
   onToggleCompress,
   protectOpen = false,
@@ -207,6 +212,22 @@ export function MobileBar({
                         ✂
                       </span>
                       <span>{t("organize.split")}</span>
+                    </button>
+                  )}
+                  {onToggleNumbers && (
+                    <button
+                      type="button"
+                      className="sheet-item"
+                      aria-pressed={numbersOpen}
+                      onClick={() => {
+                        setSheet(null);
+                        onToggleNumbers();
+                      }}
+                    >
+                      <span className="sheet-icon" aria-hidden="true">
+                        #
+                      </span>
+                      <span>{t("numbering.button")}</span>
                     </button>
                   )}
                   {onToggleCompress && (

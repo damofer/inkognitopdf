@@ -1244,6 +1244,95 @@ button[aria-pressed="true"] {
   color: #c92a2a;
 }
 
+/* Page numbers, headers and footers (spec 022). */
+.numbering-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 28px 36px 28px;
+  gap: 4px;
+  width: 132px;
+  margin: 0 auto;
+  padding: 6px;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+}
+
+.numbering-slots legend {
+  font-size: 0.85rem;
+}
+
+.numbering-slots button {
+  min-height: 0;
+  padding: 0;
+  border: 1px dashed var(--border, #bbb);
+  border-radius: 3px;
+  background: transparent;
+}
+
+.numbering-slots button[data-slot^="b"] {
+  grid-row: 3;
+}
+
+.numbering-slots button.used {
+  border-style: solid;
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.numbering-slots button[aria-pressed="true"] {
+  border: 2px solid var(--accent);
+}
+
+.numbering-formats button {
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.numbering-group {
+  margin: 0;
+  padding: 6px 8px 8px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+}
+
+.numbering-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.numbering-row input,
+.numbering-row select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.numbering-row input,
+.numbering-row select,
+.numbering-row input[type="color"] {
+  height: 30px;
+}
+
+.numbering-row input[type="color"] {
+  padding: 0 2px;
+}
+
+.numbering-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.numbering-stamp {
+  position: absolute;
+  z-index: 1;
+  line-height: 1;
+  white-space: pre;
+  pointer-events: none;
+}
+
 /* Signing (spec 004). */
 @font-face {
   font-family: "Dancing Script";

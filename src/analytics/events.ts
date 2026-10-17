@@ -32,6 +32,9 @@ const VALUES = {
   split: ["ranges", "every", "selection"],
   /** Compression preset (spec 014). */
   preset: ["high", "balanced", "small"],
+  /** Page number format and position (spec 022), never the text. */
+  format: ["number", "pageOf", "slash", "dashes", "bates", "custom"],
+  position: ["tl", "tc", "tr", "bl", "bc", "br", "several"],
   /** Whether print or copy were restricted (spec 014), never the password. */
   restricted: ["yes", "no"],
   /** Donation link followed: only its amount tier. */
@@ -63,6 +66,7 @@ const EVENTS = {
   split_pdf: ["split", "pages"],
   compress_pdf: ["preset", "pages"],
   protect_pdf: ["restricted"],
+  page_numbers: ["format", "position"],
   unlock_pdf: [],
   add_image: [],
   create_field: [],

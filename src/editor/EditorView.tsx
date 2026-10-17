@@ -61,6 +61,15 @@ import { ProtectPanel } from "../protect/ProtectPanel";
 import type { CompressLevel } from "../engine/compress";
 import type { Protection } from "../engine/pdfCrypto";
 import { unlock, type AskPassword } from "../storage/unlock";
+import { NumberingPanel } from "../numbering/NumberingPanel";
+import { NumberingPreview } from "../numbering/NumberingPreview";
+import {
+  defaultNumbering,
+  numberedPages,
+  numberingFormat,
+  usedSlots,
+  type Numbering,
+} from "../model/numbering";
 
 interface EditorViewProps {
   file: PdfFile | null;
@@ -83,8 +92,8 @@ interface EditorViewProps {
   askPassword?: AskPassword;
 }
 
-/** Panels of the pages column (specs 013 and 014): one open at a time. */
-type PagesPanel = "split" | "compress" | "protect";
+/** Panels of the pages column (specs 013, 014 and 022): one open at a time. */
+type PagesPanel = "split" | "compress" | "protect" | "numbers";
 
 const FONTS: { value: FontFamily; label: string }[] = [
   { value: "Helvetica", label: "Helvetica" },
@@ -881,6 +890,23 @@ export function EditorView({
     /\.pdf$/i,
     "",
   );
+  // Spec 022: the numbering being edited, shown on the pages while its panel
+  // is open (CA7).
+  const [numberingDraft, setNumberingDraft] = useState<Numbering | null>(null);
+  const toggleNumbers = () => {
+    if (panel !== "numbers")
+      setNumberingDraft(state.numbering ?? defaultNumbering(baseName));
+    togglePanel("numbers");
+  };
+  const shownNumbering =
+    panel === "numbers" ? numberingDraft : (state.numbering ?? null);
+  const numbered = useMemo(
+    () =>
+      shownNumbering && usedSlots(shownNumbering).length > 0
+        ? numberedPages(shownNumbering, state.pages.length)
+        : null,
+    [shownNumbering, state.pages.length],
+  );
   /** The document as it would be saved, cut into one file per group. */
   const splitDocument = async (groups: number[][], mode: SplitMode) => {
     setSplitting(true);
@@ -1300,6 +1326,11 @@ export function EditorView({
     [state.items, widgetsFor],
   );
 
+  const pageIndexOf = useCallback(
+    (entry: PageEntry) => state.pages.indexOf(entry),
+    [state.pages],
+  );
+
   const renderOverlay = useCallback(
     (entry: PageEntry, geometry: PageGeometry) => (
       <EditLayer
@@ -1357,6 +1388,14 @@ export function EditorView({
         pagePixels={pagePixelsFor.bind(null, entry)}
         onNeedOcr={() => setNeedOcr(true)}
       >
+        {shownNumbering && numbered?.numbers.has(pageIndexOf(entry)) && (
+          <NumberingPreview
+            numbering={shownNumbering}
+            geometry={geometry}
+            n={numbered.numbers.get(pageIndexOf(entry))!}
+            total={numbered.total}
+          />
+        )}
         {signAsFields
           .filter(
             (f) =>
@@ -1408,6 +1447,9 @@ export function EditorView({
       pageItems,
       ocrOpen,
       pagePixelsFor,
+      shownNumbering,
+      numbered,
+      pageIndexOf,
     ],
   );
 
@@ -1602,6 +1644,15 @@ export function EditorView({
         onClick={() => togglePanel("split")}
       >
         {t("organize.split")}
+      </button>
+      <button
+        type="button"
+        title={t("numbering.hint")}
+        className={state.numbering ? "protected" : undefined}
+        aria-pressed={panel === "numbers"}
+        onClick={toggleNumbers}
+      >
+        {t("numbering.button")}
       </button>
       <button
         type="button"
@@ -2128,6 +2179,30 @@ export function EditorView({
           onClose={closePanel}
         />
       )}
+      {panel === "numbers" && numberingDraft && (
+        <NumberingPanel
+          draft={numberingDraft}
+          applied={state.numbering !== undefined}
+          pageCount={state.pages.length}
+          onChange={setNumberingDraft}
+          onApply={() => {
+            dispatch({ kind: "setNumbering", numbering: numberingDraft });
+            const slots = usedSlots(numberingDraft);
+            track("page_numbers", {
+              format: numberingFormat(numberingDraft),
+              position: slots.length > 1 ? "several" : slots[0]!,
+            });
+            closePanel();
+            setToast(t("numbering.applied"));
+          }}
+          onRemove={() => {
+            dispatch({ kind: "setNumbering", numbering: null });
+            closePanel();
+            setToast(t("numbering.removed"));
+          }}
+          onClose={closePanel}
+        />
+      )}
       {panel === "compress" && (
         <CompressPanel
           fileSize={file?.size ?? null}
@@ -2213,6 +2288,8 @@ export function EditorView({
           onInsertPdf={onReplaceBase ? chooseInsert : null}
           splitOpen={splitOpen}
           onToggleSplit={() => togglePanel("split")}
+          numbersOpen={panel === "numbers"}
+          onToggleNumbers={toggleNumbers}
           compressOpen={panel === "compress"}
           onToggleCompress={() => togglePanel("compress")}
           protectOpen={panel === "protect"}

@@ -6,6 +6,7 @@ import { editLayer } from "./editLayer";
 import { engine } from "./engine";
 import { landing } from "./landing";
 import { mobile } from "./mobile";
+import { numbering } from "./numbering";
 import { ocr } from "./ocr";
 import { organize } from "./organize";
 import { privacy } from "./privacy";
@@ -26,6 +27,7 @@ export const es = {
   ...engine,
   ...landing,
   ...mobile,
+  ...numbering,
   ...ocr,
   ...organize,
   ...privacy,

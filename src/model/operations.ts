@@ -2,6 +2,7 @@ import { t } from "../i18n";
 import type { Box, Rotation } from "./geometry";
 import { normalizeRotation } from "./geometry";
 import type { EditorState, Item, PageEntry } from "./document";
+import type { Numbering } from "./numbering";
 
 /**
  * Typed edit operations (spec 001, plan: modelo de datos). Each tool emits
@@ -21,7 +22,9 @@ export type Operation =
       pages: PageEntry[];
       /** Items of the new pages, e.g. their OCR text (spec 009). */
       items?: Item[];
-    };
+    }
+  /** Page numbers, headers and footers (spec 022); null removes them. */
+  | { kind: "setNumbering"; numbering: Numbering | null };
 
 export class OperationError extends Error {
   constructor(message: string) {
@@ -79,6 +82,7 @@ export function applyOperation(state: EditorState, op: Operation): EditorState {
       if (state.pages.length === 1)
         throw new OperationError(t("operations.lastPage"));
       return {
+        ...state,
         pages: state.pages.filter((p) => p.id !== op.pageId),
         items: state.items.filter((i) => i.pageId !== op.pageId),
       };
@@ -115,6 +119,10 @@ export function applyOperation(state: EditorState, op: Operation): EditorState {
       const pages = [...state.pages];
       pages.splice(at, 0, ...op.pages);
       return { ...state, pages, items: [...state.items, ...(op.items ?? [])] };
+    }
+    case "setNumbering": {
+      const { numbering: _, ...rest } = state;
+      return op.numbering ? { ...rest, numbering: op.numbering } : rest;
     }
   }
 }

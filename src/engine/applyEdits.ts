@@ -1,5 +1,5 @@
 import { BRAND } from "../brand";
-import { t } from "../i18n";
+import { locale, t } from "../i18n";
 import {
   PDFDocument,
   degrees,
@@ -19,6 +19,7 @@ import type {
   TextItem,
 } from "../model/document";
 import { isImageTextEdit } from "../model/document";
+import { numberedPages, numberingDate } from "../model/numbering";
 import type { Rect } from "../model/geometry";
 import { addAnnotation, removeAnnotation } from "./annotations";
 import { applyForms, flattenForms } from "./forms";
@@ -35,6 +36,7 @@ import { drawSignature } from "./signature";
 import { hexToRgb } from "./color";
 import { FontCache, drawTextWith, type LoadFont } from "./fonts";
 import { drawImageTextEdit, drawNotFound, editPageText } from "./textEdit";
+import { drawNumbering } from "./numbering";
 
 export interface EngineDeps {
   /** Loads a bundled open font (Arimo, Tinos, Cousine, Carlito, Caladea). */
@@ -138,6 +140,27 @@ export async function applyEdits(
     for (const item of items)
       if (item.kind === "ocr") await drawOcr(page, item, fonts, covered);
       else await drawItem(doc, page, item, fonts, now);
+  }
+
+  // Spec 022: page numbers, headers and footers, over everything else.
+  if (state.numbering) {
+    const { numbers, total } = numberedPages(
+      state.numbering,
+      state.pages.length,
+    );
+    const date = numberingDate(now, locale());
+    for (const [index, n] of numbers) {
+      const entry = state.pages[index]!;
+      const page = pages[index]!;
+      if (entry.source.kind === "original") isolate(page);
+      await drawNumbering(
+        page,
+        entry,
+        state.numbering,
+        { n, total, date },
+        fonts,
+      );
+    }
   }
 
   // Spec 012, CA13: the redacted data, elsewhere in the file. Before forms

@@ -1,0 +1,47 @@
+// Spanish messages: page numbers, headers and footers (spec 022).
+export const numbering = {
+  "numbering.button": "Numerar",
+  "numbering.hint": "Números de página, encabezados y pies",
+  "numbering.title": "Numerar páginas",
+  "numbering.close": "Cerrar numeración",
+  "numbering.position": "Posición",
+  "numbering.slot.tl": "Arriba a la izquierda",
+  "numbering.slot.tc": "Arriba al centro",
+  "numbering.slot.tr": "Arriba a la derecha",
+  "numbering.slot.bl": "Abajo a la izquierda",
+  "numbering.slot.bc": "Abajo al centro",
+  "numbering.slot.br": "Abajo a la derecha",
+  "numbering.formats": "Formatos rápidos",
+  "numbering.pageOfLabel": "Página 1 de N",
+  "numbering.pageOfText": "Página {n} de {total}",
+  "numbering.clearSlot": "Vaciar",
+  "numbering.text": (slot: string) => `Texto: ${slot}`,
+  "numbering.fields":
+    "Campos: {n} número, {total} último número, {fecha}, {archivo}, {bates}.",
+  "numbering.batesPrefix": "Prefijo Bates",
+  "numbering.batesDigits": "Dígitos",
+  "numbering.pages": "Páginas",
+  "numbering.from": "Desde",
+  "numbering.to": "Hasta",
+  "numbering.startAt": "Primer número",
+  "numbering.style": "Estilo",
+  "numbering.font": "Fuente",
+  "numbering.size": "Tamaño",
+  "numbering.color": "Color",
+  "numbering.margin": "Margen (mm)",
+  "numbering.summary": (
+    from: number,
+    to: number,
+    first: number,
+    last: number,
+  ) =>
+    from === to
+      ? `Página ${from}: número ${first}.`
+      : `Páginas ${from} a ${to}: números ${first} a ${last}.`,
+  "numbering.noPages": "No hay páginas en ese rango.",
+  "numbering.noText": "Escribe un texto en alguna posición.",
+  "numbering.apply": "Aplicar",
+  "numbering.remove": "Quitar numeración",
+  "numbering.applied": "Numeración aplicada. Puedes deshacerla.",
+  "numbering.removed": "Numeración quitada.",
+};
