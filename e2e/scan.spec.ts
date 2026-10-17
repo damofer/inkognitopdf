@@ -34,7 +34,7 @@ const scanner = (page: Page) =>
   page.getByRole("dialog", { name: "Escanear documento" });
 
 async function openScanner(page: Page, files: string[]) {
-  await page.getByRole("button", { name: "Escanear" }).click();
+  await page.getByRole("button", { name: "Escanear" }).first().click();
   await page.getByTestId("scan-images").setInputFiles(files.map(photos.path));
   await expect(page.locator(".scan-strip li")).toHaveCount(files.length);
   await expect(corners(page)).toHaveCount(4);
@@ -58,7 +58,7 @@ function scanImage(doc: PDFDocument, index: number): PDFRawStream {
 
 test("CA1, CA6, CA8: photos → crop → modes → PDF", async ({ page }) => {
   await page.goto("/app/");
-  await page.getByRole("button", { name: "Escanear" }).click();
+  await page.getByRole("button", { name: "Escanear" }).first().click();
   const t0 = Date.now();
   await page
     .getByTestId("scan-images")
@@ -201,7 +201,7 @@ test("CA10, CA11: no network with the photos; 12 MP in under 3 s", async ({
   const requests: Request[] = [];
   page.on("request", (r) => requests.push(r));
   await page.goto("/app/");
-  await page.getByRole("button", { name: "Escanear" }).click();
+  await page.getByRole("button", { name: "Escanear" }).first().click();
   const t0 = Date.now();
   await page.getByTestId("scan-images").setInputFiles(photos.path("12mp.jpg"));
   await expect(corners(page)).toHaveCount(4);

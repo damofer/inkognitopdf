@@ -2,7 +2,6 @@
 // live with them in src/templates/content/.
 export const templates = {
   "templates.button": "Plantillas",
-  "templates.start": "Empezar con una plantilla: CV, cuenta de cobro, factura…",
   "templates.title": "Plantillas",
   "templates.close": "Cerrar plantillas",
   "templates.lead":

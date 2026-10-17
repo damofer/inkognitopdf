@@ -31,6 +31,21 @@
   max-width: 34em;
 }
 
+/* The ways to start: a row on desktops, a column on phones. */
+.start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.start-actions button {
+  min-height: 48px;
+  padding: 8px 22px;
+  font-size: 1.05rem;
+  border-radius: 12px;
+}
+
 /* Phone layout (spec 007). The width matches MOBILE_QUERY in useMobile.ts. */
 @media (max-width: 760px) {
   .app {

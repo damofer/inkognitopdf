@@ -3,7 +3,6 @@ import type { templates as es } from "../es/templates";
 
 export const templates: typeof es = {
   "templates.button": "Templates",
-  "templates.start": "Start from a template: resume, invoice, letter…",
   "templates.title": "Templates",
   "templates.close": "Close templates",
   "templates.lead":

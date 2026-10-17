@@ -308,7 +308,10 @@ test("CA8: at least 50 steps can be undone and redone", async ({ page }) => {
 
 test("T018: a blank document can be written on and saved", async ({ page }) => {
   await page.goto("/app/");
-  await page.getByRole("button", { name: "Documento en blanco" }).click();
+  await page
+    .getByRole("button", { name: "Documento en blanco" })
+    .first()
+    .click();
   await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
   await tool(page, "Texto").click();
   await firstPage(page).click({ position: { x: 60, y: 60 } });

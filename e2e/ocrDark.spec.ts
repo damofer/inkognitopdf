@@ -42,7 +42,7 @@ for (const [mode, file] of [
     test.setTimeout(240_000);
     await page.setViewportSize({ width: 1280, height: 1000 });
     await page.goto("/app/");
-    await page.getByRole("button", { name: "Escanear" }).click();
+    await page.getByRole("button", { name: "Escanear" }).first().click();
     await page.getByTestId("scan-images").setInputFiles(cover);
     await expect(page.locator(".scan-strip li")).toHaveCount(1);
     // A cover fills the photo: the whole image is the page.
@@ -82,7 +82,7 @@ test("a dark photo in a document is not turned into a negative", async ({
 }) => {
   await page.setViewportSize({ width: 1280, height: 1000 });
   await page.goto("/app/");
-  await page.getByRole("button", { name: "Escanear" }).click();
+  await page.getByRole("button", { name: "Escanear" }).first().click();
   await page.getByTestId("scan-images").setInputFiles(photo);
   await expect(page.locator(".scan-strip li")).toHaveCount(1);
   await scanner(page).getByRole("button", { name: "Imagen completa" }).click();

@@ -1931,10 +1931,6 @@ button.danger {
 }
 
 /* Templates (spec 021): a full-screen view like the scanner. */
-.start-templates {
-  padding: 8px 16px;
-  border-radius: 999px;
-}
 
 .tpl-toolbar h2 {
   margin: 0;

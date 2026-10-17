@@ -10,7 +10,10 @@ const view = (page: Page) => page.getByRole("dialog", { name: "Plantillas" });
 
 async function openTemplate(page: Page, id: string) {
   await page.goto("/app/");
-  await page.getByRole("button", { name: "Plantillas", exact: true }).click();
+  await page
+    .locator(".start-actions")
+    .getByRole("button", { name: "Plantillas" })
+    .click();
   await view(page).locator(`[data-template="${id}"]`).click();
   await expect(view(page).locator(".tpl-page").first()).toBeVisible();
 }
@@ -38,7 +41,10 @@ async function pdfText(bytes: Uint8Array) {
 
 test("gallery: categories, search and thumbnails", async ({ page }) => {
   await page.goto("/app/");
-  await page.getByRole("button", { name: /Empezar con una plantilla/ }).click();
+  await page
+    .locator(".start-actions")
+    .getByRole("button", { name: "Plantillas" })
+    .click();
   const cards = view(page).locator(".tpl-card");
   await expect(cards).toHaveCount(12);
   await expect(cards.first().locator("img")).toBeVisible();
@@ -191,7 +197,10 @@ test.describe("on a phone", () => {
     page,
   }) => {
     await page.goto("/app/");
-    await page.getByRole("button", { name: "Plantillas", exact: true }).click();
+    await page
+      .locator(".start-actions")
+      .getByRole("button", { name: "Plantillas" })
+      .click();
     await view(page).locator('[data-template="receipt"]').click();
     await expect(view(page).locator(".tpl-form")).toBeVisible();
     await expect(view(page).locator(".tpl-preview")).toHaveCount(0);

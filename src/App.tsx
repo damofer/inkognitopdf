@@ -21,7 +21,6 @@ import { A4, initialState, type EditorState } from "./model/document";
 import { normalizeRotation } from "./model/geometry";
 import { createPdfFile, openPdfFile, type PdfFile } from "./storage/pdfFile";
 import { loadDocument, type PDFDocumentProxy } from "./viewer/pdfjs";
-import { useMobile } from "./useMobile";
 import { SupportPanel } from "./support/SupportPanel";
 import { PasswordPrompt } from "./protect/PasswordPrompt";
 import { unlock, type AskPassword } from "./storage/unlock";
@@ -74,7 +73,6 @@ export function App() {
   const [supportOpen, setSupportOpen] = useState(false);
   const closeSupport = useCallback(() => setSupportOpen(false), []);
   // Phone layout (spec 007): the header actions live in an overflow menu.
-  const mobile = useMobile();
   const [menuOpen, setMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** Scanned pages waiting to be added to the open document. */
@@ -359,35 +357,25 @@ export function App() {
         {state.status === "empty" && (
           <div className="start">
             <p className="hint">{t("app.emptyHint")}</p>
-            {!mobile && (
+            {/* The main ways to start, on phones and desktops alike. */}
+            <div className="start-actions">
               <button
                 type="button"
-                className="start-templates"
-                onClick={() => setTemplating(true)}
+                className="primary"
+                onClick={() => fileInputRef.current?.click()}
               >
-                {t("templates.start")}
+                {t("app.openPdf")}
               </button>
-            )}
-            {mobile && (
-              <div className="start-actions">
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {t("app.openPdf")}
-                </button>
-                <button type="button" onClick={() => setScanning(true)}>
-                  {t("app.scan")}
-                </button>
-                <button type="button" onClick={() => setTemplating(true)}>
-                  {t("templates.button")}
-                </button>
-                <button type="button" onClick={startBlank}>
-                  {t("app.blankDocument")}
-                </button>
-              </div>
-            )}
+              <button type="button" onClick={() => setScanning(true)}>
+                {t("app.scan")}
+              </button>
+              <button type="button" onClick={() => setTemplating(true)}>
+                {t("templates.button")}
+              </button>
+              <button type="button" onClick={startBlank}>
+                {t("app.blankDocument")}
+              </button>
+            </div>
           </div>
         )}
         {state.status === "loading" && <p className="hint">{state.label}</p>}

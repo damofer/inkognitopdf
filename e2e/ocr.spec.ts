@@ -211,7 +211,7 @@ test("HU7: the scanner saves a searchable PDF", async ({ page }) => {
   });
   const outside = await offline(page);
   await page.goto("/app/");
-  await page.getByRole("button", { name: "Escanear" }).click();
+  await page.getByRole("button", { name: "Escanear" }).first().click();
   const scanner = page.getByRole("dialog", { name: "Escanear documento" });
   await page.getByTestId("scan-images").setInputFiles(photos.path("hoja.jpg"));
   await expect(scanner.locator(".crop-hit")).toHaveCount(4);
