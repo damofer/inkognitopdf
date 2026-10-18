@@ -89,6 +89,17 @@ The end-to-end tests use the Chrome installed on the machine. When `openssl` and
 
 The build in `dist/` is a static site: the landing page at `/` and the app at `/app/`. [`firebase.json`](firebase.json) has the Firebase Hosting configuration (rewrites and cache headers). To deploy your own copy, create a Firebase project, put its id in `.firebaserc` and run `npx firebase-tools deploy --only hosting`. No secret is needed to build or deploy. The web configuration in `src/analytics/firebase.ts` identifies the public web app and is not a secret.
 
+### Self-hosting with Docker
+
+The [`Dockerfile`](Dockerfile) builds the site and serves it with nginx, with the same routes and cache headers as `firebase.json` ([`docker/nginx.conf`](docker/nginx.conf)):
+
+```bash
+docker build -t inkognitopdf .
+docker run -d -p 8080:80 inkognitopdf
+```
+
+The container only serves files: documents are processed in the browser. Serve it over HTTPS (for example behind your reverse proxy), since browsers only allow the camera and the offline service worker in a secure context. Copies on another domain never measure usage.
+
 ## Project structure
 
 ```
@@ -113,6 +124,7 @@ tests/            unit tests and synthetic fixtures
 e2e/              end-to-end tests (Playwright)
 scripts/          asset copying, fixtures, icons, screenshots
 public/brand/     logo and icons
+docker/           nginx configuration of the Docker image
 ```
 
 ## Tech stack

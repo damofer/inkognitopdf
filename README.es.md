@@ -89,6 +89,17 @@ Las pruebas de extremo a extremo usan el Chrome instalado en el equipo. Si está
 
 La compilación en `dist/` es un sitio estático: la landing en `/` y la app en `/app/`. [`firebase.json`](firebase.json) tiene la configuración de Firebase Hosting (reescrituras y cabeceras de caché). Para publicar tu propia copia, crea un proyecto de Firebase, pon su id en `.firebaserc` y ejecuta `npx firebase-tools deploy --only hosting`. No hace falta ningún secreto para compilar ni para publicar. La configuración web de `src/analytics/firebase.ts` identifica la app web pública y no es un secreto.
 
+### Alojarlo con Docker
+
+El [`Dockerfile`](Dockerfile) compila el sitio y lo sirve con nginx, con las mismas rutas y cabeceras de caché que `firebase.json` ([`docker/nginx.conf`](docker/nginx.conf)):
+
+```bash
+docker build -t inkognitopdf .
+docker run -d -p 8080:80 inkognitopdf
+```
+
+El contenedor solo sirve archivos: los documentos se procesan en el navegador. Sírvelo por HTTPS (por ejemplo, detrás de tu proxy inverso), porque los navegadores solo permiten la cámara y el service worker sin conexión en un contexto seguro. Las copias en otro dominio nunca miden el uso.
+
 ## Estructura del proyecto
 
 ```
@@ -113,6 +124,7 @@ tests/            pruebas unitarias y fixtures sintéticos
 e2e/              pruebas de extremo a extremo (Playwright)
 scripts/          copia de recursos, fixtures, iconos, capturas
 public/brand/     logo e iconos
+docker/           configuración de nginx de la imagen de Docker
 ```
 
 ## Tecnologías
