@@ -19,6 +19,8 @@ interface Options {
   enabled: boolean;
   /** The document was resumed from the draft with this file id. */
   resumed: { fileId: string | null } | null;
+  /** The name given in the header (spec 034). */
+  name: string | null;
 }
 
 export function useAutosave({
@@ -29,6 +31,7 @@ export function useAutosave({
   planMode,
   enabled,
   resumed,
+  name,
 }: Options): { markSaved: (saved: EditorState) => void } {
   // The state the file on disk has: the one opened, or the last saved. A
   // resumed document has none until it is saved.
@@ -40,15 +43,15 @@ export function useAutosave({
   // Whether this editor wrote the draft (only then may it remove it).
   const wrote = useRef(resumed !== null);
   const timer = useRef<number | null>(null);
-  const latest = useRef({ file, state, restricted, signers, planMode });
+  const latest = useRef({ file, state, restricted, signers, planMode, name });
   useEffect(() => {
-    latest.current = { file, state, restricted, signers, planMode };
+    latest.current = { file, state, restricted, signers, planMode, name };
   });
 
   const flush = useCallback(() => {
     if (timer.current !== null) window.clearTimeout(timer.current);
     timer.current = null;
-    const { file, state, restricted, signers, planMode } = latest.current;
+    const { file, state, restricted, signers, planMode, name } = latest.current;
     if (state === baseline.current) return;
     const fresh = !stored.current || stored.current.file !== file;
     const id = fresh
@@ -60,7 +63,15 @@ export function useAutosave({
     stored.current = { file, id };
     wrote.current = true;
     writeDraft(
-      { fileId: id, savedAt: Date.now(), state, restricted, signers, planMode },
+      {
+        fileId: id,
+        savedAt: Date.now(),
+        state,
+        restricted,
+        signers,
+        planMode,
+        name,
+      },
       fresh && file
         ? { id: id!, name: file.name, bytes: file.copyBytes() }
         : undefined,
@@ -87,7 +98,7 @@ export function useAutosave({
     }
     if (timer.current !== null) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(flush, DELAY);
-  }, [enabled, file, state, signers, planMode, flush, forget]);
+  }, [enabled, file, state, signers, planMode, name, flush, forget]);
 
   // Leaving the app (another tab or app, closing it): write now.
   useEffect(() => {

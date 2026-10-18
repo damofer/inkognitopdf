@@ -110,6 +110,8 @@ interface EditorViewProps {
   askPassword?: AskPassword;
   /** The document comes from the work kept on this device (spec 028). */
   resumed?: Resumed | null;
+  /** The name given in the header (spec 034), with ".pdf". */
+  name?: string | null;
 }
 
 /** What a resumed document brings besides its edit state (spec 028). */
@@ -444,8 +446,11 @@ export function EditorView({
   restricted = false,
   askPassword = async () => null,
   resumed = null,
+  name = null,
 }: EditorViewProps) {
   const t = useT();
+  // Spec 034: what the saved files are called, renamed or not.
+  const docName = name ?? file?.name ?? null;
   const editor = useEditor(initial);
   const { state, dispatch } = editor;
   // Several signers (spec 004, HU6): the plan being prepared.
@@ -464,6 +469,7 @@ export function EditorView({
     planMode,
     enabled: password === null,
     resumed,
+    name,
   });
   const appliedSeq = useRef(incoming?.seq ?? 0);
 
@@ -1119,7 +1125,8 @@ export function EditorView({
       setComparing({
         before: { name: opened.file.name, bytes: opened.file.copyBytes() },
         after: {
-          name: pristine ? file.name : editedFileName(file?.name ?? null),
+          name:
+            name ?? (pristine ? file.name : editedFileName(file?.name ?? null)),
           bytes: now,
         },
       });
@@ -1202,7 +1209,7 @@ export function EditorView({
   };
   const [compressing, setCompressing] = useState(false);
   const [compressed, setCompressed] = useState<CompressOutcome | null>(null);
-  const baseName = (file?.name ?? t("editor.defaultBaseName")).replace(
+  const baseName = (docName ?? t("editor.defaultBaseName")).replace(
     /\.pdf$/i,
     "",
   );
@@ -1341,7 +1348,7 @@ export function EditorView({
       const { bytes, warnings } = await buildPdf(file, state, {
         flattenForms: flattenForms && hasForm,
       });
-      downloadPdf(await protect(bytes), editedFileName(file?.name ?? null));
+      downloadPdf(await protect(bytes), name ?? editedFileName(docName));
       trackSave();
       if (warnings.length === 0) setToast(t("editor.saved"));
       else setNotice([t("editor.saved"), ...warnings].join(" "));
@@ -1395,7 +1402,7 @@ export function EditorView({
       if (warnings.length > 0) setNotice(warnings.join(" "));
       await shareBuilt({
         bytes: await protect(bytes),
-        name: editedFileName(file?.name ?? null),
+        name: name ?? editedFileName(docName),
       });
     } catch (cause) {
       setNotice(
@@ -1429,11 +1436,7 @@ export function EditorView({
       // HU7: the audit page goes at the end; its row is added once the
       // document is final, with the hash of the file as signed.
       const withAudit = multi
-        ? appendAuditPage(
-            state,
-            file?.name ?? t("editor.defaultFileName"),
-            multi,
-          )
+        ? appendAuditPage(state, docName ?? t("editor.defaultFileName"), multi)
         : null;
       const base = withAudit?.state ?? state;
       const date = new Date();
@@ -1483,7 +1486,7 @@ export function EditorView({
             loadFont,
           );
         }
-        downloadPdf(await protect(bytes), signedFileName(file?.name ?? null));
+        downloadPdf(await protect(bytes), signedFileName(docName));
         trackSave();
         if (warnings.length === 0) setToast(t("editor.savedVisual"));
         else setNotice([t("editor.savedVisual"), ...warnings].join(" "));
@@ -1527,7 +1530,7 @@ export function EditorView({
           info.fingerprint,
         ),
       });
-      downloadPdf(signed, signedFileName(file?.name ?? null));
+      downloadPdf(signed, signedFileName(docName));
       trackSave();
       setNotice(
         chosen ? t("editor.savedDigital") : t("editor.savedDigitalInvisible"),
@@ -1567,7 +1570,7 @@ export function EditorView({
       const audit = withAudit
         ? appendAuditPage(
             withoutFields,
-            file?.name ?? t("editor.defaultFileName"),
+            docName ?? t("editor.defaultFileName"),
             multi,
           )
         : null;
@@ -1594,7 +1597,7 @@ export function EditorView({
         audit?.state ?? withoutFields,
       );
       const prepared = await multi.preparePlan(bytes, plan);
-      downloadPdf(prepared, preparedFileName(file?.name ?? null));
+      downloadPdf(prepared, preparedFileName(docName));
       trackSave();
       const first = Math.min(...plan.signers.map((s) => s.order));
       setNotice(
@@ -1646,7 +1649,7 @@ export function EditorView({
         formatDate: (d) => formatDate(d, "dmy"),
         loadFont,
       });
-      downloadPdf(signed, signedFileName(file?.name ?? null));
+      downloadPdf(signed, signedFileName(docName));
       trackSave();
       const status = await multi.planStatus(signed, filePlan.plan);
       setFilePlan({ plan: filePlan.plan, status, bytes: signed });
@@ -2602,7 +2605,7 @@ export function EditorView({
           pages={state.pages}
           items={state.items}
           dispatch={dispatch}
-          fileName={file?.name ?? null}
+          fileName={docName}
           onClose={() => setOcrOpen(false)}
         />
       )}

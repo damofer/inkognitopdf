@@ -427,6 +427,48 @@ button[aria-pressed="true"] {
   white-space: nowrap;
 }
 
+/* Spec 034: the name is renamed with a click; ".pdf" stays outside the field. */
+button.file-name {
+  max-width: 100%;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+  cursor: text;
+}
+
+button.file-name:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.file-name.editing {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+.file-name.editing input {
+  min-width: 4ch;
+  max-width: min(60ch, 100%);
+  padding: 3px 7px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.file-ext {
+  flex: none;
+  padding-left: 2px;
+  color: var(--muted);
+}
+
 /* Spec 025: one menu («⋯») for opening, preferences and the project, on
    every screen size. */
 .menu-button {

@@ -10,6 +10,8 @@ export const app = {
   "app.merging": (files: number) => `Uniendo ${files} PDF…`,
   "app.opening": (name: string) => `Abriendo «${name}»…`,
   "app.home": "Ir a la página de inicio de InkognitoPDF",
+  "app.renameHint": "Haz clic para cambiar el nombre",
+  "app.renameField": "Nombre del documento, sin «.pdf»",
   "app.sourceCode": "Código fuente",
   "app.sourceCodeHint": "Código abierto en GitHub (se abre en otra pestaña)",
   "app.description":

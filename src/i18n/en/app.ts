@@ -12,6 +12,8 @@ export const app: typeof es = {
   "app.merging": (files: number) => `Merging ${files} PDFs…`,
   "app.opening": (name: string) => `Opening “${name}”…`,
   "app.home": "Go to the InkognitoPDF home page",
+  "app.renameHint": "Click to rename",
+  "app.renameField": "Document name, without “.pdf”",
   "app.sourceCode": "Source code",
   "app.sourceCodeHint": "Open source on GitHub (opens in a new tab)",
   "app.description":

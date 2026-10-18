@@ -14,6 +14,7 @@ import { filesBucket, pagesBucket, sizeBucket } from "./analytics/events";
 import { reopenConsent } from "./analytics/consent";
 import { EditorView, type Resumed } from "./editor/EditorView";
 import { locale, useT } from "./i18n";
+import { DocName } from "./DocName";
 import { LangSwitch } from "./LangSwitch";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { Icon } from "./icons";
@@ -59,6 +60,8 @@ type State =
       restricted: boolean;
       /** Resumed from the work kept on this device (spec 028). */
       resumed?: Resumed;
+      /** The name given in the header (spec 034), with ".pdf". */
+      name?: string | null;
     }
   | { status: "error"; message: string };
 
@@ -136,7 +139,10 @@ export function App() {
     setDraft(null);
     setState({
       status: "loading",
-      label: t("draft.resuming", found.file?.name ?? t("app.newDocument")),
+      label: t(
+        "draft.resuming",
+        found.name ?? found.file?.name ?? t("app.newDocument"),
+      ),
     });
     try {
       performance.mark("pdfcraft:open-start");
@@ -152,6 +158,7 @@ export function App() {
         openId: nextOpenId++,
         password: null,
         restricted: found.restricted,
+        name: found.name ?? null,
         resumed: {
           fileId: found.fileId,
           signers: found.signers,
@@ -353,9 +360,20 @@ export function App() {
           </a>
         </h1>
         {state.status === "ready" && (
-          <span className="file-name">
-            {state.file?.name ?? t("app.newDocument")}
-          </span>
+          <DocName
+            key={state.openId}
+            shown={state.name ?? state.file?.name ?? t("app.newDocument")}
+            stem={(
+              state.name ??
+              state.file?.name ??
+              t("editor.defaultFileName")
+            ).replace(/\.pdf$/i, "")}
+            onRename={(stem) =>
+              setState((s) =>
+                s.status === "ready" ? { ...s, name: `${stem}.pdf` } : s,
+              )
+            }
+          />
         )}
         <button
           type="button"
@@ -483,7 +501,7 @@ export function App() {
                   <span>
                     {t(
                       "draft.detail",
-                      draft.file?.name ?? t("app.newDocument"),
+                      draft.name ?? draft.file?.name ?? t("app.newDocument"),
                       ago(draft.savedAt),
                     )}
                   </span>
@@ -543,6 +561,7 @@ export function App() {
             restricted={state.restricted}
             askPassword={askPassword}
             resumed={state.resumed ?? null}
+            name={state.name ?? null}
           />
         )}
         {scanning && (

@@ -112,6 +112,14 @@
     color: var(--text);
   }
 
+  /* The field takes the whole width left; 16px keeps iOS from zooming in. */
+  .app-header > .file-name.editing input {
+    flex: 1;
+    width: 0;
+    max-width: none;
+    font-size: 16px;
+  }
+
   .menu-button {
     width: 44px;
     height: 44px;

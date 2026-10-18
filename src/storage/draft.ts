@@ -25,6 +25,8 @@ export interface DraftState {
   restricted: boolean;
   signers: PlanSigner[];
   planMode: PlanMode;
+  /** The name given in the header (spec 034); drafts before it have none. */
+  name?: string | null;
 }
 
 export interface Draft extends DraftState {
