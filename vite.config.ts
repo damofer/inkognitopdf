@@ -5,6 +5,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import { en } from "./src/i18n/en";
 import type { MessageKey } from "./src/i18n/core";
 import { prerender } from "./src/landing/prerender";
+import { CSP } from "./src/csp";
 
 /** The texts of the static pages, in English, written into their HTML: the
  * landing page (spec 008) and the signing guide (spec 036). */
@@ -21,6 +22,8 @@ export default defineConfig({
     // Lets the user check which build is running (e.g. after an update).
     __BUILD_ID__: JSON.stringify(new Date().toISOString().slice(0, 16)),
   },
+  // The e2e tests run on the preview server, under the hosted site's CSP.
+  preview: { headers: { "Content-Security-Policy": CSP } },
   build: {
     // The save engine (pdf-lib + fontkit, ~1.2 MB) is its own chunk, loaded
     // only when saving; the initial bundle stays well under this.

@@ -10,6 +10,15 @@
     ],
     "headers": [
       {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "connect-src 'self' blob: data: https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com; form-action 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+          }
+        ]
+      },
+      {
         "source": "/assets/**",
         "headers": [
           {

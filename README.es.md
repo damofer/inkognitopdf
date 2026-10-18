@@ -37,6 +37,14 @@
 - **Sin cuentas ni anuncios.**
 - **La medición de uso es opcional.** Solo si el visitante la acepta se envían conteos anónimos de uso (Google Analytics a través de Firebase), y nunca incluyen nombres de archivo, texto ni contenido: la lista cerrada de eventos está en [`src/analytics/events.ts`](src/analytics/events.ts). Sin aceptarla, la app no hace ninguna petición a Google.
 
+### Compruébalo tú mismo
+
+No tienes que creernos.
+
+1. **Lee el encabezado.** Todas las páginas se sirven con una `Content-Security-Policy` cuyo `connect-src` solo permite el propio sitio y las direcciones de Google Analytics (a las que se conecta únicamente si aceptas la medición de uso). El navegador rechaza cualquier otra conexión, intente lo que intente el código. Ejecuta `curl -sI https://inkognitopdf.com/app/` o mira los encabezados de respuesta de `/app/` en las herramientas de desarrollador. La política está en [`src/csp.ts`](src/csp.ts).
+2. **Mira la pestaña Red.** Abre [la app](https://inkognitopdf.com/app/), abre las herramientas de desarrollador en la pestaña Red y vacíala. Luego abre un PDF, edítalo, fírmalo y guárdalo. Todas las peticiones van a `inkognitopdf.com` (fuentes, el motor de OCR y otros archivos de la app) y ninguna lleva tu documento. Si aceptaste Google Analytics, también verás peticiones a Google con los nombres de los eventos, nunca nombres de archivo ni contenido.
+3. **Desconéctate.** Cuando la app ya cargó, activa el modo avión: sigue funcionando, porque nada necesita un servidor.
+
 ## Funciones
 
 |                            |                                                                                                                                                                                                                                                                |

@@ -37,6 +37,14 @@
 - **No accounts and no ads.**
 - **Usage measurement is optional.** Anonymous usage counts (Google Analytics through Firebase) are sent only if the visitor accepts them, and they never include file names, text or any content: see the closed list of events in [`src/analytics/events.ts`](src/analytics/events.ts). Without consent, the app makes no request to Google.
 
+### Check it yourself
+
+You don't have to take our word for it.
+
+1. **Read the header.** Every page is served with a `Content-Security-Policy` whose `connect-src` only allows the site itself and the Google Analytics addresses (contacted only after you accept the usage measurement). The browser refuses any other connection, whatever the code tries. Run `curl -sI https://inkognitopdf.com/app/` or look at the response headers of `/app/` in DevTools. The policy is defined in [`src/csp.ts`](src/csp.ts).
+2. **Watch the Network tab.** Open [the app](https://inkognitopdf.com/app/), open DevTools on the Network tab and clear it. Then open a PDF, edit it, sign it and save it. Every request goes to `inkognitopdf.com` (fonts, the OCR engine and other app files), and none carries your document. With Google Analytics accepted you will also see requests to Google with the event names, never file names or content.
+3. **Go offline.** Once the app has loaded, turn on airplane mode: it keeps working, because nothing needs a server.
+
 ## Features
 
 |                       |                                                                                                                                                                                                                                              |
