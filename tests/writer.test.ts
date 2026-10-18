@@ -314,7 +314,7 @@ describe("PDF (spec 032, RF-032-11)", () => {
         expect.stringContaining("Arimo-Regular"),
       ]),
     );
-    if (qpdfPath) expect(await qpdfCheck(bytes)).toBe("");
+    if (qpdfPath) await qpdfCheck(bytes); // rejects on any error or warning
   });
 });
 
