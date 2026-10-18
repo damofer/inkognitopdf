@@ -47,7 +47,7 @@ export const guide: typeof es = {
   // 2. Several signers.
   "guide.multiTitle": "2. Several people sign the same PDF",
   "guide.multiWhat":
-    "Whoever sends the document decides who signs, in which order and where. That plan is kept inside the PDF. Each person opens the file in InkognitoPDF, signs only their own fields and passes it on to the next one. Nobody needs an account.",
+    "Whoever sends the document decides who signs, in which order and where. That plan is kept inside the PDF. Each person opens the file in InkognitoPDF, signs only their own fields and passes it on to the next one. Nobody needs an account. While signatures are missing, the document cannot be edited in the app, and the first signature certifies it: Acrobat and other readers flag any later change other than signing, filling fields or adding annotations.",
   "guide.flow": "The document's journey",
   "guide.flowPrepare": "You prepare it",
   "guide.flowSigner1": "Ann signs",
@@ -70,15 +70,15 @@ export const guide: typeof es = {
     "Two signers in order, each with a signature field and a date field on the page.",
   "guide.signTitle": "Signing (each signer)",
   "guide.signStep1":
-    "Open the PDF you were sent in InkognitoPDF (inkognitopdf.com/app, “Open PDF”). At the top you see “Document for signing. Next to sign:” with your name. Press “Sign as…”.",
+    "Open the PDF you were sent in InkognitoPDF (inkognitopdf.com/app, “Open PDF”). It opens in signing mode: it cannot be edited, and the “Sign the document” panel is already open for whoever’s turn it is. On a phone, press “Sign as…” in the notice at the top.",
   "guide.signShotNotice":
-    "The notice when opening a document prepared for signing.",
+    "A document prepared for signing opens in signing mode, with the panel ready.",
   "guide.signStep2":
-    "Choose your name. Only whoever's turn it is can sign: the others show “waiting” or “signed”. Your fields are outlined on the page.",
+    "Check that your name is selected. Only whoever's turn it is can sign: the others show “waiting” or “signed”. Your fields are outlined on the page.",
   "guide.signStep3":
     "Press “Create” to make your signature (and your initials, if asked for) and fill in the texts that are yours.",
   "guide.signStep4":
-    "Choose or create your certificate, as in part 1, and press “Save signed”. A copy with “(signed)” in its name is downloaded, and the app tells you who to send it to.",
+    "Choose or create your certificate, as in part 1, and press “Save signed”. A copy with “(signed)” in its name is downloaded, and the app tells you who to send it to. If an earlier signature is no longer valid or the document changed after it, the app does not let you sign and says why.",
   "guide.signShot": "It is Ann's turn: Bob waits for his.",
   "guide.doneTitle": "When everyone has signed",
   "guide.doneText":

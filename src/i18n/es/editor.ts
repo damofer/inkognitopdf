@@ -129,6 +129,9 @@ export const editor = {
     `Documento firmado por todos (${count}).`,
   "editor.planPending": (names: string) =>
     `Documento para firmar. Le toca a: ${names}.`,
+  "editor.signOnly":
+    "Solo para firmar: no se puede editar hasta que firmen todos.",
+  "editor.signOnlyLocked": "No se puede editar hasta que firmen todos.",
   "editor.signAs": "Firmar como…",
   "editor.looksScanned":
     "Este documento parece escaneado: su texto es una imagen. Reconózcalo con OCR para poder buscarlo y copiarlo.",

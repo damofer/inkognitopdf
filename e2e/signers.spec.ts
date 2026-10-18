@@ -3,6 +3,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { PDFDocument, PDFName, PDFArray } from "pdf-lib";
+import { IncrementalUpdate } from "../src/sign/incremental";
 import {
   opensslPath,
   opensslVerify,
@@ -96,10 +97,15 @@ async function sharePlan(page: Page) {
 
 /** Signs the opened plan as `name`, with a new self-signed certificate. */
 async function signAs(page: Page, name: string, wave: number) {
+  // Opened to sign, the panel is already open (CA15); closed, the notice
+  // opens it.
   const notice = page.getByTestId("plan-notice");
-  await expect(notice).toContainText(`Le toca a: ${name}`);
-  await notice.getByRole("button", { name: "Firmar como…" }).click();
   const panel = signAsPanel(page);
+  await expect(panel.or(notice)).toBeVisible();
+  if (await notice.isVisible()) {
+    await expect(notice).toContainText(`Le toca a: ${name}`);
+    await notice.getByRole("button", { name: "Firmar como…" }).click();
+  }
   await expect(
     panel.getByRole("radio", { name: new RegExp(name) }),
   ).toBeChecked();
@@ -190,12 +196,19 @@ test("CA9, CA10, CA13: two signers in order, each signature valid, audit page", 
   );
   expect(await sharePlan(page)).toEqual(prepared.bytes);
 
-  // Beto cannot sign before Ana.
+  // CA15: opened by the next signer, the document is only for signing: no
+  // editing tools, and the panel is open for Ana, whose turn it is.
   await openBytes(page, prepared.name, prepared.bytes);
-  await page
-    .getByTestId("plan-notice")
-    .getByRole("button", { name: "Firmar como…" })
-    .click();
+  await expect(page.getByTestId("sign-only")).toContainText(
+    "no se puede editar",
+  );
+  await expect(page.getByRole("button", { name: "Editar" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Deshacer" })).toHaveCount(0);
+  await expect(page.locator(".page-actions")).toHaveCount(0);
+  await expect(
+    signAsPanel(page).getByRole("radio", { name: /Ana Uno/ }),
+  ).toBeChecked();
+  // Beto cannot sign before Ana.
   await expect(
     signAsPanel(page).getByRole("radio", { name: /Beto Dos/ }),
   ).toBeDisabled();
@@ -219,6 +232,25 @@ test("CA9, CA10, CA13: two signers in order, each signature valid, audit page", 
     "Le toca a: Beto Dos",
   );
   expect(await sharePlan(page)).toEqual(first.bytes);
+
+  // CA15: a page changed after Ana signed (by another editor) cannot be
+  // signed: the panel says why instead of asking for a signature.
+  {
+    const update = await IncrementalUpdate.load(first.bytes);
+    const changed = update.doc.getPage(0);
+    update.touch(changed.ref);
+    changed.node.set(
+      PDFName.of("Contents"),
+      update.context.register(update.context.stream("BT ET")),
+    );
+    await openBytes(page, first.name, update.write().bytes);
+    await expect(signAsPanel(page).getByTestId("sign-blocked")).toContainText(
+      "se modificó después de una firma anterior",
+    );
+    await expect(
+      signAsPanel(page).getByRole("button", { name: "Crear", exact: true }),
+    ).toHaveCount(0);
+  }
 
   await openBytes(page, first.name, first.bytes);
   await expect(page.getByTestId("signed-notice")).toContainText(

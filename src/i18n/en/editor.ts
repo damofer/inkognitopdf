@@ -130,6 +130,9 @@ export const editor: typeof es = {
     `Document signed by everyone (${count}).`,
   "editor.planPending": (names: string) =>
     `Document for signing. Next to sign: ${names}.`,
+  "editor.signOnly":
+    "For signing only: it cannot be edited until everyone has signed.",
+  "editor.signOnlyLocked": "It cannot be edited until everyone has signed.",
   "editor.signAs": "Sign as…",
   "editor.looksScanned":
     "This document looks scanned: its text is an image. Recognize it with OCR so you can search and copy it.",

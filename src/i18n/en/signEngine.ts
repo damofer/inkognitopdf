@@ -23,6 +23,10 @@ export const signEngine: typeof es = {
     `${name} has already signed this document.`,
   "signEngine.notYourTurn": (name: string) =>
     `It is not ${name}’s turn yet: earlier signers have not signed.`,
+  "signEngine.earlierSignatureBroken":
+    "An earlier signature is no longer valid: the file was changed after it was signed. It cannot be signed; ask whoever sent it for the right file.",
+  "signEngine.changedAfterSigning":
+    "The document was changed after an earlier signature. It cannot be signed; ask whoever sent it for the right file.",
   "signEngine.missingSignature": "Create your signature first.",
   "signEngine.missingInitials": "Create your initials first.",
   "signEngine.missingCertificate": "A certificate is required to sign.",

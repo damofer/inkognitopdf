@@ -592,6 +592,8 @@ export function EditorView({
   } | null>(null);
   const [signAsOpen, setSignAsOpen] = useState(false);
   const [signAsId, setSignAsId] = useState<string | null>(null);
+  // Opened by the user, not the result of preparing or signing here.
+  const autoSignAs = useRef(openNotice === null && !mobile);
   useEffect(() => {
     if (!openedFile) return;
     let live = true;
@@ -603,12 +605,31 @@ export function EditorView({
       const plan = await readPlan(bytes).catch(() => null);
       if (!plan || !live) return;
       const status = await planStatus(bytes, plan);
-      if (live) setFilePlan({ plan, status, bytes });
+      if (!live) return;
+      setFilePlan({ plan, status, bytes });
+      // Spec 004, CA15: opened to sign, the panel is ready for whoever's
+      // turn it is (not on phones, where it would cover the page).
+      const turn = status.find((s) => s.canSign);
+      if (turn && autoSignAs.current) {
+        setSignAsId(turn.signer.id);
+        setSignAsOpen(true);
+      }
     })();
     return () => {
       live = false;
     };
   }, [openedFile]);
+  /**
+   * Spec 004, CA15: while signatures are missing, the document is only
+   * signed and shared: editing it would change what earlier signers signed
+   * or what the next ones are asked to sign.
+   */
+  const signOnly = !!filePlan && filePlan.status.some((s) => !s.done);
+  const signBlocked = signatures.some((s) => s.integrity !== "valid")
+    ? t("signEngine.earlierSignatureBroken")
+    : signatures.some((s) => s.laterChanges === "modified")
+      ? t("signEngine.changedAfterSigning")
+      : null;
   const signerNames = useMemo(
     () =>
       Object.fromEntries(
@@ -1355,9 +1376,8 @@ export function EditorView({
   // the signing plan, so the next signer would not be asked to sign.
   const untouched =
     file &&
-    state === initial &&
-    !protection &&
-    (signatures.length > 0 || filePlan)
+    (signOnly ||
+      (state === initial && !protection && (signatures.length > 0 || filePlan)))
       ? file
       : null;
 
@@ -1764,6 +1784,42 @@ export function EditorView({
     [state.pages],
   );
 
+  const planFieldBoxes = useCallback(
+    (entry: PageEntry, geometry: PageGeometry) =>
+      signAsFields
+        .filter(
+          (f) =>
+            entry.source.kind === "original" && entry.source.index === f.page,
+        )
+        .map((f) => {
+          const v = geometry.rectToView(f.rect);
+          return (
+            <div
+              key={f.id}
+              className="plan-field"
+              data-testid="plan-field"
+              style={{
+                left: v.x,
+                top: v.y,
+                width: v.width,
+                height: v.height,
+              }}
+            >
+              {signFieldLabel(f.type)}
+            </div>
+          );
+        }),
+    [signAsFields],
+  );
+
+  // Spec 004, CA15: nothing to edit, only the fields of the signer.
+  const renderSignOnlyOverlay = useCallback(
+    (entry: PageEntry, geometry: PageGeometry) => (
+      <div className="sign-only-overlay">{planFieldBoxes(entry, geometry)}</div>
+    ),
+    [planFieldBoxes],
+  );
+
   const renderOverlay = useCallback(
     (entry: PageEntry, geometry: PageGeometry) => (
       <EditLayer
@@ -1830,29 +1886,7 @@ export function EditorView({
             total={numbered.total}
           />
         )}
-        {signAsFields
-          .filter(
-            (f) =>
-              entry.source.kind === "original" && entry.source.index === f.page,
-          )
-          .map((f) => {
-            const v = geometry.rectToView(f.rect);
-            return (
-              <div
-                key={f.id}
-                className="plan-field"
-                data-testid="plan-field"
-                style={{
-                  left: v.x,
-                  top: v.y,
-                  width: v.width,
-                  height: v.height,
-                }}
-              >
-                {signFieldLabel(f.type)}
-              </div>
-            );
-          })}
+        {planFieldBoxes(entry, geometry)}
         {continuable.has(entry.id) && tool === "select" && (
           <button
             type="button"
@@ -1887,7 +1921,7 @@ export function EditorView({
       probeStyleFor,
       renderEditsFor,
       signerNames,
-      signAsFields,
+      planFieldBoxes,
       docInfo,
       widgetsFor,
       fieldType,
@@ -2022,26 +2056,8 @@ export function EditorView({
       updateSelectedField({ style: { ...selectedField.style, ...patch } });
   };
 
-  const historyButtons = (
+  const saveButtons = (
     <>
-      <button
-        type="button"
-        onClick={editor.undo}
-        disabled={!editor.canUndo}
-        aria-label={t("editor.undo")}
-        title={t("editor.undoHint")}
-      >
-        <Icon name="undo" />
-      </button>
-      <button
-        type="button"
-        onClick={editor.redo}
-        disabled={!editor.canRedo}
-        aria-label={t("editor.redo")}
-        title={t("editor.redoHint")}
-      >
-        <Icon name="redo" />
-      </button>
       <button
         type="button"
         className="primary"
@@ -2077,6 +2093,30 @@ export function EditorView({
           )}
         </button>
       )}
+    </>
+  );
+
+  const historyButtons = (
+    <>
+      <button
+        type="button"
+        onClick={editor.undo}
+        disabled={!editor.canUndo}
+        aria-label={t("editor.undo")}
+        title={t("editor.undoHint")}
+      >
+        <Icon name="undo" />
+      </button>
+      <button
+        type="button"
+        onClick={editor.redo}
+        disabled={!editor.canRedo}
+        aria-label={t("editor.redo")}
+        title={t("editor.redoHint")}
+      >
+        <Icon name="redo" />
+      </button>
+      {saveButtons}
     </>
   );
 
@@ -2514,7 +2554,15 @@ export function EditorView({
 
   // Spec 025, desktop: the tasks and the save actions above, the tools of
   // the task and their options below.
-  const topBar = (
+  const topBar = signOnly ? (
+    <div className="task-bar">
+      <p className="sign-only-note" role="note" data-testid="sign-only">
+        <Icon name="protect" size={18} />
+        {t("editor.signOnly")}
+      </p>
+      <span className="task-actions">{saveButtons}</span>
+    </div>
+  ) : (
     <div className="task-bar">
       <div className="task-tabs" role="group" aria-label={t("tasks.label")}>
         {TASKS.map(({ id, icon }) => (
@@ -2592,6 +2640,7 @@ export function EditorView({
           adopted={adopted}
           onAdopted={setAdopted}
           busy={signing}
+          blocked={signBlocked}
           onSign={(id, texts, identity, timestamp) =>
             void signAs(id, texts, identity, timestamp)
           }
@@ -2832,6 +2881,7 @@ export function EditorView({
                     .map((s) => s.signer.name)
                     .join(", "),
                 )}
+            {mobile && signOnly && ` ${t("editor.signOnlyLocked")}`}
           </span>
           {canShare && untouched && (
             <button
@@ -2918,7 +2968,7 @@ export function EditorView({
           onChange={updateSelectedField}
         />
       )}
-      {mobile && hint}
+      {mobile && !signOnly && hint}
       {imageInput}
       {insertInput}
       <input
@@ -2965,31 +3015,37 @@ export function EditorView({
         aside={dock || null}
         floating={!mobile}
         // The default tool needs no note over the page.
-        pagesNote={mobile || tool === "select" ? null : hint}
+        pagesNote={mobile || tool === "select" || signOnly ? null : hint}
         toolbar={
           mobile ? (
-            <span className="toolbar-group">{historyButtons}</span>
-          ) : (
+            <span className="toolbar-group">
+              {signOnly ? saveButtons : historyButtons}
+            </span>
+          ) : signOnly ? null : (
             toolbar
           )
         }
         belowToolbar={
-          mobile && hasOptions ? (
+          mobile && hasOptions && !signOnly ? (
             <div className="mobile-options">{options}</div>
           ) : null
         }
         thumbnailsOpen={thumbsOpen}
-        renderOverlay={renderOverlay}
-        renderPageActions={renderPageActions}
-        thumbnailsHeader={thumbnailsHeader}
-        onMovePage={(from, to) => {
-          const page = state.pages[from];
-          if (page)
-            dispatch({ kind: "movePage", pageId: page.id, toIndex: to });
-        }}
+        renderOverlay={signOnly ? renderSignOnlyOverlay : renderOverlay}
+        renderPageActions={signOnly ? undefined : renderPageActions}
+        thumbnailsHeader={signOnly ? undefined : thumbnailsHeader}
+        onMovePage={
+          signOnly
+            ? undefined
+            : (from, to) => {
+                const page = state.pages[from];
+                if (page)
+                  dispatch({ kind: "movePage", pageId: page.id, toIndex: to });
+              }
+        }
         pagesClassName={`tool-${tool}`}
       />
-      {mobile && (
+      {mobile && !signOnly && (
         <MobileBar
           tool={tool}
           onTool={chooseTool}

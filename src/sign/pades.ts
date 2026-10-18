@@ -183,6 +183,13 @@ export interface SignOptions {
   prepare?: (update: IncrementalUpdate) => Promise<void>;
   /** Adds a trusted timestamp (PAdES B-T, spec 040). */
   timestamp?: Timestamper;
+  /**
+   * Certifies the document (DocMDP, ISO 32000 12.8.2.2): readers flag any
+   * later change but those allowed by `certify` (1: none, 2: filling forms
+   * and signing, 3: also annotations). Ignored when the file already has a
+   * signature: only the first one can certify.
+   */
+  certify?: 1 | 2 | 3;
 }
 
 const lookupDict = (update: IncrementalUpdate, obj: PDFObject | undefined) =>
@@ -364,7 +371,23 @@ export async function signPdf(
 
   // The signature dictionary, written by hand to know where /Contents is.
   const sigRef = update.reserve();
+  const certify =
+    options.certify &&
+    !formFields(update).some(
+      (f) =>
+        f.dict.get(PDFName.of("FT"))?.toString() === "/Sig" &&
+        f.dict.get(PDFName.of("V")),
+    )
+      ? options.certify
+      : undefined;
   widget.set(PDFName.of("V"), sigRef);
+  if (certify) {
+    update.touch(context.trailerInfo.Root as PDFRef);
+    update.doc.catalog.set(
+      PDFName.of("Perms"),
+      context.obj({ DocMDP: sigRef }),
+    );
+  }
   const entries = [
     "/Type /Sig",
     "/Filter /Adobe.PPKLite",
@@ -372,6 +395,10 @@ export async function signPdf(
     `/ByteRange [0 ${PLACEHOLDER} ${PLACEHOLDER} ${PLACEHOLDER}]`,
     `/Contents <${"0".repeat(size * 2)}>`,
     `/M ${PDFString.of(pdfDate(date)).toString()}`,
+    certify
+      ? "/Reference [<< /Type /SigRef /TransformMethod /DocMDP " +
+        `/TransformParams << /Type /TransformParams /P ${certify} /V /1.2 >> >>]`
+      : "",
     options.name ? `/Name ${text(options.name).toString()}` : "",
     options.reason ? `/Reason ${text(options.reason).toString()}` : "",
     options.location ? `/Location ${text(options.location).toString()}` : "",

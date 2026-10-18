@@ -20,6 +20,8 @@ interface SignAsPanelProps {
   adopted: Adopted;
   onAdopted: (adopted: Adopted) => void;
   busy: boolean;
+  /** Why the file cannot be signed (spec 004, CA15), if it cannot. */
+  blocked?: string | null;
   onSign: (
     signerId: string,
     texts: Record<string, string>,
@@ -38,6 +40,7 @@ export function SignAsPanel({
   adopted,
   onAdopted,
   busy,
+  blocked = null,
   onSign,
   onClose,
 }: SignAsPanelProps) {
@@ -116,7 +119,12 @@ export function SignAsPanel({
           {t("sign.visualOnlyDocument")}
         </p>
       )}
-      {me && (
+      {blocked && (
+        <p className="sign-warning" role="alert" data-testid="sign-blocked">
+          {blocked}
+        </p>
+      )}
+      {me && !blocked && (
         <>
           <p className="sign-note">
             {t(

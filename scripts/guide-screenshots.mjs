@@ -351,19 +351,10 @@ async function guide(lang) {
     const s = await session(lang);
     const { page } = s;
     await s.open(sample.file, signed);
-    const notice = page.getByTestId("plan-notice");
-    await notice.waitFor();
-    if (i === 0) {
-      const box = await notice.boundingBox();
-      await shot(page, lang, "multi-notice", {
-        x: 0,
-        y: 0,
-        width: 1280,
-        height: Math.min(800, Math.ceil(box.y + box.height + 220)),
-      });
-    }
-    await notice.getByRole("button", { name: s.tr("editor.signAs") }).click();
+    // Opened to sign (spec 004, CA15): no editing, the panel already open.
     const panel = s.signAsPanel();
+    await panel.waitFor();
+    if (i === 0) await shot(page, lang, "multi-notice");
     await panel
       .getByRole("button", { name: s.tr("sign.create"), exact: true })
       .click();

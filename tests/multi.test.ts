@@ -13,6 +13,7 @@ import {
   signAsSigner,
   type SigningPlan,
 } from "../src/sign/multi";
+import { IncrementalUpdate } from "../src/sign/incremental";
 import { verifyPdf } from "../src/sign/verify";
 import { DEFAULT_TEXT_STYLE } from "../src/editor/itemOps";
 import {
@@ -299,6 +300,97 @@ describe("several signers, PAdES", () => {
     await expect(
       signAsSigner(pdf, { ...common, plan, signerId: "a", identity: id }),
     ).rejects.toThrow(/ya firmó/);
+  });
+});
+
+describe("several signers, changes before signing (CA15)", () => {
+  const signA = async () => {
+    const prep = await prepared("pades");
+    const ids = {
+      a: await createSelfSigned({ commonName: "a" }),
+      b: await createSelfSigned({ commonName: "b" }),
+    };
+    const pdf = await signAsSigner(prep.pdf, {
+      ...common,
+      plan: prep.plan,
+      signerId: "a",
+      identity: ids.a,
+    });
+    return { pdf, plan: prep.plan, ids };
+  };
+  const latin1 = (b: Uint8Array) => new TextDecoder("latin1").decode(b);
+
+  it(
+    "the first signature certifies the document, allowing annotations",
+    { timeout: 30_000 },
+    async () => {
+      const { pdf: signed, plan, ids } = await signA();
+      let pdf = signed;
+      const doc = await PDFDocument.load(pdf, { updateMetadata: false });
+      const perms = doc.catalog.lookup(PDFName.of("Perms"), PDFDict);
+      const sig = perms.lookup(PDFName.of("DocMDP"), PDFDict);
+      expect(String(sig.get(PDFName.of("Contents"))).length).toBeGreaterThan(
+        100,
+      );
+      expect(latin1(pdf)).toMatch(
+        /\/TransformMethod \/DocMDP \/TransformParams << \/Type \/TransformParams \/P 3 /,
+      );
+      for (const who of ["b", "c"] as const)
+        pdf = await signAsSigner(pdf, {
+          ...common,
+          plan,
+          signerId: who,
+          identity:
+            who === "b" ? ids.b : await createSelfSigned({ commonName: who }),
+        });
+      // Only the first signature certifies; the later ones only add
+      // signatures and annotations, which the certification allows.
+      expect(latin1(pdf).match(/\/TransformMethod \/DocMDP/g)).toHaveLength(1);
+      const reports = await verifyPdf(pdf);
+      expect(reports.every((r) => r.integrity === "valid")).toBe(true);
+      expect(reports[0]!.laterChanges).toBe("annotations");
+    },
+  );
+
+  it("a page changed after a signature cannot be signed", async () => {
+    const { pdf, plan, ids } = await signA();
+    // Another editor changes the page as an incremental update: the earlier
+    // signature stays intact, but the page is not what Ana signed.
+    const update = await IncrementalUpdate.load(pdf);
+    const page = update.doc.getPage(0);
+    update.touch(page.ref);
+    page.node.set(
+      PDFName.of("Contents"),
+      update.context.register(update.context.stream("BT ET")),
+    );
+    const changed = update.write().bytes;
+    const [report] = await verifyPdf(changed);
+    expect(report!.integrity).toBe("valid");
+    expect(report!.laterChanges).toBe("modified");
+    await expect(
+      signAsSigner(changed, {
+        ...common,
+        plan,
+        signerId: "b",
+        identity: ids.b,
+      }),
+    ).rejects.toThrow(/se modificó después de una firma anterior/);
+  });
+
+  it("a file rewritten after a signature cannot be signed", async () => {
+    const { pdf, plan, ids } = await signA();
+    const rewritten = await (
+      await PDFDocument.load(pdf, { updateMetadata: false })
+    ).save();
+    expect(await readPlan(rewritten)).toEqual(plan);
+    await expect(
+      signAsSigner(rewritten, {
+        ...common,
+        plan,
+        signerId: "b",
+        identity: ids.b,
+      }),
+    ).rejects.toThrow(/Una firma anterior ya no es válida/);
   });
 });
 

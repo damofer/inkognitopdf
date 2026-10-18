@@ -45,7 +45,7 @@ export const guide = {
   // 2. Several signers.
   "guide.multiTitle": "2. Varias personas firman el mismo PDF",
   "guide.multiWhat":
-    "Quien envía el documento decide quién firma, en qué orden y dónde. Ese plan va guardado dentro del PDF. Cada persona abre el archivo en InkognitoPDF, firma solo sus campos y se lo pasa a la siguiente. Nadie necesita cuenta.",
+    "Quien envía el documento decide quién firma, en qué orden y dónde. Ese plan va guardado dentro del PDF. Cada persona abre el archivo en InkognitoPDF, firma solo sus campos y se lo pasa a la siguiente. Nadie necesita cuenta. Mientras faltan firmas, el documento no se puede editar en la app, y la primera firma lo certifica: Acrobat y otros lectores avisan de cualquier cambio posterior que no sea firmar, rellenar campos o añadir anotaciones.",
   "guide.flow": "Recorrido del documento",
   "guide.flowPrepare": "Lo preparas",
   "guide.flowSigner1": "Firma Ana",
@@ -68,15 +68,15 @@ export const guide = {
     "Dos firmantes en orden, cada uno con su campo de firma y de fecha en la página.",
   "guide.signTitle": "Firmar (cada firmante)",
   "guide.signStep1":
-    "Abre el PDF que te enviaron en InkognitoPDF (inkognitopdf.com/app, «Abrir PDF»). Arriba aparece «Documento para firmar. Le toca a:» con tu nombre. Pulsa «Firmar como…».",
+    "Abre el PDF que te enviaron en InkognitoPDF (inkognitopdf.com/app, «Abrir PDF»). Se abre en modo firma: no se puede editar, y el panel «Firmar el documento» ya está abierto para quien le toca. En el móvil, pulsa «Firmar como…» en el aviso de arriba.",
   "guide.signShotNotice":
-    "El aviso al abrir un documento preparado para firmar.",
+    "Un documento preparado para firmar se abre en modo firma, con el panel listo.",
   "guide.signStep2":
-    "Elige tu nombre. Solo puede firmar a quien le toca: los demás aparecen como «espera» o «firmó». Tus campos se marcan en la página.",
+    "Comprueba que tu nombre está marcado. Solo puede firmar a quien le toca: los demás aparecen como «espera» o «firmó». Tus campos se marcan en la página.",
   "guide.signStep3":
     "Pulsa «Crear» para hacer tu firma (y tus iniciales, si te las piden) y rellena los textos que te correspondan.",
   "guide.signStep4":
-    "Elige o crea tu certificado, como en el apartado 1, y pulsa «Guardar firmado». Se descarga una copia con «(firmado)» en el nombre, y la app te dice a quién enviársela.",
+    "Elige o crea tu certificado, como en el apartado 1, y pulsa «Guardar firmado». Se descarga una copia con «(firmado)» en el nombre, y la app te dice a quién enviársela. Si una firma anterior ya no es válida o el documento cambió después de ella, la app no deja firmar y explica por qué.",
   "guide.signShot": "Le toca a Ana: Beto espera su turno.",
   "guide.doneTitle": "Cuando firmaron todos",
   "guide.doneText":

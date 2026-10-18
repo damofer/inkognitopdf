@@ -25,6 +25,10 @@ export const signEngine = {
     `${name} ya firmó este documento.`,
   "signEngine.notYourTurn": (name: string) =>
     `Todavía no le toca a ${name}: faltan firmantes anteriores.`,
+  "signEngine.earlierSignatureBroken":
+    "Una firma anterior ya no es válida: el archivo se cambió después de firmarse. No se puede firmar; pida el archivo correcto a quien se lo envió.",
+  "signEngine.changedAfterSigning":
+    "El documento se modificó después de una firma anterior. No se puede firmar; pida el archivo correcto a quien se lo envió.",
   "signEngine.missingSignature": "Falta crear su firma.",
   "signEngine.missingInitials": "Faltan sus iniciales.",
   "signEngine.missingCertificate": "Falta el certificado para firmar.",

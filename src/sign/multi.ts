@@ -23,6 +23,7 @@ import { certificateInfo, type Identity } from "./certificates";
 import { IncrementalUpdate } from "./incremental";
 import { addAnnotation, appearanceStream, formFields, signPdf } from "./pades";
 import type { Timestamper } from "./timestamp";
+import { verifyPdf, type SignatureReport } from "./verify";
 
 export type PlanMode = "pades" | "visual";
 
@@ -383,6 +384,21 @@ export interface SignAsOptions {
   loadFont: LoadFont;
 }
 
+/**
+ * Why the next signer cannot sign a file with these signatures (spec 004,
+ * CA15): an earlier signature is broken, or the file was changed after it
+ * in a way other than signing, filling fields or adding annotations.
+ */
+export function signingBlocked(
+  reports: Pick<SignatureReport, "integrity" | "laterChanges">[],
+): string | null {
+  if (reports.some((r) => r.integrity !== "valid"))
+    return t("signEngine.earlierSignatureBroken");
+  if (reports.some((r) => r.laterChanges === "modified"))
+    return t("signEngine.changedAfterSigning");
+  return null;
+}
+
 /** The file signed by one signer of the plan (one incremental update). */
 export async function signAsSigner(
   bytes: Uint8Array,
@@ -394,6 +410,8 @@ export async function signAsSigner(
   if (!me) throw new Error(t("signEngine.signerNotInDocument"));
   if (me.done) throw new Error(t("signEngine.alreadySigned", me.signer.name));
   if (!me.canSign) throw new Error(t("signEngine.notYourTurn", me.signer.name));
+  const blocked = signingBlocked(await verifyPdf(bytes));
+  if (blocked) throw new Error(blocked);
   const plan = options.plan;
   const signer = me.signer;
   const mine = plan.fields.filter((f) => f.signerId === signer.id);
@@ -485,6 +503,9 @@ export async function signAsSigner(
       date,
       loadFont: options.loadFont,
       timestamp: options.timestamp,
+      // The first signer certifies the document: readers flag any later
+      // change but signing, filling fields and annotations (our stamps).
+      certify: signedCount === 0 ? 3 : undefined,
       prepare: async (update) => {
         const fonts = new FontCache(update.doc, options.loadFont);
         await fill(update, fonts);

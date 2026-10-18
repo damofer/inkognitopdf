@@ -3490,3 +3490,24 @@ button.danger {
   box-shadow: var(--panel-shadow);
   pointer-events: auto;
 }
+
+/* Spec 004, CA15: a document waiting for signatures is only signed. */
+.sign-only-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.sign-only-note svg {
+  flex: none;
+}
+
+.sign-only-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
