@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useT } from "../i18n";
 import type { SignatureRole } from "../model/signature";
 import { signFieldLabel } from "../model/signature";
+import { GuideLink } from "./GuideLink";
 import { IdentityPicker, type StoredIdentity } from "./IdentityPicker";
 import type { SignerStatus, SigningPlan } from "./multi";
 import type { Adopted } from "./SignPanel";
@@ -107,6 +108,7 @@ export function SignAsPanel({
           </li>
         ))}
       </ol>
+      <GuideLink section="varios-firmantes" />
       {plan.mode === "visual" && (
         <p className="sign-warning" role="note">
           {t("sign.visualOnlyDocument")}

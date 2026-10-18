@@ -37,6 +37,15 @@
         ]
       },
       {
+        "source": "/guia/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
         "source": "/app/**",
         "headers": [
           {

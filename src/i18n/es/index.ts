@@ -5,6 +5,7 @@ import { compare } from "./compare";
 import { editor } from "./editor";
 import { editLayer } from "./editLayer";
 import { engine } from "./engine";
+import { guide } from "./guide";
 import { landing } from "./landing";
 import { mobile } from "./mobile";
 import { numbering } from "./numbering";
@@ -32,6 +33,7 @@ export const es = {
   ...editor,
   ...editLayer,
   ...engine,
+  ...guide,
   ...landing,
   ...mobile,
   ...numbering,

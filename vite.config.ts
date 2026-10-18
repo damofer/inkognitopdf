@@ -6,11 +6,13 @@ import { en } from "./src/i18n/en";
 import type { MessageKey } from "./src/i18n/core";
 import { prerender } from "./src/landing/prerender";
 
-/** The landing page's texts, in English, written into its HTML (spec 008). */
-function englishLanding(key: string): string {
+/** The texts of the static pages, in English, written into their HTML: the
+ * landing page (spec 008) and the signing guide (spec 036). */
+const STATIC_PAGES = ["/index.html", "/guia/firmar/index.html"];
+function english(key: string): string {
   const message = en[key as MessageKey];
   if (typeof message !== "string")
-    throw new Error(`index.html: unknown text key "${key}"`);
+    throw new Error(`static page: unknown text key "${key}"`);
   return message;
 }
 
@@ -28,6 +30,7 @@ export default defineConfig({
       input: {
         landing: resolve(import.meta.dirname, "index.html"),
         app: resolve(import.meta.dirname, "app/index.html"),
+        guide: resolve(import.meta.dirname, "guia/firmar/index.html"),
       },
     },
   },
@@ -38,7 +41,7 @@ export default defineConfig({
       transformIndexHtml: {
         order: "pre",
         handler: (html, ctx) =>
-          ctx.path === "/index.html" ? prerender(html, englishLanding) : html,
+          STATIC_PAGES.includes(ctx.path) ? prerender(html, english) : html,
       },
     },
     VitePWA({
@@ -100,7 +103,14 @@ export default defineConfig({
         // (~16 MB) are cached on first use. The link-preview images are only
         // for crawlers.
         // The promo video and its poster are only for the landing page.
-        globIgnores: ["fonts/**", "tesseract/**", "brand/og-*", "promo/**"],
+        globIgnores: [
+          "fonts/**",
+          "tesseract/**",
+          "brand/og-*",
+          "promo/**",
+          // The signing guide's screenshots (spec 036), fetched when read.
+          "guia/**/img/**",
+        ],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         // Spec 017: receives shared PDFs; loaded before the routes, so its
         // fetch handler answers first.

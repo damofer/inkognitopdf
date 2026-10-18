@@ -1,0 +1,378 @@
+<!doctype html>
+<!-- Signing guide (spec 036): several signers and PAdES, step by step, with
+     screenshots of the app. Texts come from src/i18n (guide.* keys): the
+     build writes the English ones into this file, and src/guide/main.ts
+     switches them, and the screenshots, to the visitor's language. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="guide.title"></title>
+    <meta name="description" data-i18n-attr="content:guide.description" />
+    <link rel="canonical" href="https://inkognitopdf.com/guia/firmar/" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="InkognitoPDF" />
+    <meta property="og:title" data-i18n-attr="content:guide.heading" />
+    <meta
+      property="og:description"
+      data-i18n-attr="content:guide.description"
+    />
+    <meta property="og:url" content="https://inkognitopdf.com/guia/firmar/" />
+    <meta
+      property="og:image"
+      content="https://inkognitopdf.com/brand/og-image.png"
+    />
+    <link rel="icon" href="/brand/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/brand/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
+    <meta name="theme-color" content="#23272F" />
+    <script>
+      // Runs before the first paint: when the visitor's language is not the
+      // one written in the page, the page stays hidden until main.ts has
+      // switched it (landing.css shows it anyway after 1.5 s). Same rule as
+      // detectLang() in src/i18n/core.ts.
+      (function () {
+        var lang = null;
+        try {
+          lang = localStorage.getItem("inkognitopdf.lang");
+        } catch (e) {}
+        if (lang !== "es" && lang !== "en") {
+          lang = "en";
+          var list = navigator.languages || [];
+          for (var i = 0; i < list.length; i++) {
+            var primary = list[i].toLowerCase().split("-")[0];
+            if (primary === "es" || primary === "en") {
+              lang = primary;
+              break;
+            }
+          }
+        }
+        if (lang !== document.documentElement.lang) {
+          document.documentElement.classList.add("i18n-pending");
+          document.documentElement.lang = lang;
+        }
+      })();
+    </script>
+  </head>
+  <body class="guide">
+    <a class="skip" href="#main" data-i18n="landing.skip"></a>
+
+    <header class="site-header">
+      <div class="wrap header-row">
+        <a class="logo" href="/" data-i18n-attr="aria-label:landing.home">
+          <img
+            src="/brand/logo-dark.svg"
+            alt="InkognitoPDF"
+            width="145"
+            height="32"
+          />
+        </a>
+        <div
+          class="lang-switch"
+          role="group"
+          data-i18n-attr="aria-label:lang.label"
+        >
+          <button
+            type="button"
+            lang="es"
+            data-lang="es"
+            aria-pressed="false"
+            data-i18n-attr="aria-label:lang.es"
+          >
+            ES
+          </button>
+          <button
+            type="button"
+            lang="en"
+            data-lang="en"
+            aria-pressed="false"
+            data-i18n-attr="aria-label:lang.en"
+          >
+            EN
+          </button>
+        </div>
+        <a
+          class="button button-small"
+          href="/app/"
+          data-i18n="landing.openApp"
+        ></a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="guide-intro">
+        <div class="wrap narrow">
+          <p class="eyebrow" data-i18n="guide.eyebrow"></p>
+          <h1 data-i18n="guide.heading"></h1>
+          <p class="lead" data-i18n="guide.lead"></p>
+          <nav class="guide-toc" aria-labelledby="toc-title">
+            <h2 id="toc-title" data-i18n="guide.toc"></h2>
+            <ol>
+              <li><a href="#firma-digital" data-i18n="guide.toc1"></a></li>
+              <li><a href="#varios-firmantes" data-i18n="guide.toc2"></a></li>
+              <li><a href="#comprobar" data-i18n="guide.toc3"></a></li>
+              <li><a href="#preguntas" data-i18n="guide.toc4"></a></li>
+            </ol>
+          </nav>
+        </div>
+      </section>
+
+      <section
+        id="firma-digital"
+        class="guide-section"
+        aria-labelledby="pades-title"
+      >
+        <div class="wrap narrow">
+          <h2 id="pades-title" data-i18n="guide.padesTitle"></h2>
+          <p class="section-lead" data-i18n="guide.padesWhat"></p>
+          <ol class="guide-steps">
+            <li data-i18n="guide.padesStep1"></li>
+            <li data-i18n="guide.padesStep2"></li>
+          </ol>
+          <figure class="shot">
+            <img
+              data-shot="pades-place"
+              src="/guia/firmar/img/en/pades-place.webp"
+              width="1280"
+              height="800"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.padesShotPlace"></figcaption>
+          </figure>
+          <ol class="guide-steps" start="3">
+            <li data-i18n="guide.padesStep3"></li>
+            <li>
+              <span data-i18n="guide.padesStep4"></span>
+              <ul>
+                <li data-i18n="guide.padesCertP12"></li>
+                <li data-i18n="guide.padesCertOwn"></li>
+              </ul>
+              <p class="guide-note" data-i18n="guide.padesCertKept"></p>
+            </li>
+            <li data-i18n="guide.padesStep5"></li>
+            <li data-i18n="guide.padesStep6"></li>
+          </ol>
+          <figure class="shot">
+            <img
+              data-shot="pades-save"
+              src="/guia/firmar/img/en/pades-save.webp"
+              width="1280"
+              height="800"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.padesShotSave"></figcaption>
+          </figure>
+          <p
+            class="guide-warning"
+            role="note"
+            data-i18n="guide.padesWarning"
+          ></p>
+        </div>
+      </section>
+
+      <section
+        id="varios-firmantes"
+        class="guide-section"
+        aria-labelledby="multi-title"
+      >
+        <div class="wrap narrow">
+          <h2 id="multi-title" data-i18n="guide.multiTitle"></h2>
+          <p class="section-lead" data-i18n="guide.multiWhat"></p>
+          <ol class="guide-flow" data-i18n-attr="aria-label:guide.flow">
+            <li data-i18n="guide.flowPrepare"></li>
+            <li data-i18n="guide.flowSigner1"></li>
+            <li data-i18n="guide.flowSigner2"></li>
+            <li class="done" data-i18n="guide.flowDone"></li>
+          </ol>
+
+          <h3 data-i18n="guide.prepareTitle"></h3>
+          <ol class="guide-steps">
+            <li data-i18n="guide.prepareStep1"></li>
+            <li data-i18n="guide.prepareStep2"></li>
+            <li data-i18n="guide.prepareStep3"></li>
+            <li data-i18n="guide.prepareStep4"></li>
+            <li data-i18n="guide.prepareStep5"></li>
+            <li data-i18n="guide.prepareStep6"></li>
+          </ol>
+          <figure class="shot">
+            <img
+              data-shot="multi-prepare"
+              src="/guia/firmar/img/en/multi-prepare.webp"
+              width="1280"
+              height="800"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.prepareShot"></figcaption>
+          </figure>
+
+          <h3 data-i18n="guide.signTitle"></h3>
+          <ol class="guide-steps">
+            <li data-i18n="guide.signStep1"></li>
+          </ol>
+          <figure class="shot">
+            <img
+              data-shot="multi-notice"
+              src="/guia/firmar/img/en/multi-notice.webp"
+              width="1280"
+              height="320"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.signShotNotice"></figcaption>
+          </figure>
+          <ol class="guide-steps" start="2">
+            <li data-i18n="guide.signStep2"></li>
+            <li data-i18n="guide.signStep3"></li>
+            <li data-i18n="guide.signStep4"></li>
+          </ol>
+          <figure class="shot">
+            <img
+              data-shot="multi-sign-as"
+              src="/guia/firmar/img/en/multi-sign-as.webp"
+              width="1280"
+              height="800"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.signShot"></figcaption>
+          </figure>
+
+          <h3 data-i18n="guide.doneTitle"></h3>
+          <p data-i18n="guide.doneText"></p>
+          <figure class="shot">
+            <img
+              data-shot="multi-done"
+              src="/guia/firmar/img/en/multi-done.webp"
+              width="1280"
+              height="800"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.doneShot"></figcaption>
+          </figure>
+          <figure class="shot shot-page">
+            <img
+              data-shot="multi-audit"
+              src="/guia/firmar/img/en/multi-audit.webp"
+              width="893"
+              height="530"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.auditShot"></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section
+        id="comprobar"
+        class="guide-section"
+        aria-labelledby="verify-title"
+      >
+        <div class="wrap narrow">
+          <h2 id="verify-title" data-i18n="guide.verifyTitle"></h2>
+          <p class="section-lead" data-i18n="guide.verifyText"></p>
+          <ul class="guide-points">
+            <li data-i18n="guide.verifyIntegrity"></li>
+            <li data-i18n="guide.verifyChanges"></li>
+            <li data-i18n="guide.verifyTrust"></li>
+          </ul>
+          <figure class="shot">
+            <img
+              data-shot="verify"
+              src="/guia/firmar/img/en/verify.webp"
+              width="1280"
+              height="800"
+              loading="lazy"
+              decoding="async"
+              alt=""
+            />
+            <figcaption data-i18n="guide.verifyShot"></figcaption>
+          </figure>
+          <p data-i18n="guide.verifyRoots"></p>
+          <p class="guide-note" data-i18n="guide.verifyOther"></p>
+        </div>
+      </section>
+
+      <section id="preguntas" class="section faq" aria-labelledby="faq-title">
+        <div class="wrap narrow">
+          <h2 id="faq-title" data-i18n="guide.faqTitle"></h2>
+          <details>
+            <summary data-i18n="guide.faqLegalQ"></summary>
+            <p data-i18n="guide.faqLegalA"></p>
+          </details>
+          <details>
+            <summary data-i18n="guide.faqAccountQ"></summary>
+            <p data-i18n="guide.faqAccountA"></p>
+          </details>
+          <details>
+            <summary data-i18n="guide.faqPhoneQ"></summary>
+            <p data-i18n="guide.faqPhoneA"></p>
+          </details>
+          <details>
+            <summary data-i18n="guide.faqP12Q"></summary>
+            <p data-i18n="guide.faqP12A"></p>
+          </details>
+          <details>
+            <summary data-i18n="guide.faqChangedQ"></summary>
+            <p data-i18n="guide.faqChangedA"></p>
+          </details>
+          <details>
+            <summary data-i18n="guide.faqTurnQ"></summary>
+            <p data-i18n="guide.faqTurnA"></p>
+          </details>
+          <details>
+            <summary data-i18n="guide.faqUploadQ"></summary>
+            <p data-i18n="guide.faqUploadA"></p>
+          </details>
+        </div>
+      </section>
+
+      <section class="cta" aria-labelledby="cta-title">
+        <div class="wrap center">
+          <h2 id="cta-title" data-i18n="guide.ctaTitle"></h2>
+          <p data-i18n="guide.ctaText"></p>
+          <a
+            class="button button-large"
+            href="/app/"
+            data-i18n="guide.ctaButton"
+          ></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-row">
+        <img
+          src="/brand/logo-dark.svg"
+          alt="InkognitoPDF"
+          width="109"
+          height="24"
+        />
+        <p>
+          <span data-i18n="landing.footerLicense"></span>
+          <a href="/" data-i18n="guide.back"></a>
+          <a
+            class="source-link"
+            href="https://github.com/damofer/inkognitopdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="landing.footerCode"
+          ></a>
+        </p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/guide/main.ts"></script>
+  </body>
+</html>

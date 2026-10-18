@@ -2312,6 +2312,14 @@ button.file-name:hover:not(:disabled) {
   color: var(--muted);
 }
 
+/* Spec 036: the link to the signing guide. */
+.sign-guide {
+  justify-self: start;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
 .item-signature {
   outline: 1px dashed transparent;
 }

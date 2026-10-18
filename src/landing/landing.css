@@ -693,6 +693,12 @@ p {
   margin-top: 8px;
   color: var(--muted);
 }
+/* Spec 036: the signing card links to the guide. */
+.card-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 15px;
+}
 
 .card-art {
   border-radius: 14px;
@@ -1121,7 +1127,8 @@ p {
   color: var(--muted);
   text-underline-offset: 3px;
 }
-.footer-row span + a::before {
+.footer-row span + a::before,
+.footer-row a + a::before {
   content: " · ";
 }
 

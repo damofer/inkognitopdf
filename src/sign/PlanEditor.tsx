@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useT } from "../i18n";
 import { signFieldLabel, type SignFieldType } from "../model/signature";
+import { GuideLink } from "./GuideLink";
 import type { PlanMode, PlanSigner } from "./multi";
 
 interface PlanEditorProps {
@@ -61,6 +62,7 @@ export function PlanEditor({
     <details className="sign-plan" open={signers.length > 0}>
       <summary>{t("sign.severalSigners")}</summary>
       <p className="sign-note">{t("sign.planNote")}</p>
+      <GuideLink section="varios-firmantes" />
       <div
         className="sign-row"
         role="radiogroup"

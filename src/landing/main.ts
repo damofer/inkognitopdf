@@ -9,7 +9,7 @@ import {
   type Consent,
 } from "../analytics/consent";
 import { getLang, setLang, t, type Lang, type MessageKey } from "../i18n/core";
-import { attrPairs } from "./prerender";
+import { applyTexts } from "./texts";
 import { donationOrder } from "../support/donations";
 import { labelPromo, setupPromo, type Promo } from "./promo";
 import "./landing.css";
@@ -18,13 +18,7 @@ let promo: Promo | null = null;
 
 function apply() {
   const lang = getLang();
-  for (const el of document.querySelectorAll<HTMLElement>("[data-i18n]"))
-    el.textContent = t(el.dataset.i18n as MessageKey);
-  for (const el of document.querySelectorAll<HTMLElement>("[data-i18n-attr]"))
-    for (const [attr, key] of attrPairs(el.dataset.i18nAttr ?? ""))
-      el.setAttribute(attr, t(key as MessageKey));
-  for (const button of document.querySelectorAll<HTMLElement>("[data-lang]"))
-    button.setAttribute("aria-pressed", String(button.dataset.lang === lang));
+  applyTexts();
   orderDonations(lang);
   promo?.setLang(lang);
   labelPromo();

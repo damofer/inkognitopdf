@@ -7,6 +7,7 @@ import { locale, useT, type MessageKey } from "../i18n";
 import type { SignatureAsset, SignatureRole } from "../model/signature";
 import { keystore } from "../storage/keystore";
 import type { Placing } from "../editor/EditLayer";
+import { GuideLink } from "./GuideLink";
 import { SignatureArt } from "./SignaturePreview";
 import { SignaturePad } from "./SignaturePad";
 
@@ -182,6 +183,7 @@ export function SignPanel({
       {step === "save" ? (
         <>
           {children}
+          <GuideLink section="firma-digital" />
           <button
             type="button"
             className="sign-back"
