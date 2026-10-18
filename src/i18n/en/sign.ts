@@ -76,6 +76,11 @@ export const sign: typeof es = {
   "sign.rememberCertificate":
     "Save the certificate on this device (the key cannot be exported)",
   "sign.addAuditPage": "Add a signature audit page",
+  "sign.addTimestamp": "Add a timestamp",
+  "sign.timestampNote":
+    "DigiCert certifies the time of signing instead of this device's clock. Only a hash of the signature is sent, never the document.",
+  "sign.timestampOffline":
+    "The timestamp needs a connection. Without one, the signature uses this device's time.",
   "sign.selfSignedLabel": (name: string, algorithm: string) =>
     `${name} (self-signed, ${algorithm})`,
   "sign.issuedByLabel": (subject: string, issuer: string) =>
@@ -137,6 +142,11 @@ export const sign: typeof es = {
   "sign.trustUnknown":
     "Unverified certificate: its issuer is not among the imported roots",
   "sign.signedAt": (date: string) => `Signed: ${date}`,
+  "sign.deviceTime": (date: string) => `Signer's device time: ${date}`,
+  "sign.timestampAt": (date: string, authority: string) =>
+    `Timestamp: ${date}, certified by ${authority}`,
+  "sign.timestampInvalid":
+    "The timestamp does not belong to this signature or is damaged.",
   "sign.reason": (reason: string) => `Reason: ${reason}`,
   "sign.certHolder": "Subject",
   "sign.certIssuer": "Issuer",

@@ -24,6 +24,8 @@ interface SignAsPanelProps {
     signerId: string,
     texts: Record<string, string>,
     identity: StoredIdentity | null,
+    /** Adds a trusted timestamp (spec 040). */
+    timestamp?: boolean,
   ) => void;
   onClose: () => void;
 }
@@ -165,7 +167,9 @@ export function SignAsPanel({
             <IdentityPicker
               busy={busy}
               modes={["digital"]}
-              onSave={(_, identity) => onSign(me.signer.id, texts, identity)}
+              onSave={(_, identity, { timestamp }) =>
+                onSign(me.signer.id, texts, identity, timestamp)
+              }
             />
           ) : (
             <button

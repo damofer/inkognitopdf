@@ -36,6 +36,10 @@ export const signEngine = {
   "signEngine.fieldAlreadySigned": "Ese campo ya está firmado.",
   "signEngine.defaultFieldName": (n: number) => `Firma${n}`,
   "signEngine.signatureTooLarge": "La firma no cabe en el espacio reservado.",
+  "signEngine.timestampUnreachable":
+    "No se pudo contactar con el servicio de sello de tiempo. Revisa la conexión o firma sin sello.",
+  "signEngine.timestampRefused":
+    "El servicio de sello de tiempo no devolvió un sello válido. Inténtalo de nuevo o firma sin sello.",
 
   // Incremental updates (incremental.ts).
   "signEngine.noStartxref": "El PDF no tiene startxref.",

@@ -34,6 +34,10 @@ export const signEngine: typeof es = {
   "signEngine.defaultFieldName": (n: number) => `Signature${n}`,
   "signEngine.signatureTooLarge":
     "The signature does not fit in the reserved space.",
+  "signEngine.timestampUnreachable":
+    "Could not reach the timestamp service. Check the connection or sign without a timestamp.",
+  "signEngine.timestampRefused":
+    "The timestamp service did not return a valid timestamp. Try again or sign without one.",
 
   "signEngine.noStartxref": "The PDF has no startxref.",
   "signEngine.encrypted":

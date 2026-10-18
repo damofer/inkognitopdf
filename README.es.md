@@ -36,34 +36,35 @@
 - **Funciona sin conexión.** Es una PWA que se puede instalar; los modelos de OCR y las fuentes se guardan la primera vez que se usan.
 - **Sin cuentas ni anuncios.**
 - **La medición de uso es opcional.** Solo si el visitante la acepta se envían conteos anónimos de uso (Google Analytics a través de Firebase), y nunca incluyen nombres de archivo, texto ni contenido: la lista cerrada de eventos está en [`src/analytics/events.ts`](src/analytics/events.ts). Sin aceptarla, la app no hace ninguna petición a Google.
+- **El sello de tiempo es opcional.** Si al firmar marcas «Añadir sello de tiempo», la app envía a `/tsa`, en el propio sitio, una huella SHA-256 de la firma, que se reenvía a DigiCert para que certifique la hora. No lleva el documento ni datos tuyos ([`functions/relay.js`](functions/relay.js)).
 
 ### Compruébalo tú mismo
 
 No tienes que creernos.
 
 1. **Lee el encabezado.** Todas las páginas se sirven con una `Content-Security-Policy` cuyo `connect-src` solo permite el propio sitio y las direcciones de Google Analytics (a las que se conecta únicamente si aceptas la medición de uso). El navegador rechaza cualquier otra conexión, intente lo que intente el código. Ejecuta `curl -sI https://inkognitopdf.com/app/` o mira los encabezados de respuesta de `/app/` en las herramientas de desarrollador. La política está en [`src/csp.ts`](src/csp.ts).
-2. **Mira la pestaña Red.** Abre [la app](https://inkognitopdf.com/app/), abre las herramientas de desarrollador en la pestaña Red y vacíala. Luego abre un PDF, edítalo, fírmalo y guárdalo. Todas las peticiones van a `inkognitopdf.com` (fuentes, el motor de OCR y otros archivos de la app) y ninguna lleva tu documento. Si aceptaste Google Analytics, también verás peticiones a Google con los nombres de los eventos, nunca nombres de archivo ni contenido.
-3. **Desconéctate.** Cuando la app ya cargó, activa el modo avión: sigue funcionando, porque nada necesita un servidor.
+2. **Mira la pestaña Red.** Abre [la app](https://inkognitopdf.com/app/), abre las herramientas de desarrollador en la pestaña Red y vacíala. Luego abre un PDF, edítalo, fírmalo y guárdalo. Todas las peticiones van a `inkognitopdf.com` (fuentes, el motor de OCR y otros archivos de la app) y ninguna lleva tu documento. Si aceptaste Google Analytics, también verás peticiones a Google con los nombres de los eventos, nunca nombres de archivo ni contenido. Si firmas con sello de tiempo, verás una petición a `/tsa` de unos 80 bytes: la huella de la firma.
+3. **Desconéctate.** Cuando la app ya cargó, activa el modo avión: sigue funcionando, porque nada necesita un servidor. Solo el sello de tiempo, que es opcional, necesita conexión.
 
 ## Funciones
 
-|                            |                                                                                                                                                                                                                                                                |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Editar texto**           | Cambia el texto que ya está en el PDF conservando su fuente, tamaño, color y grosor. Añade texto, imágenes y blanqueos.                                                                                                                                        |
-| **Anotar**                 | Resaltado, subrayado, tachado, notas, texto libre, dibujo, líneas, flechas, rectángulos y elipses, guardados como anotaciones estándar.                                                                                                                        |
-| **Formularios**            | Rellena campos AcroForm, crea campos nuevos de seis tipos y aplana el formulario.                                                                                                                                                                              |
-| **Firmar**                 | Firma dibujada, escrita o desde una foto; firma digital **PAdES** con un certificado creado en el dispositivo o importado de un `.p12`; varios firmantes en orden, con página de registro opcional; verificación de firmas.                                    |
-| **Escanear**               | Fotografía papeles con el móvil: detección de la página, corrección de perspectiva y un filtro limpio de fotocopia en blanco y negro.                                                                                                                          |
-| **OCR**                    | Reconoce el texto de los escaneos en español e inglés (Tesseract.js) para buscarlo, seleccionarlo y copiarlo.                                                                                                                                                  |
-| **Editar texto escaneado** | Reemplaza una línea reconocida dentro de la imagen escaneada, igualando el papel y la tinta.                                                                                                                                                                   |
-| **Borrado seguro**         | Marca zonas o busca palabras o patrones y elimina de verdad el texto, las imágenes, las anotaciones y los metadatos que hay debajo.                                                                                                                            |
-| **Unir y dividir**         | Abre varios PDFs como uno, inserta PDFs, ordena las páginas arrastrándolas, divide por rangos o cada N páginas o extrae páginas (ZIP si salen varios archivos).                                                                                                |
-| **Comprimir**              | Reduce el tamaño: las imágenes se ajustan a lo que su página necesita y se codifican de nuevo, con tres niveles y el tamaño antes y después.                                                                                                                   |
-| **Contraseñas**            | Abre PDFs protegidos (RC4 y AES, hasta AES-256) y guarda con contraseña AES-256; restricciones opcionales de imprimir y copiar, que la app explica que son solo orientativas.                                                                                  |
-| **Páginas**                | Gira, elimina e inserta páginas en blanco.                                                                                                                                                                                                                     |
-| **Plantillas**             | CV, cartas de presentación, facturas, cotizaciones, cuentas de cobro, recibos y cartas listos para rellenar, con vista previa, colores, tipografías y tamaño de papel; descarga el PDF o sigue editándolo en la app.                                           |
-| **Escribir documentos**    | Escribe desde cero como en Word o Google Docs: títulos, listas, negrita, colores, resaltado, alineación, imágenes y saltos de página, viendo dónde empieza cada página; el resultado es un PDF con texto real, para descargar, firmar o añadir al PDF abierto. |
-| **Idiomas**                | Español e inglés, en el ordenador y en el teléfono.                                                                                                                                                                                                            |
+|                            |                                                                                                                                                                                                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Editar texto**           | Cambia el texto que ya está en el PDF conservando su fuente, tamaño, color y grosor. Añade texto, imágenes y blanqueos.                                                                                                                                           |
+| **Anotar**                 | Resaltado, subrayado, tachado, notas, texto libre, dibujo, líneas, flechas, rectángulos y elipses, guardados como anotaciones estándar.                                                                                                                           |
+| **Formularios**            | Rellena campos AcroForm, crea campos nuevos de seis tipos y aplana el formulario.                                                                                                                                                                                 |
+| **Firmar**                 | Firma dibujada, escrita o desde una foto; firma digital **PAdES** con un certificado creado en el dispositivo o importado de un `.p12`; varios firmantes en orden, con página de registro opcional; sello de tiempo opcional (PAdES B-T); verificación de firmas. |
+| **Escanear**               | Fotografía papeles con el móvil: detección de la página, corrección de perspectiva y un filtro limpio de fotocopia en blanco y negro.                                                                                                                             |
+| **OCR**                    | Reconoce el texto de los escaneos en español e inglés (Tesseract.js) para buscarlo, seleccionarlo y copiarlo.                                                                                                                                                     |
+| **Editar texto escaneado** | Reemplaza una línea reconocida dentro de la imagen escaneada, igualando el papel y la tinta.                                                                                                                                                                      |
+| **Borrado seguro**         | Marca zonas o busca palabras o patrones y elimina de verdad el texto, las imágenes, las anotaciones y los metadatos que hay debajo.                                                                                                                               |
+| **Unir y dividir**         | Abre varios PDFs como uno, inserta PDFs, ordena las páginas arrastrándolas, divide por rangos o cada N páginas o extrae páginas (ZIP si salen varios archivos).                                                                                                   |
+| **Comprimir**              | Reduce el tamaño: las imágenes se ajustan a lo que su página necesita y se codifican de nuevo, con tres niveles y el tamaño antes y después.                                                                                                                      |
+| **Contraseñas**            | Abre PDFs protegidos (RC4 y AES, hasta AES-256) y guarda con contraseña AES-256; restricciones opcionales de imprimir y copiar, que la app explica que son solo orientativas.                                                                                     |
+| **Páginas**                | Gira, elimina e inserta páginas en blanco.                                                                                                                                                                                                                        |
+| **Plantillas**             | CV, cartas de presentación, facturas, cotizaciones, cuentas de cobro, recibos y cartas listos para rellenar, con vista previa, colores, tipografías y tamaño de papel; descarga el PDF o sigue editándolo en la app.                                              |
+| **Escribir documentos**    | Escribe desde cero como en Word o Google Docs: títulos, listas, negrita, colores, resaltado, alineación, imágenes y saltos de página, viendo dónde empieza cada página; el resultado es un PDF con texto real, para descargar, firmar o añadir al PDF abierto.    |
+| **Idiomas**                | Español e inglés, en el ordenador y en el teléfono.                                                                                                                                                                                                               |
 
 ## Capturas
 
@@ -95,7 +96,7 @@ Las pruebas de extremo a extremo usan el Chrome instalado en el equipo. Si está
 
 ### Publicar
 
-La compilación en `dist/` es un sitio estático: la landing en `/` y la app en `/app/`. [`firebase.json`](firebase.json) tiene la configuración de Firebase Hosting (reescrituras y cabeceras de caché). Para publicar tu propia copia, crea un proyecto de Firebase, pon su id en `.firebaserc` y ejecuta `npx firebase-tools deploy --only hosting`. No hace falta ningún secreto para compilar ni para publicar. La configuración web de `src/analytics/firebase.ts` identifica la app web pública y no es un secreto.
+La compilación en `dist/` es un sitio estático: la landing en `/` y la app en `/app/`. [`firebase.json`](firebase.json) tiene la configuración de Firebase Hosting (reescrituras y cabeceras de caché). Para publicar tu propia copia, crea un proyecto de Firebase, pon su id en `.firebaserc` y ejecuta `npx firebase-tools deploy --only hosting,functions`. El intermediario del sello de tiempo (`/tsa`) es una Cloud Function de [`functions/`](functions/), que necesita el plan Blaze de Firebase. No hace falta ningún secreto para compilar ni para publicar. La configuración web de `src/analytics/firebase.ts` identifica la app web pública y no es un secreto.
 
 ### Alojarlo con Docker
 
@@ -106,7 +107,7 @@ docker build -t inkognitopdf .
 docker run -d -p 8080:80 inkognitopdf
 ```
 
-El contenedor solo sirve archivos: los documentos se procesan en el navegador. Sírvelo por HTTPS (por ejemplo, detrás de tu proxy inverso), porque los navegadores solo permiten la cámara y el service worker sin conexión en un contexto seguro. Las copias en otro dominio nunca miden el uso.
+El contenedor solo sirve archivos y reenvía a DigiCert las peticiones del sello de tiempo, que llevan una huella y nunca el documento: los documentos se procesan en el navegador. Sírvelo por HTTPS (por ejemplo, detrás de tu proxy inverso), porque los navegadores solo permiten la cámara y el service worker sin conexión en un contexto seguro. Las copias en otro dominio nunca miden el uso.
 
 ## Estructura del proyecto
 
@@ -133,6 +134,7 @@ e2e/              pruebas de extremo a extremo (Playwright)
 scripts/          copia de recursos, fixtures, iconos, capturas
 public/brand/     logo e iconos
 docker/           configuración de nginx de la imagen de Docker
+functions/        intermediario del sello de tiempo (Cloud Function)
 ```
 
 ## Tecnologías

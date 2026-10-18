@@ -4,6 +4,13 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
+        "source": "/tsa",
+        "function": {
+          "functionId": "tsa",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "/app/**",
         "destination": "/app/index.html"
       }
@@ -82,5 +89,12 @@
         ]
       }
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": ["node_modules", "*.d.ts"]
+    }
+  ]
 }

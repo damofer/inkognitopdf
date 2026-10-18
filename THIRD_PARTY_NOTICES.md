@@ -28,6 +28,8 @@ Usage measurement is active only if the visitor accepts it. Then the Firebase SD
 
 The Tesseract files are copied to `public/tesseract/` on `npm install`, `dev` and `build` (`scripts/copy-pdfjs-assets.mjs`), together with `tesseract.js-LICENSE.txt` and `tesseract.js-core-LICENSE.txt`. They are served from the app's own origin; OCR makes no requests to third parties.
 
+The timestamp relay in `functions/` (spec 040) runs on Cloud Functions, not in the browser. It uses firebase-functions 7.4.0 (MIT) and firebase-admin 14.5.0 (Apache-2.0). It forwards timestamp requests, which carry only a hash, to DigiCert's RFC 3161 service.
+
 The test fixture `tests/fixtures/subset-font.pdf` embeds a subset of Liberation Sans (from `pdfjs-dist/standard_fonts`, SIL Open Font License 1.1).
 
 Development tools (Vite, Vitest, Playwright, TypeScript, ESLint, Prettier, firebase-tools and their dependencies) are not part of the built app. Their licenses are MIT, Apache-2.0, BSD, ISC and similar permissive licenses, plus MPL-2.0 for the `lightningcss` build tool.

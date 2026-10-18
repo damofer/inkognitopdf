@@ -22,6 +22,7 @@ import type { SignatureAsset, SignFieldType } from "../model/signature";
 import { certificateInfo, type Identity } from "./certificates";
 import { IncrementalUpdate } from "./incremental";
 import { addAnnotation, appearanceStream, formFields, signPdf } from "./pades";
+import type { Timestamper } from "./timestamp";
 
 export type PlanMode = "pades" | "visual";
 
@@ -375,6 +376,8 @@ export interface SignAsOptions {
   /** Values of the signer's text fields, by field id. */
   texts?: Record<string, string>;
   identity?: Identity;
+  /** Adds a trusted timestamp to the PAdES signature (spec 040). */
+  timestamp?: Timestamper;
   date?: Date;
   formatDate: (date: Date) => string;
   loadFont: LoadFont;
@@ -481,6 +484,7 @@ export async function signAsSigner(
       contactInfo: signer.email,
       date,
       loadFont: options.loadFont,
+      timestamp: options.timestamp,
       prepare: async (update) => {
         const fonts = new FontCache(update.doc, options.loadFont);
         await fill(update, fonts);

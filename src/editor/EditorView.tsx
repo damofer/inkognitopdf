@@ -46,6 +46,7 @@ import { signFieldLabel, type SignFieldType } from "../model/signature";
 import {
   IdentityPicker,
   type SaveMode,
+  type SaveOptions as SignSaveOptions,
   type StoredIdentity,
 } from "../sign/IdentityPicker";
 import { SignaturesPanel } from "../sign/SignaturesPanel";
@@ -1420,7 +1421,7 @@ export function EditorView({
   const saveSigned = async (
     mode: SaveMode,
     identity: Identity | null,
-    { audit }: { audit: boolean },
+    { audit, timestamp }: SignSaveOptions,
   ) => {
     // Spec 014: a later password would break the signature.
     if (protection && mode === "digital" && identity) {
@@ -1504,10 +1505,12 @@ export function EditorView({
         ...base,
         items: base.items.filter((i) => i !== chosen),
       });
-      const [{ signPdf }, { certificateInfo }] = await Promise.all([
-        import("../sign/pades"),
-        import("../sign/certificates"),
-      ]);
+      const [{ signPdf }, { certificateInfo }, { tsaTimestamper }] =
+        await Promise.all([
+          import("../sign/pades"),
+          import("../sign/certificates"),
+          import("../sign/timestamp"),
+        ]);
       const info = await certificateInfo(identity.certificate);
       const signed = await signPdf(bytes, {
         identity,
@@ -1523,6 +1526,7 @@ export function EditorView({
         contactInfo: info.email,
         date,
         loadFont,
+        timestamp: timestamp ? tsaTimestamper() : undefined,
         prepare: await auditStep(
           bytes,
           info.subject,
@@ -1629,6 +1633,7 @@ export function EditorView({
     signerId: string,
     texts: Record<string, string>,
     identity: StoredIdentity | null,
+    timestamp = false,
   ) => {
     if (!filePlan) return;
     if (protection) {
@@ -1638,14 +1643,19 @@ export function EditorView({
     setSigning(true);
     setNotice(null);
     try {
-      const [{ downloadPdf, loadFont, signedFileName }, multi] =
-        await Promise.all([import("./save"), import("../sign/multi")]);
+      const [{ downloadPdf, loadFont, signedFileName }, multi, timestamps] =
+        await Promise.all([
+          import("./save"),
+          import("../sign/multi"),
+          import("../sign/timestamp"),
+        ]);
       const signed = await multi.signAsSigner(filePlan.bytes, {
         plan: filePlan.plan,
         signerId,
         assets: adopted,
         texts,
         identity: identity ?? undefined,
+        timestamp: timestamp ? timestamps.tsaTimestamper() : undefined,
         formatDate: (d) => formatDate(d, "dmy"),
         loadFont,
       });
@@ -2531,7 +2541,9 @@ export function EditorView({
           adopted={adopted}
           onAdopted={setAdopted}
           busy={signing}
-          onSign={(id, texts, identity) => void signAs(id, texts, identity)}
+          onSign={(id, texts, identity, timestamp) =>
+            void signAs(id, texts, identity, timestamp)
+          }
           onClose={() => setSignAsOpen(false)}
         />
       )}

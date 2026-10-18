@@ -2,7 +2,8 @@
  * Verification of the digital signatures of a PDF (spec 004, HU8, CA11):
  * integrity of each signature (hash of /ByteRange and the CMS signature),
  * changes made after it, signer certificate and trust in the roots the user
- * imported. No network: no revocation checks, no timestamps (CA13).
+ * imported. No network: no revocation checks (CA13). A timestamp already in
+ * the signature is read and checked against it (spec 040).
  */
 import {
   PDFArray,
@@ -19,6 +20,7 @@ import {
 import * as pkijs from "pkijs";
 import { t } from "../i18n";
 import { certificateInfo, type CertificateInfo } from "./certificates";
+import { readTimestamp, type TimestampReport } from "./timestamp";
 
 export type Integrity = "valid" | "invalid";
 /**
@@ -37,7 +39,10 @@ export interface SignatureReport {
   laterChanges: LaterChanges;
   trust: Trust;
   signer: CertificateInfo | null;
+  /** /M: the clock of the signer's device. */
   signedAt: Date | null;
+  /** A trusted timestamp in the signature (spec 040). */
+  timestamp?: TimestampReport;
   reason?: string;
   location?: string;
   subFilter?: string;
@@ -307,6 +312,10 @@ export async function verifyPdf(
         );
         report.trust = await trustOf(signer, certs, roots);
       }
+      const timestamp = await readTimestamp(signed.signerInfos[0]!).catch(
+        () => null,
+      );
+      if (timestamp) report.timestamp = timestamp;
       if (result.signatureVerified) report.integrity = "valid";
       else report.problem = t("signEngine.signatureMismatch");
     } catch (cause) {

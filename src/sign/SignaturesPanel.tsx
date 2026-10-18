@@ -122,9 +122,25 @@ export function SignaturesPanel({
             </span>
             <span data-testid="sig-changes">{t(CHANGES[r.laterChanges])}</span>
             <span data-testid="sig-trust">{t(TRUST[r.trust])}</span>
+            {r.timestamp?.valid && (
+              <span data-testid="sig-timestamp">
+                {t(
+                  "sign.timestampAt",
+                  r.timestamp.time.toLocaleString(locale()),
+                  r.timestamp.authority,
+                )}
+              </span>
+            )}
+            {r.timestamp && !r.timestamp.valid && (
+              <span data-testid="sig-timestamp">
+                {t("sign.timestampInvalid")}
+              </span>
+            )}
             {r.signedAt && (
               <span>
-                {t("sign.signedAt", r.signedAt.toLocaleString(locale()))}
+                {r.timestamp?.valid
+                  ? t("sign.deviceTime", r.signedAt.toLocaleString(locale()))
+                  : t("sign.signedAt", r.signedAt.toLocaleString(locale()))}
               </span>
             )}
             {r.reason && <span>{t("sign.reason", r.reason)}</span>}

@@ -36,34 +36,35 @@
 - **Works offline.** It is an installable PWA; the OCR models and fonts are cached the first time they are used.
 - **No accounts and no ads.**
 - **Usage measurement is optional.** Anonymous usage counts (Google Analytics through Firebase) are sent only if the visitor accepts them, and they never include file names, text or any content: see the closed list of events in [`src/analytics/events.ts`](src/analytics/events.ts). Without consent, the app makes no request to Google.
+- **The timestamp is optional.** If you tick “Add a timestamp” when signing, the app sends a SHA-256 hash of the signature to `/tsa` on the site itself, which forwards it to DigiCert to certify the time. It carries neither the document nor anything about you ([`functions/relay.js`](functions/relay.js)).
 
 ### Check it yourself
 
 You don't have to take our word for it.
 
 1. **Read the header.** Every page is served with a `Content-Security-Policy` whose `connect-src` only allows the site itself and the Google Analytics addresses (contacted only after you accept the usage measurement). The browser refuses any other connection, whatever the code tries. Run `curl -sI https://inkognitopdf.com/app/` or look at the response headers of `/app/` in DevTools. The policy is defined in [`src/csp.ts`](src/csp.ts).
-2. **Watch the Network tab.** Open [the app](https://inkognitopdf.com/app/), open DevTools on the Network tab and clear it. Then open a PDF, edit it, sign it and save it. Every request goes to `inkognitopdf.com` (fonts, the OCR engine and other app files), and none carries your document. With Google Analytics accepted you will also see requests to Google with the event names, never file names or content.
-3. **Go offline.** Once the app has loaded, turn on airplane mode: it keeps working, because nothing needs a server.
+2. **Watch the Network tab.** Open [the app](https://inkognitopdf.com/app/), open DevTools on the Network tab and clear it. Then open a PDF, edit it, sign it and save it. Every request goes to `inkognitopdf.com` (fonts, the OCR engine and other app files), and none carries your document. With Google Analytics accepted you will also see requests to Google with the event names, never file names or content. Signing with a timestamp adds one request to `/tsa` of about 80 bytes: the hash of the signature.
+3. **Go offline.** Once the app has loaded, turn on airplane mode: it keeps working, because nothing needs a server. Only the optional timestamp needs a connection.
 
 ## Features
 
-|                       |                                                                                                                                                                                                                                              |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Edit text**         | Change the text already in the PDF, keeping its font, size, color and weight. Add text, images and whiteout.                                                                                                                                 |
-| **Annotate**          | Highlight, underline, strike out, notes, free text, drawing, lines, arrows, rectangles and ellipses, saved as standard annotations.                                                                                                          |
-| **Forms**             | Fill in AcroForm fields, create new ones of six types, and flatten the form.                                                                                                                                                                 |
-| **Sign**              | Drawn, typed or photographed signatures; digital **PAdES** signatures with a certificate created on the device or imported from a `.p12`; several signers in order, with an optional audit page; signature verification.                     |
-| **Scan**              | Photograph paper with the phone: page detection, perspective correction and a clean black-and-white "photocopy" filter.                                                                                                                      |
-| **OCR**               | Recognize the text of scans in English and Spanish (Tesseract.js) so it can be searched, selected and copied.                                                                                                                                |
-| **Edit scanned text** | Replace a recognized line inside the scanned image, matching the paper and the ink.                                                                                                                                                          |
-| **Secure redaction**  | Mark areas or search for words or patterns, then really remove the text, images, annotations and metadata underneath.                                                                                                                        |
-| **Merge and split**   | Open several PDFs as one, insert PDFs, reorder pages by dragging, split by ranges or every N pages, or extract pages (ZIP for several files).                                                                                                |
-| **Compress**          | Make files smaller: images are scaled down to what their page needs and encoded again, with three levels and the size before and after.                                                                                                      |
-| **Passwords**         | Open protected PDFs (RC4 and AES, up to AES-256) and save with an AES-256 password; optional print and copy restrictions, which the app explains are only advisory.                                                                          |
-| **Pages**             | Rotate, delete and insert blank pages.                                                                                                                                                                                                       |
-| **Templates**         | Resumes, cover letters, invoices, quotes, payment requests, receipts and letters ready to fill in, with a live preview, colors, fonts and paper size; download the PDF or keep editing it in the app.                                        |
-| **Write documents**   | Write from scratch as in Word or Google Docs: headings, lists, bold, colors, highlight, alignment, images and page breaks, with page breaks shown as you type; the result is a PDF with real text, to download, sign or add to the open PDF. |
-| **Languages**         | English and Spanish, on desktop and on phones.                                                                                                                                                                                               |
+|                       |                                                                                                                                                                                                                                                          |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Edit text**         | Change the text already in the PDF, keeping its font, size, color and weight. Add text, images and whiteout.                                                                                                                                             |
+| **Annotate**          | Highlight, underline, strike out, notes, free text, drawing, lines, arrows, rectangles and ellipses, saved as standard annotations.                                                                                                                      |
+| **Forms**             | Fill in AcroForm fields, create new ones of six types, and flatten the form.                                                                                                                                                                             |
+| **Sign**              | Drawn, typed or photographed signatures; digital **PAdES** signatures with a certificate created on the device or imported from a `.p12`; several signers in order, with an optional audit page; optional timestamp (PAdES B-T); signature verification. |
+| **Scan**              | Photograph paper with the phone: page detection, perspective correction and a clean black-and-white "photocopy" filter.                                                                                                                                  |
+| **OCR**               | Recognize the text of scans in English and Spanish (Tesseract.js) so it can be searched, selected and copied.                                                                                                                                            |
+| **Edit scanned text** | Replace a recognized line inside the scanned image, matching the paper and the ink.                                                                                                                                                                      |
+| **Secure redaction**  | Mark areas or search for words or patterns, then really remove the text, images, annotations and metadata underneath.                                                                                                                                    |
+| **Merge and split**   | Open several PDFs as one, insert PDFs, reorder pages by dragging, split by ranges or every N pages, or extract pages (ZIP for several files).                                                                                                            |
+| **Compress**          | Make files smaller: images are scaled down to what their page needs and encoded again, with three levels and the size before and after.                                                                                                                  |
+| **Passwords**         | Open protected PDFs (RC4 and AES, up to AES-256) and save with an AES-256 password; optional print and copy restrictions, which the app explains are only advisory.                                                                                      |
+| **Pages**             | Rotate, delete and insert blank pages.                                                                                                                                                                                                                   |
+| **Templates**         | Resumes, cover letters, invoices, quotes, payment requests, receipts and letters ready to fill in, with a live preview, colors, fonts and paper size; download the PDF or keep editing it in the app.                                                    |
+| **Write documents**   | Write from scratch as in Word or Google Docs: headings, lists, bold, colors, highlight, alignment, images and page breaks, with page breaks shown as you type; the result is a PDF with real text, to download, sign or add to the open PDF.             |
+| **Languages**         | English and Spanish, on desktop and on phones.                                                                                                                                                                                                           |
 
 ## Screenshots
 
@@ -95,7 +96,7 @@ The end-to-end tests use the Chrome installed on the machine. When `openssl` and
 
 ### Deploying
 
-The build in `dist/` is a static site: the landing page at `/` and the app at `/app/`. [`firebase.json`](firebase.json) has the Firebase Hosting configuration (rewrites and cache headers). To deploy your own copy, create a Firebase project, put its id in `.firebaserc` and run `npx firebase-tools deploy --only hosting`. No secret is needed to build or deploy. The web configuration in `src/analytics/firebase.ts` identifies the public web app and is not a secret.
+The build in `dist/` is a static site: the landing page at `/` and the app at `/app/`. [`firebase.json`](firebase.json) has the Firebase Hosting configuration (rewrites and cache headers). To deploy your own copy, create a Firebase project, put its id in `.firebaserc` and run `npx firebase-tools deploy --only hosting,functions`. The timestamp relay (`/tsa`) is a Cloud Function in [`functions/`](functions/), which needs Firebase's Blaze plan. No secret is needed to build or deploy. The web configuration in `src/analytics/firebase.ts` identifies the public web app and is not a secret.
 
 ### Self-hosting with Docker
 
@@ -106,7 +107,7 @@ docker build -t inkognitopdf .
 docker run -d -p 8080:80 inkognitopdf
 ```
 
-The container only serves files: documents are processed in the browser. Serve it over HTTPS (for example behind your reverse proxy), since browsers only allow the camera and the offline service worker in a secure context. Copies on another domain never measure usage.
+The container only serves files and forwards timestamp requests to DigiCert, which carry a hash and never the document: documents are processed in the browser. Serve it over HTTPS (for example behind your reverse proxy), since browsers only allow the camera and the offline service worker in a secure context. Copies on another domain never measure usage.
 
 ## Project structure
 
@@ -133,6 +134,7 @@ e2e/              end-to-end tests (Playwright)
 scripts/          asset copying, fixtures, icons, screenshots
 public/brand/     logo and icons
 docker/           nginx configuration of the Docker image
+functions/        timestamp relay (Cloud Function)
 ```
 
 ## Tech stack

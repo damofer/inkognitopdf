@@ -14,6 +14,22 @@ export interface StoredIdentity extends Identity {
 
 export type SaveMode = "visual" | "digital";
 
+export interface SaveOptions {
+  audit: boolean;
+  /** Adds a trusted timestamp (spec 040). */
+  timestamp: boolean;
+}
+
+const TIMESTAMP_KEY = "pdfcraft.timestamp";
+
+function readTimestamp(): boolean {
+  try {
+    return localStorage.getItem(TIMESTAMP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 /** Identities kept on this device; the key stays a non-extractable CryptoKey. */
 export async function storedIdentities(): Promise<StoredIdentity[]> {
   try {
@@ -34,7 +50,7 @@ interface IdentityPickerProps {
   onSave: (
     mode: SaveMode,
     identity: StoredIdentity | null,
-    options: { audit: boolean },
+    options: SaveOptions,
   ) => void;
 }
 
@@ -46,6 +62,8 @@ export function IdentityPicker({
 }: IdentityPickerProps) {
   const t = useT();
   const [audit, setAudit] = useState(false);
+  const [timestamp, setTimestamp] = useState(readTimestamp);
+  const [online, setOnline] = useState(() => navigator.onLine);
   const [mode, setMode] = useState<SaveMode>("digital");
   const [identities, setIdentities] = useState<StoredIdentity[]>([]);
   const [chosen, setChosen] = useState<string>("");
@@ -58,6 +76,25 @@ export function IdentityPicker({
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    addEventListener("online", update);
+    addEventListener("offline", update);
+    return () => {
+      removeEventListener("online", update);
+      removeEventListener("offline", update);
+    };
+  }, []);
+
+  const changeTimestamp = (on: boolean) => {
+    setTimestamp(on);
+    try {
+      localStorage.setItem(TIMESTAMP_KEY, on ? "1" : "0");
+    } catch {
+      // Without storage the choice lasts while the panel is open.
+    }
+  };
 
   useEffect(() => {
     void storedIdentities().then((list) => {
@@ -277,6 +314,19 @@ export function IdentityPicker({
               </label>
             )}
           </details>
+          {/* Spec 040: a trusted time, asked for only with a connection. */}
+          <label className="sign-check">
+            <input
+              type="checkbox"
+              checked={timestamp && online}
+              disabled={!online}
+              onChange={(e) => changeTimestamp(e.currentTarget.checked)}
+            />
+            {t("sign.addTimestamp")}
+          </label>
+          <p className="sign-note">
+            {online ? t("sign.timestampNote") : t("sign.timestampOffline")}
+          </p>
         </>
       )}
       {offerAudit && (
@@ -295,7 +345,10 @@ export function IdentityPicker({
         className="primary"
         disabled={mode === "digital" && !identity}
         onClick={() =>
-          onSave(mode, mode === "digital" ? identity : null, { audit })
+          onSave(mode, mode === "digital" ? identity : null, {
+            audit,
+            timestamp: mode === "digital" && timestamp && online,
+          })
         }
       >
         {busy ? t("sign.signing") : t("sign.saveSigned")}

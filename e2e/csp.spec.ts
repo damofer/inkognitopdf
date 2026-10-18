@@ -1,4 +1,4 @@
-// Spec 036: the browser refuses connections to other sites.
+// Spec 039: the browser refuses connections to other sites.
 import { expect, test } from "@playwright/test";
 import { firstPage, openFixture, saveAndRead } from "./helpers";
 

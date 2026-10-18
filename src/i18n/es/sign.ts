@@ -75,6 +75,11 @@ export const sign = {
   "sign.rememberCertificate":
     "Guardar el certificado en este dispositivo (la clave no se puede exportar)",
   "sign.addAuditPage": "Añadir página de registro de firmas",
+  "sign.addTimestamp": "Añadir sello de tiempo",
+  "sign.timestampNote":
+    "Certifica la hora de la firma con DigiCert en vez de usar el reloj de este dispositivo. Solo se envía una huella de la firma, nunca el documento.",
+  "sign.timestampOffline":
+    "El sello de tiempo necesita conexión. Sin ella se firma con la hora de este dispositivo.",
   "sign.selfSignedLabel": (name: string, algorithm: string) =>
     `${name} (autofirmado, ${algorithm})`,
   "sign.issuedByLabel": (subject: string, issuer: string) =>
@@ -136,6 +141,12 @@ export const sign = {
   "sign.trustUnknown":
     "Certificado no verificado: su emisor no está entre las raíces importadas",
   "sign.signedAt": (date: string) => `Firmado: ${date}`,
+  "sign.deviceTime": (date: string) =>
+    `Hora del dispositivo del firmante: ${date}`,
+  "sign.timestampAt": (date: string, authority: string) =>
+    `Sello de tiempo: ${date}, certificado por ${authority}`,
+  "sign.timestampInvalid":
+    "El sello de tiempo no corresponde a esta firma o está dañado.",
   "sign.reason": (reason: string) => `Motivo: ${reason}`,
   "sign.certHolder": "Titular",
   "sign.certIssuer": "Emisor",

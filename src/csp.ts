@@ -1,5 +1,5 @@
 /**
- * Content-Security-Policy of the site (spec 036). The browser itself refuses
+ * Content-Security-Policy of the site (spec 039). The browser itself refuses
  * any connection that is not to the site, so documents cannot be sent
  * anywhere. The only exception is Google Analytics, which the app contacts
  * only after the visitor accepts the usage measurement (spec 011). Anyone can

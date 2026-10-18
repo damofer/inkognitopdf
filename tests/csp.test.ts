@@ -1,4 +1,4 @@
-// Spec 036: the hosted site, the Docker image and the e2e preview server send
+// Spec 039: the hosted site, the Docker image and the e2e preview server send
 // the same Content-Security-Policy.
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";

@@ -17,3 +17,4 @@ tests/real-pdfs
 *.key
 *.p12
 *.pfx
+functions

@@ -24,6 +24,16 @@ export default defineConfig({
   },
   // The e2e tests run on the preview server, under the hosted site's CSP.
   preview: { headers: { "Content-Security-Policy": CSP } },
+  // The timestamp relay of functions/ (spec 040), for `npm run dev`.
+  server: {
+    proxy: {
+      "/tsa": {
+        target: "http://timestamp.digicert.com",
+        changeOrigin: true,
+        rewrite: () => "/",
+      },
+    },
+  },
   build: {
     // The save engine (pdf-lib + fontkit, ~1.2 MB) is its own chunk, loaded
     // only when saving; the initial bundle stays well under this.

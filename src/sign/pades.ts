@@ -23,9 +23,12 @@ import type { SignatureAsset } from "../model/signature";
 import { t } from "../i18n";
 import type { Identity } from "./certificates";
 import { IncrementalUpdate, latin1 } from "./incremental";
+import { OID_TIMESTAMP_TOKEN, type Timestamper } from "./timestamp";
 
 /** Bytes reserved for the CMS in /Contents (hex doubles it). */
 export const CONTENTS_SIZE = 16384;
+/** With a timestamp: its token brings the authority's certificates. */
+const CONTENTS_SIZE_TIMESTAMPED = 32768;
 const PLACEHOLDER = "0000000000";
 
 const OID = {
@@ -57,10 +60,14 @@ export function pdfDate(date: Date): string {
 const text = (s: string) =>
   /^[\x20-\x7e]*$/.test(s) ? PDFString.of(s) : PDFHexString.fromText(s);
 
-/** Detached CMS SignedData (CAdES, PAdES B-B) over `data`. */
+/**
+ * Detached CMS SignedData (CAdES) over `data`: PAdES B-B, or B-T when
+ * `timestamp` adds a trusted timestamp of the signature value (spec 040).
+ */
 export async function cmsSign(
   data: Uint8Array,
   identity: Identity,
+  timestamp?: Timestamper,
 ): Promise<Uint8Array> {
   const subtle = globalThis.crypto.subtle;
   const cert = pkijs.Certificate.fromBER(buffer(identity.certificate));
@@ -128,6 +135,23 @@ export async function cmsSign(
     ],
   });
   await signedData.sign(identity.privateKey, 0, "SHA-256");
+  if (timestamp) {
+    const signerInfo = signedData.signerInfos[0]!;
+    const imprint = await subtle.digest(
+      "SHA-256",
+      buffer(signerInfo.signature.valueBlock.valueHexView),
+    );
+    const token = await timestamp(new Uint8Array(imprint));
+    signerInfo.unsignedAttrs = new pkijs.SignedAndUnsignedAttributes({
+      type: 1,
+      attributes: [
+        new pkijs.Attribute({
+          type: OID_TIMESTAMP_TOKEN,
+          values: [asn1js.fromBER(buffer(token)).result],
+        }),
+      ],
+    });
+  }
   const contentInfo = new pkijs.ContentInfo({
     contentType: OID.signedData,
     content: signedData.toSchema(true),
@@ -157,6 +181,8 @@ export interface SignOptions {
   loadFont: LoadFont;
   /** Extra changes made in the same update (annotations of a signer). */
   prepare?: (update: IncrementalUpdate) => Promise<void>;
+  /** Adds a trusted timestamp (PAdES B-T, spec 040). */
+  timestamp?: Timestamper;
 }
 
 const lookupDict = (update: IncrementalUpdate, obj: PDFObject | undefined) =>
@@ -275,6 +301,7 @@ export async function signPdf(
   const { context } = update;
   const fonts = new FontCache(update.doc, options.loadFont);
   const date = options.date ?? new Date();
+  const size = options.timestamp ? CONTENTS_SIZE_TIMESTAMPED : CONTENTS_SIZE;
 
   const acroForm = editableAcroForm(update);
   acroForm.set(PDFName.of("SigFlags"), PDFNumber.of(3));
@@ -343,7 +370,7 @@ export async function signPdf(
     "/Filter /Adobe.PPKLite",
     "/SubFilter /ETSI.CAdES.detached",
     `/ByteRange [0 ${PLACEHOLDER} ${PLACEHOLDER} ${PLACEHOLDER}]`,
-    `/Contents <${"0".repeat(CONTENTS_SIZE * 2)}>`,
+    `/Contents <${"0".repeat(size * 2)}>`,
     `/M ${PDFString.of(pdfDate(date)).toString()}`,
     options.name ? `/Name ${text(options.name).toString()}` : "",
     options.reason ? `/Reason ${text(options.reason).toString()}` : "",
@@ -362,7 +389,7 @@ export async function signPdf(
   const rangeAt = at + head.indexOf("/ByteRange [0 ") + "/ByteRange [0 ".length;
   const contentsStart = at + head.indexOf("/Contents <");
   const start = contentsStart + "/Contents ".length; // at "<"
-  const end = start + CONTENTS_SIZE * 2 + 2; // after ">"
+  const end = start + size * 2 + 2; // after ">"
   const range = [start, end, bytes.length - end];
   const field = (n: number) => String(n).padEnd(PLACEHOLDER.length, " ");
   bytes.set(latin1(range.map(field).join(" ")), rangeAt);
@@ -370,9 +397,8 @@ export async function signPdf(
   const signed = new Uint8Array(start + (bytes.length - end));
   signed.set(bytes.subarray(0, start), 0);
   signed.set(bytes.subarray(end), start);
-  const cms = await cmsSign(signed, options.identity);
-  if (cms.length > CONTENTS_SIZE)
-    throw new Error(t("signEngine.signatureTooLarge"));
+  const cms = await cmsSign(signed, options.identity, options.timestamp);
+  if (cms.length > size) throw new Error(t("signEngine.signatureTooLarge"));
   const hexCms = [...cms]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("")
