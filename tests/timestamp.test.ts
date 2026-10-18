@@ -9,6 +9,7 @@ import { createSelfSigned } from "../src/sign/certificates";
 import { signPdf } from "../src/sign/pades";
 import {
   OID_TIMESTAMP_TOKEN,
+  TSA_URL,
   TimestampError,
   tsaTimestamper,
 } from "../src/sign/timestamp";
@@ -162,20 +163,46 @@ describe("trusted timestamp", () => {
   });
 
   it("says so when the authority cannot be reached or answers nonsense", async () => {
-    vi.stubGlobal("fetch", async () => {
+    const noWaits = () => tsaTimestamper(TSA_URL, [0, 0]);
+    const failing = vi.fn(async () => {
       throw new TypeError("Failed to fetch");
     });
-    await expect(signed(tsaTimestamper())).rejects.toThrow(
-      /No se pudo contactar/,
-    );
-    vi.stubGlobal("fetch", async () => new Response("<html>oops</html>"));
-    await expect(signed(tsaTimestamper())).rejects.toThrow(
+    vi.stubGlobal("fetch", failing);
+    await expect(signed(noWaits())).rejects.toThrow(/No se pudo contactar/);
+    expect(failing).toHaveBeenCalledTimes(3);
+    const nonsense = vi.fn(async () => new Response("<html>oops</html>"));
+    vi.stubGlobal("fetch", nonsense);
+    await expect(signed(noWaits())).rejects.toThrow(
       /no devolvió un sello válido/,
     );
+    // A wrong answer is not asked again.
+    expect(nonsense).toHaveBeenCalledTimes(1);
     vi.stubGlobal("fetch", async () => new Response("", { status: 502 }));
-    await expect(signed(tsaTimestamper())).rejects.toThrow(
-      /No se pudo contactar/,
-    );
+    await expect(signed(noWaits())).rejects.toThrow(/No se pudo contactar/);
+    const forbidden = vi.fn(async () => new Response("", { status: 403 }));
+    vi.stubGlobal("fetch", forbidden);
+    await expect(signed(noWaits())).rejects.toThrow(/No se pudo contactar/);
+    expect(forbidden).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks again while the relay starts or loses the authority", async () => {
+    const tsa = await fakeTsa({ name: "Sellos de Prueba" });
+    const answers = [
+      async () => {
+        throw new TypeError("Failed to fetch");
+      },
+      async () => new Response("", { status: 503 }),
+    ];
+    const fetch = vi.fn(async (_url: string, init: RequestInit) => {
+      const next = answers.shift();
+      if (next) return next();
+      const body = new Uint8Array(init.body as ArrayBuffer);
+      return new Response(buffer(await tsa.respond(body)));
+    });
+    vi.stubGlobal("fetch", fetch);
+    const pdf = await signed(tsaTimestamper(TSA_URL, [0, 0]));
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(tokenOf(pdf).token).toBeDefined();
   });
 });
 
@@ -225,13 +252,40 @@ describe("timestamp relay", () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
-  it("answers 502 when the authority fails", async () => {
-    const down = (async () => {
+  it("answers 502 when the authority fails twice", async () => {
+    const down = vi.fn(async () => {
       throw new Error("down");
-    }) as unknown as typeof fetch;
-    expect((await relay({ ...ok, body: query }, down)).status).toBe(502);
-    const refusing = (async () =>
-      new Response("", { status: 500 })) as unknown as typeof fetch;
-    expect((await relay({ ...ok, body: query }, refusing)).status).toBe(502);
+    });
+    expect(
+      (await relay({ ...ok, body: query }, down as unknown as typeof fetch))
+        .status,
+    ).toBe(502);
+    expect(down).toHaveBeenCalledTimes(2);
+    const refusing = vi.fn(async () => new Response("", { status: 500 }));
+    expect(
+      (await relay({ ...ok, body: query }, refusing as unknown as typeof fetch))
+        .status,
+    ).toBe(502);
+    expect(refusing).toHaveBeenCalledTimes(2);
+    // A refusal is not asked again.
+    const bad = vi.fn(async () => new Response("", { status: 400 }));
+    expect(
+      (await relay({ ...ok, body: query }, bad as unknown as typeof fetch))
+        .status,
+    ).toBe(502);
+    expect(bad).toHaveBeenCalledTimes(1);
+  });
+
+  it("tries the authority again when the connection drops", async () => {
+    const upstream = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("other side closed"))
+      .mockResolvedValueOnce(new Response(new Uint8Array([0x30, 0x00])));
+    const reply = await relay(
+      { ...ok, body: query },
+      upstream as unknown as typeof fetch,
+    );
+    expect(reply.status).toBe(200);
+    expect(upstream).toHaveBeenCalledTimes(2);
   });
 });

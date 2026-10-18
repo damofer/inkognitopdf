@@ -6,8 +6,10 @@ import { relay } from "./relay.js";
 export const tsa = onRequest(
   {
     region: "us-central1",
-    memory: "128MiB",
-    timeoutSeconds: 20,
+    // Some room for Node and firebase-functions while starting from cold.
+    memory: "256MiB",
+    // Two tries at the authority, 10 s each at most.
+    timeoutSeconds: 30,
     maxInstances: 3,
     invoker: "public",
   },

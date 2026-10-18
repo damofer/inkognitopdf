@@ -32,8 +32,27 @@ export class TimestampError extends Error {
 /** Gets a timestamp token (a CMS ContentInfo, DER) for a SHA-256 `imprint`. */
 export type Timestamper = (imprint: Uint8Array) => Promise<Uint8Array>;
 
+/**
+ * Waits before asking again when the relay cannot be reached or answers
+ * with a server error: a relay that has not run for a while takes some
+ * seconds to start, and a connection to the authority can drop.
+ */
+export const RETRY_WAITS = [1_000, 3_000];
+
+/** Answers worth asking again for: the relay is starting or overloaded. */
+const TRANSIENT = new Set([408, 429, 500, 502, 503, 504]);
+
+/** Longest wait for one answer: a relay starting from cold included. */
+const ATTEMPT_TIMEOUT = 30_000;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /** A timestamper that asks the TSA behind `url`. */
-export function tsaTimestamper(url = TSA_URL): Timestamper {
+export function tsaTimestamper(
+  url = TSA_URL,
+  waits = RETRY_WAITS,
+): Timestamper {
   return async (imprint) => {
     const nonce = crypto.getRandomValues(new Uint8Array(8));
     nonce[0] = (nonce[0]! & 0x7f) | 1; // positive, no leading zero byte
@@ -48,17 +67,29 @@ export function tsaTimestamper(url = TSA_URL): Timestamper {
       nonce: new asn1js.Integer({ valueHex: buffer(nonce) }),
       certReq: true,
     });
-    let reply: ArrayBuffer;
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/timestamp-query" },
-        body: request.toSchema().toBER(false),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      reply = await response.arrayBuffer();
-    } catch {
-      throw new TimestampError(t("signEngine.timestampUnreachable"));
+    const body = request.toSchema().toBER(false);
+    let reply: ArrayBuffer | undefined;
+    for (let attempt = 0; !reply; attempt++) {
+      let retry: boolean;
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/timestamp-query" },
+          body,
+          signal:
+            typeof AbortSignal.timeout === "function"
+              ? AbortSignal.timeout(ATTEMPT_TIMEOUT)
+              : undefined,
+        });
+        if (response.ok) reply = await response.arrayBuffer();
+        retry = TRANSIENT.has(response.status);
+      } catch {
+        retry = true;
+      }
+      if (reply) break;
+      if (!retry || attempt >= waits.length)
+        throw new TimestampError(t("signEngine.timestampUnreachable"));
+      await sleep(waits[attempt]!);
     }
     let token: pkijs.ContentInfo | undefined;
     try {
