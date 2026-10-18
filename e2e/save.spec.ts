@@ -51,3 +51,28 @@ test("CA10: no network request carries document content", async ({ page }) => {
   });
   expect(offending.map((r) => `${r.method()} ${r.url()}`)).toEqual([]);
 });
+
+test("spec 038: the PDF is built in the save worker", async ({ page }) => {
+  const workers: string[] = [];
+  const warnings: string[] = [];
+  page.on("worker", (w) => workers.push(w.url()));
+  page.on("console", (m) => {
+    if (m.type() === "warning") warnings.push(m.text());
+  });
+  await openFixture(page, "two-pages.pdf");
+  const { bytes } = await saveAndRead(page);
+  expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
+  expect(workers.some((url) => url.includes("saveWorker"))).toBe(true);
+  expect(warnings.filter((w) => w.includes("Save worker"))).toEqual([]);
+});
+
+test("spec 038: without workers the PDF is still saved", async ({ page }) => {
+  await page.addInitScript(() => {
+    // @ts-expect-error: a browser without module workers.
+    delete window.Worker;
+  });
+  await openFixture(page, "two-pages.pdf");
+  const { name, bytes } = await saveAndRead(page);
+  expect(name).toBe("two-pages (editado).pdf");
+  expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
+});

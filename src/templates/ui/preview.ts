@@ -1,6 +1,6 @@
 // Pictures of a generated template (spec 021, CA4): the live preview and the
 // gallery thumbnails, drawn by pdf.js from the PDF itself.
-import { loadFont } from "../../editor/save";
+import { loadFont } from "../../editor/loadFont";
 import type { LoadFont } from "../../engine/fonts";
 import type { Lang } from "../../i18n";
 import { loadDocumentBytes } from "../../viewer/pdfjs";

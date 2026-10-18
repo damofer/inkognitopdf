@@ -1,25 +1,17 @@
 import {
   applyEdits,
+  EngineError,
   type SaveOptions,
   type SaveResult,
 } from "../engine/applyEdits";
-import type { FontVariant, SubstituteFamily } from "../engine/fonts";
 import type { EditorState } from "../model/document";
 import { LANGS, t, tIn } from "../i18n";
 import type { PdfFile } from "../storage/pdfFile";
 import { browserImageCodec } from "./imageCodec";
+import { loadFont } from "./loadFont";
+import { buildInWorker, SaveWorkerUnavailable } from "./saveClient";
 
-/** Bundled open fonts are served by the app itself (copied from npm at build). */
-export async function loadFont(
-  family: SubstituteFamily,
-  variant: FontVariant,
-): Promise<Uint8Array> {
-  const url = `${import.meta.env.BASE_URL}fonts/${family}-${variant}.ttf`;
-  const response = await fetch(url);
-  if (!response.ok)
-    throw new Error(t("editor.fontLoadFailed", family, variant));
-  return new Uint8Array(await response.arrayBuffer());
-}
+export { loadFont };
 
 export function editedFileName(name: string | null): string {
   if (!name) return t("editor.defaultFileName");
@@ -52,18 +44,31 @@ export function preparedFileName(name: string | null): string {
   return `${base} (${t("editor.toSignSuffix")}).pdf`;
 }
 
-/** `file` is null for a document started from scratch (HU10). */
-export function buildPdf(
+/**
+ * `file` is null for a document started from scratch (HU10). The PDF is built
+ * in the save worker, so the interface keeps responding (spec 038). If the
+ * worker cannot run, or fails for a reason other than the document itself, the
+ * main thread builds it as before.
+ */
+export async function buildPdf(
   file: PdfFile | null,
   state: EditorState,
   options: SaveOptions = {},
 ): Promise<SaveResult> {
-  return applyEdits(
-    file ? file.copyBytes() : new Uint8Array(),
-    state,
-    { loadFont, images: browserImageCodec },
-    options,
-  );
+  const original = () => (file ? file.copyBytes() : new Uint8Array());
+  try {
+    return await buildInWorker(original(), state, options);
+  } catch (cause) {
+    if (cause instanceof EngineError) throw cause;
+    if (!(cause instanceof SaveWorkerUnavailable))
+      console.warn("Save worker failed; saving on the main thread", cause);
+    return applyEdits(
+      original(),
+      state,
+      { loadFont, images: browserImageCodec },
+      options,
+    );
+  }
 }
 
 /**

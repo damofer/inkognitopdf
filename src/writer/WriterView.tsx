@@ -19,7 +19,8 @@ import {
 import { track } from "../analytics/analytics";
 import type { WrittenSource } from "../model/document";
 import { pagesBucket } from "../analytics/events";
-import { downloadPdf, loadFont } from "../editor/save";
+import { downloadPdf } from "../editor/save";
+import { loadFont } from "../editor/loadFont";
 import { loadImageFile } from "../editor/imageInput";
 import { locale, useT } from "../i18n";
 import { Icon, type IconName } from "../icons";

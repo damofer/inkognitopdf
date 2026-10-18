@@ -8,7 +8,7 @@ import {
 import type { PdfFile } from "../storage/pdfFile";
 import { canvasScale } from "../viewer/canvasScale";
 import { loadDocumentBytes } from "../viewer/pdfjs";
-import { loadFont } from "./save";
+import { loadFont } from "./loadFont";
 
 /**
  * Preview of edited page text (spec 001, CA3b), filled and created form
