@@ -73,8 +73,9 @@ export class EngineError extends Error {
 }
 
 /**
- * Applies the edit state to a copy of the original PDF and returns new bytes
- * (spec 001, T010). Runs entirely on the device; the input is never modified.
+ * Applies the edit state to the original PDF and returns new bytes
+ * (spec 001, T010). Runs entirely on the device; the input is never modified,
+ * and not copied either: callers already pass their own copy (spec 035).
  */
 export async function applyEdits(
   original: Uint8Array,
@@ -88,7 +89,7 @@ export async function applyEdits(
     doc =
       original.length === 0
         ? await PDFDocument.create({ updateMetadata: false })
-        : await PDFDocument.load(original.slice(), { updateMetadata: false });
+        : await PDFDocument.load(original, { updateMetadata: false });
   } catch (cause) {
     if (cause instanceof Error && /encrypt/i.test(cause.message))
       throw new EngineError(t("engine.encrypted"));

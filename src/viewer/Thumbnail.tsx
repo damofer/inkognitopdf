@@ -35,7 +35,8 @@ export function Thumbnail({
   const t = useT();
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const near = useNearViewport(rootRef, "400px");
+  // Far thumbnails free their canvas too (spec 035).
+  const near = useNearViewport(rootRef, "400px", "2000px");
   const [rendered, setRendered] = useState(false);
   const rotation = effectiveRotation(entry);
   const sourceIndex =
@@ -86,6 +87,13 @@ export function Thumbnail({
       setRendered(false);
     };
   }, [doc, sourceIndex, scanImage, entry.box, rotation, scale, near]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (near || !canvas || canvas.width === 0) return;
+    canvas.width = 0;
+    canvas.height = 0;
+  }, [near]);
 
   return (
     <div

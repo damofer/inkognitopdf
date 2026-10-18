@@ -6,6 +6,7 @@ import {
   type PageEntry,
 } from "../model/document";
 import type { PdfFile } from "../storage/pdfFile";
+import { canvasScale } from "../viewer/canvasScale";
 import { loadDocumentBytes } from "../viewer/pdfjs";
 import { loadFont } from "./save";
 
@@ -36,7 +37,7 @@ export async function renderEditedPage(
       scale: zoom,
       rotation: effectiveRotation(entry),
     });
-    const outputScale = window.devicePixelRatio || 1;
+    const outputScale = canvasScale(viewport.width, viewport.height);
     const canvas = document.createElement("canvas");
     canvas.width = Math.floor(viewport.width * outputScale);
     canvas.height = Math.floor(viewport.height * outputScale);

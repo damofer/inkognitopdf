@@ -9,6 +9,7 @@ import { AnnotationMode, TextLayer } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { effectiveRotation, type PageEntry } from "../model/document";
 import { PageGeometry } from "../model/geometry";
 import type { PDFDocumentProxy } from "./pdfjs";
+import { canvasScale } from "./canvasScale";
 import { drawScanPage } from "./scanBitmap";
 import { useNearViewport } from "./useNearViewport";
 import { useT } from "../i18n";
@@ -43,7 +44,9 @@ export function PageView({
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
-  const near = useNearViewport(wrapRef);
+  // Pages far from the screen free their canvas (spec 035).
+  const near = useNearViewport(wrapRef, "800px", "3000px");
+  const drawn = useRef(false);
   const [rendered, setRendered] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const rotation = effectiveRotation(entry);
@@ -54,6 +57,7 @@ export function PageView({
 
   useEffect(() => {
     if (!near) return;
+    drawn.current = true;
     let cancelled = false;
     let renderTask: { cancel(): void } | null = null;
     let textLayer: TextLayer | null = null;
@@ -62,11 +66,11 @@ export function PageView({
       const canvas = canvasRef.current;
       const textContainer = textLayerRef.current;
       if (!canvas || !textContainer) return;
-      const outputScale = window.devicePixelRatio || 1;
       textContainer.replaceChildren();
 
       if (sourceIndex < 0 || !doc) {
         const g = new PageGeometry(entry.box, rotation, zoom);
+        const outputScale = canvasScale(g.viewWidth, g.viewHeight);
         canvas.width = Math.floor(g.viewWidth * outputScale);
         canvas.height = Math.floor(g.viewHeight * outputScale);
         const ctx = canvas.getContext("2d");
@@ -80,6 +84,7 @@ export function PageView({
         const page = await doc.getPage(sourceIndex + 1);
         if (cancelled) return;
         const viewport = page.getViewport({ scale: zoom, rotation });
+        const outputScale = canvasScale(viewport.width, viewport.height);
         canvas.width = Math.floor(viewport.width * outputScale);
         canvas.height = Math.floor(viewport.height * outputScale);
         const task = page.render({
@@ -130,6 +135,24 @@ export function PageView({
     pageNumber,
     onRendered,
   ]);
+
+  // A page that went far away gives back its canvas memory and pdf.js's
+  // cached page data; it renders again when it comes back.
+  useEffect(() => {
+    if (near || !drawn.current) return;
+    drawn.current = false;
+    const canvas = canvasRef.current;
+    if (canvas && canvas.width > 0) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
+    textLayerRef.current?.replaceChildren();
+    if (doc && sourceIndex >= 0)
+      doc.getPage(sourceIndex + 1).then(
+        (page) => page.cleanup(),
+        () => undefined,
+      );
+  }, [near, doc, sourceIndex]);
 
   const style = {
     width: `${geometry.viewWidth}px`,

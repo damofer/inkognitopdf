@@ -61,6 +61,37 @@ test("pages render lazily: distant pages wait until scrolled into view", async (
   await expect(last.locator(".textLayer")).toContainText("Pagina 200 de 200");
 });
 
+test("spec 035: far pages free their canvas and render again on return", async ({
+  page,
+}) => {
+  await openFixture(page, "many-pages.pdf");
+  await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
+  const firstCanvas = firstPage(page).locator(".page-canvas");
+  expect(
+    await firstCanvas.evaluate((c) => (c as HTMLCanvasElement).width),
+  ).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: "Ir a la página 200" }).click();
+  const last = page.locator('.page[data-page-number="200"]');
+  await expect(last).toHaveAttribute("data-rendered", "true");
+  await expect(firstPage(page)).toHaveAttribute("data-rendered", "false");
+  expect(
+    await firstCanvas.evaluate((c) => (c as HTMLCanvasElement).width),
+  ).toBe(0);
+  expect(
+    await page.locator('.page[data-rendered="true"]').count(),
+  ).toBeLessThan(10);
+
+  await page
+    .getByRole("button", { name: "Ir a la página 1", exact: true })
+    .click();
+  await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
+  await expect(firstPage(page).locator(".textLayer")).toContainText(
+    "Pagina 1 de 200",
+  );
+  await expect(last).toHaveAttribute("data-rendered", "false");
+});
+
 test("each page has canvas, text, annotation and edit layers", async ({
   page,
 }) => {
