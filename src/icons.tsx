@@ -223,6 +223,39 @@ const PATHS = {
       <rect x="14" y="15" width="7" height="6" rx="1" />
     </>
   ),
+  // Writer (spec 032).
+  write: (
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </>
+  ),
+  bold: (
+    <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
+  ),
+  italic: <path d="M19 4h-9M14 20H5M15 4 9 20" />,
+  textColor: <path d="M4 20h16M6 16l6-12 6 12M8 12h8" />,
+  alignLeft: <path d="M15 12H3M17 18H3M21 6H3" />,
+  alignCenter: <path d="M17 12H7M19 18H5M21 6H3" />,
+  alignRight: <path d="M21 12H9M21 18H7M21 6H3" />,
+  alignJustify: <path d="M3 12h18M3 18h18M3 6h18" />,
+  listBullet: <path d="M3 12h.01M3 18h.01M3 6h.01M8 12h13M8 18h13M8 6h13" />,
+  listOrdered: (
+    <path d="M10 12h11M10 18h11M10 6h11M4 10h2M4 6h1v4M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" />
+  ),
+  indent: <path d="M21 12H11M21 18H11M21 6H11M3 8l4 4-4 4" />,
+  outdent: <path d="M21 12H11M21 18H11M21 6H11M7 8l-4 4 4 4" />,
+  pageBreak: <path d="M3 12h18M8 8l4-4 4 4M16 16l-4 4-4-4" />,
+  rule: <path d="M5 12h14" />,
+  clearFormat: <path d="M4 7V4h16v3M5 20h6M13 4 8 20M15 15l5 5M20 15l-5 5" />,
+  eye: (
+    <>
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  check: <path d="M20 6 9 17l-5-5" />,
+  plus: <path d="M12 5v14M5 12h14" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;

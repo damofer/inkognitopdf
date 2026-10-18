@@ -135,16 +135,23 @@
     flex: 1;
   }
 
+  /* Opening a PDF across, the other ways two by two (spec 032 added one). */
   .start-actions {
     display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
-    width: min(320px, 100%);
+    width: min(340px, 100%);
   }
 
   .start-actions button {
     min-height: 52px;
-    font-size: 1.05rem;
+    padding: 6px 10px;
+    font-size: 1rem;
     border-radius: 12px;
+  }
+
+  .start-actions button:first-child {
+    grid-column: 1 / -1;
   }
 
   /* Collapsed help: one line; a tap shows all of it. */

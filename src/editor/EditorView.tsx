@@ -126,6 +126,11 @@ const CompareView = lazy(() =>
   import("../compare/CompareView").then((m) => ({ default: m.CompareView })),
 );
 
+// Spec 032: the writer loads only when used.
+const WriterView = lazy(() =>
+  import("../writer/WriterView").then((m) => ({ default: m.WriterView })),
+);
+
 const FONTS: { value: FontFamily; label: string }[] = [
   { value: "Helvetica", label: "Helvetica" },
   { value: "Times", label: "Times" },
@@ -936,6 +941,45 @@ export function EditorView({
   // Spec 013: other PDFs go at the end, as one undoable step.
   const insertInputRef = useRef<HTMLInputElement>(null);
   const [inserting, setInserting] = useState(false);
+  /**
+   * Adds the pages of `others` at the end. A document that is only an empty
+   * blank page has it replaced (spec 032): the new pages are the document.
+   */
+  const appendFiles = async (others: PdfFile[]): Promise<number> => {
+    if (!onReplaceBase) return 0;
+    const { appendPdfs } = await import("../engine/organize");
+    const { bytes, added } = await appendPdfs(
+      file?.copyBytes() ?? new Uint8Array(),
+      others.map((o) => ({ name: o.name, bytes: o.copyBytes() })),
+    );
+    const merged = createPdfFile(file?.name ?? others[0]!.name, bytes);
+    const loaded = await onReplaceBase(merged);
+    const pages: PageEntry[] = [];
+    for (const { start, count } of added)
+      for (let index = start; index < start + count; index++) {
+        const page = await loaded.getPage(index + 1);
+        const [x0, y0, x1, y1] = page.view as [number, number, number, number];
+        pages.push({
+          id: newId("page"),
+          source: { kind: "original", index },
+          box: [x0, y0, x1, y1],
+          baseRotation: normalizeRotation(page.rotate),
+          extraRotation: 0,
+        });
+      }
+    const lone = state.pages.length === 1 ? state.pages[0]! : null;
+    const replace =
+      lone?.source.kind === "blank" &&
+      lone.extraRotation === 0 &&
+      !state.items.some((i) => i.pageId === lone.id) &&
+      !state.numbering;
+    dispatch([
+      { kind: "insertPages", atIndex: Number.MAX_SAFE_INTEGER, pages },
+      ...(replace ? [{ kind: "deletePage" as const, pageId: lone.id }] : []),
+    ]);
+    return pages.length;
+  };
+
   const insertPdfs = async (chosen: File[]) => {
     if (chosen.length === 0 || !onReplaceBase) return;
     setInserting(true);
@@ -947,40 +991,11 @@ export function EditorView({
         if (opened.password !== null) track("unlock_pdf");
         others.push(opened.file);
       }
-      const { appendPdfs } = await import("../engine/organize");
-      const { bytes, added } = await appendPdfs(
-        file?.copyBytes() ?? new Uint8Array(),
-        others.map((o) => ({ name: o.name, bytes: o.copyBytes() })),
-      );
-      const merged = createPdfFile(file?.name ?? others[0]!.name, bytes);
-      const loaded = await onReplaceBase(merged);
-      const pages: PageEntry[] = [];
-      for (const { start, count } of added)
-        for (let index = start; index < start + count; index++) {
-          const page = await loaded.getPage(index + 1);
-          const [x0, y0, x1, y1] = page.view as [
-            number,
-            number,
-            number,
-            number,
-          ];
-          pages.push({
-            id: newId("page"),
-            source: { kind: "original", index },
-            box: [x0, y0, x1, y1],
-            baseRotation: normalizeRotation(page.rotate),
-            extraRotation: 0,
-          });
-        }
-      dispatch({
-        kind: "insertPages",
-        atIndex: Number.MAX_SAFE_INTEGER,
-        pages,
-      });
-      setToast(t("organize.inserted", pages.length));
+      const count = await appendFiles(others);
+      setToast(t("organize.inserted", count));
       track("merge_pdf", {
         files: filesBucket(chosen.length + 1),
-        pages: pagesBucket(pages.length),
+        pages: pagesBucket(count),
       });
     } catch (cause) {
       setNotice(
@@ -993,6 +1008,18 @@ export function EditorView({
       setInserting(false);
     }
   };
+
+  // Spec 032: pages written with formatting, added to the document.
+  const [writing, setWriting] = useState(false);
+  const insertWritten = async (bytes: Uint8Array, name: string) => {
+    const count = await appendFiles([createPdfFile(name, bytes)]);
+    setToast(t("organize.inserted", count));
+  };
+  const lonelyBlank =
+    state.pages.length === 1 &&
+    state.pages[0]!.source.kind === "blank" &&
+    state.items.length === 0 &&
+    !!onReplaceBase;
   const chooseInsert = () => insertInputRef.current?.click();
 
   // Spec 018: another version of the PDF, compared with the document as it
@@ -1687,9 +1714,27 @@ export function EditorView({
               </div>
             );
           })}
+        {lonelyBlank && tool === "select" && (
+          <div
+            className="write-here"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="primary"
+              onClick={() => setWriting(true)}
+            >
+              <Icon name="write" />
+              {t("writer.writeHere")}
+            </button>
+            <small>{t("writer.writeHereHint")}</small>
+          </div>
+        )}
       </EditLayer>
     ),
     [
+      lonelyBlank,
+      t,
       tool,
       selectedId,
       dispatch,
@@ -2233,6 +2278,13 @@ export function EditorView({
       {task === "pages" && (
         <span className="toolbar-group">
           <TaskButton
+            icon="write"
+            label={t("writer.writePages")}
+            title={t("writer.writePagesHint")}
+            disabled={!onReplaceBase}
+            onClick={() => setWriting(true)}
+          />
+          <TaskButton
             icon="insert"
             label={inserting ? t("organize.inserting") : t("organize.insert")}
             title={t("organize.insertHint")}
@@ -2731,6 +2783,14 @@ export function EditorView({
           e.currentTarget.value = "";
         }}
       />
+      {writing && (
+        <Suspense fallback={<div className="scan-view" />}>
+          <WriterView
+            onClose={() => setWriting(false)}
+            onInsert={insertWritten}
+          />
+        </Suspense>
+      )}
       {comparing && (
         <Suspense fallback={null}>
           <CompareView
@@ -2789,6 +2849,7 @@ export function EditorView({
           onToggleThumbs={() => setThumbsOpen((o) => !o)}
           formOptions={flattenCheck || undefined}
           onInsertPdf={onReplaceBase ? chooseInsert : null}
+          onWrite={onReplaceBase ? () => setWriting(true) : null}
           splitOpen={splitOpen}
           onToggleSplit={() => togglePanel("split")}
           xrayOpen={xrayOpen}

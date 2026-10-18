@@ -1,0 +1,523 @@
+/* Writing documents from scratch (spec 032). Sizes on the page are in points
+   times --pt (pixels per point), so the editor's lines match the PDF's. */
+
+.writer-view {
+  z-index: 60;
+}
+
+.writer-top {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.writer-top button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.writer-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.writer-heading h2 {
+  margin: 0;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.writer-page-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.writer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.writer-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 6px;
+  margin-right: 2px;
+  border-right: 1px solid var(--border);
+}
+
+.writer-group:last-child {
+  border-right: 0;
+}
+
+.writer-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  border-color: transparent;
+  background: transparent;
+  position: relative;
+}
+
+.writer-tool[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.writer-select {
+  height: 32px;
+  max-width: 13em;
+}
+
+.writer-toolbar .writer-select {
+  max-width: 9.5em;
+}
+
+.writer-size-select {
+  width: 4.5em;
+}
+
+.writer-swatch-tool .icon {
+  margin-bottom: 4px;
+}
+
+.writer-swatch-bar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 4px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+}
+
+.writer-notice {
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 0.9rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.writer-notice.error {
+  color: var(--danger);
+}
+
+.writer-scroll {
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 24px 24px 64px;
+}
+
+/* The sheet of paper: always white with black text, also in dark mode. */
+.writer-page {
+  position: relative;
+  margin: 0 auto;
+  background: #ffffff;
+  color: #000000;
+  color-scheme: light;
+}
+
+.writer-page.is-paged {
+  box-sizing: border-box;
+  width: calc(var(--page-w) * var(--pt) * 1px);
+  min-height: calc(var(--page-w) * 1.414 * var(--pt) * 1px);
+  padding: calc(72 * var(--pt) * 1px);
+  box-shadow: var(--page-shadow);
+}
+
+.writer-page.is-flow {
+  width: 100%;
+  min-height: 100%;
+  padding: 20px 16px 40px;
+  box-sizing: border-box;
+}
+
+.writer-editor {
+  outline: none;
+  min-height: calc(200 * var(--pt) * 1px);
+  font-family: var(--doc-font), sans-serif;
+  font-size: calc(11 * var(--pt) * 1px);
+  line-height: 1.3225;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  /* Metrics as the PDF uses them: no kerning, no ligatures. */
+  font-kerning: none;
+  font-variant-ligatures: none;
+  font-synthesis: none;
+  caret-color: #000000;
+  -webkit-font-smoothing: antialiased;
+}
+
+.writer-editor > :first-child {
+  margin-top: 0;
+}
+
+.writer-editor p {
+  margin: 0 0 calc(6 * var(--pt) * 1px);
+}
+
+.writer-editor h1,
+.writer-editor h2,
+.writer-editor h3 {
+  font-weight: bold;
+}
+
+.writer-editor h1 {
+  font-size: calc(20 * var(--pt) * 1px);
+  margin: calc(16 * var(--pt) * 1px) 0 calc(6 * var(--pt) * 1px);
+}
+
+.writer-editor h2 {
+  font-size: calc(16 * var(--pt) * 1px);
+  margin: calc(14 * var(--pt) * 1px) 0 calc(4 * var(--pt) * 1px);
+}
+
+.writer-editor h3 {
+  font-size: calc(13 * var(--pt) * 1px);
+  margin: calc(12 * var(--pt) * 1px) 0 calc(4 * var(--pt) * 1px);
+}
+
+/* Line spacing: spacing × 1.15 (LINE_FACTOR in layout.ts). */
+.writer-editor [data-spacing="1"] {
+  line-height: 1.15;
+}
+.writer-editor [data-spacing="1.15"] {
+  line-height: 1.3225;
+}
+.writer-editor [data-spacing="1.5"] {
+  line-height: 1.725;
+}
+.writer-editor [data-spacing="2"] {
+  line-height: 2.3;
+}
+
+.writer-editor ul,
+.writer-editor ol {
+  margin: 0;
+  padding-left: calc(24 * var(--pt) * 1px);
+}
+
+.writer-editor li > p {
+  margin-bottom: calc(3 * var(--pt) * 1px);
+}
+
+.writer-editor ul {
+  list-style-type: disc;
+}
+.writer-editor ul ul {
+  list-style-type: circle;
+}
+.writer-editor ul ul ul {
+  list-style-type: square;
+}
+.writer-editor ol ol {
+  list-style-type: lower-alpha;
+}
+.writer-editor ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.writer-editor li::marker {
+  font-family: Arimo, sans-serif;
+}
+
+.writer-editor hr {
+  border: 0;
+  border-top: calc(0.75 * var(--pt) * 1px) solid #9aa0a6;
+  margin: calc(6 * var(--pt) * 1px) 0;
+}
+
+.writer-editor figure.writer-image {
+  margin: 0 auto calc(6 * var(--pt) * 1px);
+}
+
+.writer-editor figure.writer-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.writer-editor .ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.writer-editor .writer-size {
+  font-size: calc(var(--size) * var(--pt) * 1px);
+}
+
+.writer-editor .writer-page-break {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: calc(8 * var(--pt) * 1px) 0;
+  color: #5f6368;
+  font:
+    12px/1.4 system-ui,
+    sans-serif;
+  cursor: default;
+}
+
+.writer-editor .writer-page-break::before,
+.writer-editor .writer-page-break::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dashed #9aa0a6;
+}
+
+.writer-editor .writer-page-break span::before {
+  content: var(--page-break-label);
+}
+
+.writer-editor.is-empty > p:first-child::before {
+  content: attr(data-placeholder);
+  color: #80868b;
+  pointer-events: none;
+  position: absolute;
+}
+
+/* Where a page of the PDF starts. */
+.writer-marker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed #9aa0a6;
+  pointer-events: none;
+  transform: translateY(-3px);
+}
+
+.writer-marker span {
+  position: absolute;
+  right: 6px;
+  top: -9px;
+  padding: 0 6px;
+  font:
+    11px/16px system-ui,
+    sans-serif;
+  color: #5f6368;
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+}
+
+.writer-page.is-paged .writer-marker {
+  left: calc(-12px);
+  right: calc(-12px);
+}
+
+/* Popovers: palettes, alignment, insert, more formatting. */
+.writer-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+}
+
+.writer-popover {
+  position: fixed;
+  z-index: 62;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--panel-shadow);
+}
+
+.writer-row-popover {
+  display: flex;
+  gap: 4px;
+}
+
+.writer-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 232px;
+}
+
+.writer-palette-none {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.writer-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.writer-swatch {
+  min-width: 0;
+  height: 32px;
+  padding: 4px;
+}
+
+.writer-swatch span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgb(0 0 0 / 0.15);
+}
+
+.writer-more {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(300px, calc(100vw - 16px));
+}
+
+.writer-more label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.writer-more .writer-select {
+  max-width: 60%;
+}
+
+.writer-more-row {
+  display: flex;
+  gap: 4px;
+}
+
+.writer-finish {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.writer-finish p {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.writer-finish button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+/* Phones: a bar of formatting over the keyboard, as Google Docs. */
+.writer-view.is-mobile .writer-scroll {
+  padding: 0;
+  background: #ffffff;
+}
+
+.writer-view.is-mobile .writer-page.is-paged {
+  margin-top: 8px;
+}
+
+.writer-format-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
+  overflow-x: auto;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.writer-format-bar .writer-tool {
+  min-width: 40px;
+  height: 44px;
+  padding: 0 4px;
+  flex: 1 0 auto;
+}
+
+.writer-view.is-mobile .writer-popover {
+  width: auto;
+}
+
+.writer-view.is-mobile .writer-row-popover {
+  justify-content: space-around;
+}
+
+.writer-view.is-mobile .writer-top .writer-tool {
+  min-width: 40px;
+  height: 40px;
+}
+
+.writer-done {
+  padding: 6px 14px;
+}
+
+/* An unfinished document, offered when the writer opens. */
+.writer-offer {
+  position: absolute;
+  inset: 0;
+  z-index: 63;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 16px;
+  background: rgb(0 0 0 / 0.25);
+}
+
+.writer-offer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--panel-shadow);
+}
+
+.writer-offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.writer-preview {
+  position: absolute;
+  inset: 0;
+  z-index: 64;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.writer-preview-pages {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.writer-preview-page {
+  width: min(100%, 820px);
+  height: auto;
+  background: #ffffff;
+  box-shadow: var(--page-shadow);
+}
+
+.writer-toolbar .writer-font {
+  max-width: 11.5em;
+}

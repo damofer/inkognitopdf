@@ -31,6 +31,11 @@ import { unlock, type AskPassword } from "./storage/unlock";
 import { onLaunch, takeShared, wasShared } from "./storage/incoming";
 import { clearDraft, readDraft, type Draft } from "./storage/draft";
 
+// The writer (spec 032) loads only when opened.
+const WriterView = lazy(() =>
+  import("./writer/WriterView").then((m) => ({ default: m.WriterView })),
+);
+
 // Templates (spec 021) load only when opened: their catalog is code.
 const TemplatesView = lazy(() =>
   import("./templates/TemplatesView").then((m) => ({
@@ -90,6 +95,7 @@ export function App() {
   const [state, setState] = useState<State>({ status: "empty" });
   const [scanning, setScanning] = useState(false);
   const [templating, setTemplating] = useState(false);
+  const [writing, setWriting] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const closeSupport = useCallback(() => setSupportOpen(false), []);
   // Phone layout (spec 007): the header actions live in an overflow menu.
@@ -412,6 +418,14 @@ export function App() {
               }}
             />
           </label>
+          <button
+            type="button"
+            className="menu-item"
+            onClick={() => setWriting(true)}
+          >
+            <Icon name="write" />
+            {t("writer.button")}
+          </button>
           <button type="button" className="menu-item" onClick={startBlank}>
             <Icon name="blank" />
             {t("app.blankDocument")}
@@ -520,6 +534,9 @@ export function App() {
               <button type="button" onClick={() => setScanning(true)}>
                 {t("app.scan")}
               </button>
+              <button type="button" onClick={() => setWriting(true)}>
+                {t("writer.button")}
+              </button>
               <button type="button" onClick={() => setTemplating(true)}>
                 {t("templates.button")}
               </button>
@@ -565,6 +582,14 @@ export function App() {
                 : null
             }
           />
+        )}
+        {writing && (
+          <Suspense fallback={<div className="scan-view" />}>
+            <WriterView
+              onClose={() => setWriting(false)}
+              onOpen={(file) => void open([file])}
+            />
+          </Suspense>
         )}
         {templating && (
           <Suspense fallback={<div className="scan-view" />}>

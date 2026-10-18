@@ -39,22 +39,23 @@
 
 ## Features
 
-|                       |                                                                                                                                                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Edit text**         | Change the text already in the PDF, keeping its font, size, color and weight. Add text, images and whiteout.                                                                                                             |
-| **Annotate**          | Highlight, underline, strike out, notes, free text, drawing, lines, arrows, rectangles and ellipses, saved as standard annotations.                                                                                      |
-| **Forms**             | Fill in AcroForm fields, create new ones of six types, and flatten the form.                                                                                                                                             |
-| **Sign**              | Drawn, typed or photographed signatures; digital **PAdES** signatures with a certificate created on the device or imported from a `.p12`; several signers in order, with an optional audit page; signature verification. |
-| **Scan**              | Photograph paper with the phone: page detection, perspective correction and a clean black-and-white "photocopy" filter.                                                                                                  |
-| **OCR**               | Recognize the text of scans in English and Spanish (Tesseract.js) so it can be searched, selected and copied.                                                                                                            |
-| **Edit scanned text** | Replace a recognized line inside the scanned image, matching the paper and the ink.                                                                                                                                      |
-| **Secure redaction**  | Mark areas or search for words or patterns, then really remove the text, images, annotations and metadata underneath.                                                                                                    |
-| **Merge and split**   | Open several PDFs as one, insert PDFs, reorder pages by dragging, split by ranges or every N pages, or extract pages (ZIP for several files).                                                                            |
-| **Compress**          | Make files smaller: images are scaled down to what their page needs and encoded again, with three levels and the size before and after.                                                                                  |
-| **Passwords**         | Open protected PDFs (RC4 and AES, up to AES-256) and save with an AES-256 password; optional print and copy restrictions, which the app explains are only advisory.                                                      |
-| **Pages**             | Rotate, delete, insert blank pages and start from a blank document.                                                                                                                                                      |
-| **Templates**         | Resumes, cover letters, invoices, quotes, payment requests, receipts and letters ready to fill in, with a live preview, colors, fonts and paper size; download the PDF or keep editing it in the app.                    |
-| **Languages**         | English and Spanish, on desktop and on phones.                                                                                                                                                                           |
+|                       |                                                                                                                                                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Edit text**         | Change the text already in the PDF, keeping its font, size, color and weight. Add text, images and whiteout.                                                                                                                                 |
+| **Annotate**          | Highlight, underline, strike out, notes, free text, drawing, lines, arrows, rectangles and ellipses, saved as standard annotations.                                                                                                          |
+| **Forms**             | Fill in AcroForm fields, create new ones of six types, and flatten the form.                                                                                                                                                                 |
+| **Sign**              | Drawn, typed or photographed signatures; digital **PAdES** signatures with a certificate created on the device or imported from a `.p12`; several signers in order, with an optional audit page; signature verification.                     |
+| **Scan**              | Photograph paper with the phone: page detection, perspective correction and a clean black-and-white "photocopy" filter.                                                                                                                      |
+| **OCR**               | Recognize the text of scans in English and Spanish (Tesseract.js) so it can be searched, selected and copied.                                                                                                                                |
+| **Edit scanned text** | Replace a recognized line inside the scanned image, matching the paper and the ink.                                                                                                                                                          |
+| **Secure redaction**  | Mark areas or search for words or patterns, then really remove the text, images, annotations and metadata underneath.                                                                                                                        |
+| **Merge and split**   | Open several PDFs as one, insert PDFs, reorder pages by dragging, split by ranges or every N pages, or extract pages (ZIP for several files).                                                                                                |
+| **Compress**          | Make files smaller: images are scaled down to what their page needs and encoded again, with three levels and the size before and after.                                                                                                      |
+| **Passwords**         | Open protected PDFs (RC4 and AES, up to AES-256) and save with an AES-256 password; optional print and copy restrictions, which the app explains are only advisory.                                                                          |
+| **Pages**             | Rotate, delete, insert blank pages and start from a blank document.                                                                                                                                                                          |
+| **Templates**         | Resumes, cover letters, invoices, quotes, payment requests, receipts and letters ready to fill in, with a live preview, colors, fonts and paper size; download the PDF or keep editing it in the app.                                        |
+| **Write documents**   | Write from scratch as in Word or Google Docs: headings, lists, bold, colors, highlight, alignment, images and page breaks, with page breaks shown as you type; the result is a PDF with real text, to download, sign or add to the open PDF. |
+| **Languages**         | English and Spanish, on desktop and on phones.                                                                                                                                                                                               |
 
 ## Screenshots
 
@@ -106,6 +107,7 @@ src/
   analytics/      consent and the closed list of usage events
   support/        donation links
   templates/      templates: layout engine, PDF rendering and the catalog
+  writer/         writing documents: editor (ProseMirror), page layout and PDF
   i18n/           Spanish (reference) and English texts
 tests/            unit tests and synthetic fixtures
 e2e/              end-to-end tests (Playwright)

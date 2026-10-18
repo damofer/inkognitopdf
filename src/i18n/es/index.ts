@@ -23,6 +23,7 @@ import { templates } from "./templates";
 import { tools } from "./tools";
 import { ui } from "./ui";
 import { viewer } from "./viewer";
+import { writer } from "./writer";
 import { xray } from "./xray";
 
 export const es = {
@@ -49,6 +50,7 @@ export const es = {
   ...tools,
   ...ui,
   ...viewer,
+  ...writer,
   ...xray,
 };
 

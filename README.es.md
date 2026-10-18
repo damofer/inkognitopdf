@@ -39,22 +39,23 @@
 
 ## Funciones
 
-|                            |                                                                                                                                                                                                                             |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Editar texto**           | Cambia el texto que ya está en el PDF conservando su fuente, tamaño, color y grosor. Añade texto, imágenes y blanqueos.                                                                                                     |
-| **Anotar**                 | Resaltado, subrayado, tachado, notas, texto libre, dibujo, líneas, flechas, rectángulos y elipses, guardados como anotaciones estándar.                                                                                     |
-| **Formularios**            | Rellena campos AcroForm, crea campos nuevos de seis tipos y aplana el formulario.                                                                                                                                           |
-| **Firmar**                 | Firma dibujada, escrita o desde una foto; firma digital **PAdES** con un certificado creado en el dispositivo o importado de un `.p12`; varios firmantes en orden, con página de registro opcional; verificación de firmas. |
-| **Escanear**               | Fotografía papeles con el móvil: detección de la página, corrección de perspectiva y un filtro limpio de fotocopia en blanco y negro.                                                                                       |
-| **OCR**                    | Reconoce el texto de los escaneos en español e inglés (Tesseract.js) para buscarlo, seleccionarlo y copiarlo.                                                                                                               |
-| **Editar texto escaneado** | Reemplaza una línea reconocida dentro de la imagen escaneada, igualando el papel y la tinta.                                                                                                                                |
-| **Borrado seguro**         | Marca zonas o busca palabras o patrones y elimina de verdad el texto, las imágenes, las anotaciones y los metadatos que hay debajo.                                                                                         |
-| **Unir y dividir**         | Abre varios PDFs como uno, inserta PDFs, ordena las páginas arrastrándolas, divide por rangos o cada N páginas o extrae páginas (ZIP si salen varios archivos).                                                             |
-| **Comprimir**              | Reduce el tamaño: las imágenes se ajustan a lo que su página necesita y se codifican de nuevo, con tres niveles y el tamaño antes y después.                                                                                |
-| **Contraseñas**            | Abre PDFs protegidos (RC4 y AES, hasta AES-256) y guarda con contraseña AES-256; restricciones opcionales de imprimir y copiar, que la app explica que son solo orientativas.                                               |
-| **Páginas**                | Gira, elimina, inserta páginas en blanco y empieza desde un documento en blanco.                                                                                                                                            |
-| **Plantillas**             | CV, cartas de presentación, facturas, cotizaciones, cuentas de cobro, recibos y cartas listos para rellenar, con vista previa, colores, tipografías y tamaño de papel; descarga el PDF o sigue editándolo en la app.        |
-| **Idiomas**                | Español e inglés, en el ordenador y en el teléfono.                                                                                                                                                                         |
+|                            |                                                                                                                                                                                                                                                                |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Editar texto**           | Cambia el texto que ya está en el PDF conservando su fuente, tamaño, color y grosor. Añade texto, imágenes y blanqueos.                                                                                                                                        |
+| **Anotar**                 | Resaltado, subrayado, tachado, notas, texto libre, dibujo, líneas, flechas, rectángulos y elipses, guardados como anotaciones estándar.                                                                                                                        |
+| **Formularios**            | Rellena campos AcroForm, crea campos nuevos de seis tipos y aplana el formulario.                                                                                                                                                                              |
+| **Firmar**                 | Firma dibujada, escrita o desde una foto; firma digital **PAdES** con un certificado creado en el dispositivo o importado de un `.p12`; varios firmantes en orden, con página de registro opcional; verificación de firmas.                                    |
+| **Escanear**               | Fotografía papeles con el móvil: detección de la página, corrección de perspectiva y un filtro limpio de fotocopia en blanco y negro.                                                                                                                          |
+| **OCR**                    | Reconoce el texto de los escaneos en español e inglés (Tesseract.js) para buscarlo, seleccionarlo y copiarlo.                                                                                                                                                  |
+| **Editar texto escaneado** | Reemplaza una línea reconocida dentro de la imagen escaneada, igualando el papel y la tinta.                                                                                                                                                                   |
+| **Borrado seguro**         | Marca zonas o busca palabras o patrones y elimina de verdad el texto, las imágenes, las anotaciones y los metadatos que hay debajo.                                                                                                                            |
+| **Unir y dividir**         | Abre varios PDFs como uno, inserta PDFs, ordena las páginas arrastrándolas, divide por rangos o cada N páginas o extrae páginas (ZIP si salen varios archivos).                                                                                                |
+| **Comprimir**              | Reduce el tamaño: las imágenes se ajustan a lo que su página necesita y se codifican de nuevo, con tres niveles y el tamaño antes y después.                                                                                                                   |
+| **Contraseñas**            | Abre PDFs protegidos (RC4 y AES, hasta AES-256) y guarda con contraseña AES-256; restricciones opcionales de imprimir y copiar, que la app explica que son solo orientativas.                                                                                  |
+| **Páginas**                | Gira, elimina, inserta páginas en blanco y empieza desde un documento en blanco.                                                                                                                                                                               |
+| **Plantillas**             | CV, cartas de presentación, facturas, cotizaciones, cuentas de cobro, recibos y cartas listos para rellenar, con vista previa, colores, tipografías y tamaño de papel; descarga el PDF o sigue editándolo en la app.                                           |
+| **Escribir documentos**    | Escribe desde cero como en Word o Google Docs: títulos, listas, negrita, colores, resaltado, alineación, imágenes y saltos de página, viendo dónde empieza cada página; el resultado es un PDF con texto real, para descargar, firmar o añadir al PDF abierto. |
+| **Idiomas**                | Español e inglés, en el ordenador y en el teléfono.                                                                                                                                                                                                            |
 
 ## Capturas
 
@@ -106,6 +107,7 @@ src/
   analytics/      consentimiento y lista cerrada de eventos de uso
   support/        enlaces de donación
   templates/      plantillas: motor de maquetación, render a PDF y catálogo
+  writer/         escribir documentos: editor (ProseMirror), maquetación y PDF
   i18n/           textos en español (referencia) e inglés
 tests/            pruebas unitarias y fixtures sintéticos
 e2e/              pruebas de extremo a extremo (Playwright)

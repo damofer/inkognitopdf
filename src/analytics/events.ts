@@ -52,6 +52,8 @@ const VALUES = {
   /** Spec 020: whether the ID card mode was on. */
   card: ["yes", "no"],
   source: ["file", "scan", "blank"],
+  /** What was done with a written document (spec 032), never its text. */
+  output: ["download", "editor", "insert"],
   /** Visited page: only the route, never the full URL. */
   page_path: ["/", "/app/"],
   page_title: ["landing", "app"],
@@ -98,6 +100,8 @@ const EVENTS = {
   template_open: ["template"],
   template_download: ["template"],
   template_to_editor: ["template"],
+  writer_open: [],
+  writer_finish: ["output", "pages"],
 } as const satisfies Record<string, readonly Param[]>;
 
 export type EventName = keyof typeof EVENTS;

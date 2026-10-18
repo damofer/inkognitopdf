@@ -49,6 +49,8 @@ interface MobileBarProps {
   formOptions?: ReactNode;
   /** Chooses PDFs to add at the end (spec 013); null when it cannot. */
   onInsertPdf?: (() => void) | null;
+  /** Writes new pages with formatting (spec 032); null when it cannot. */
+  onWrite?: (() => void) | null;
   splitOpen?: boolean;
   onToggleSplit?: () => void;
   /** Privacy x-ray (spec 015). */
@@ -80,6 +82,7 @@ export function MobileBar({
   onToggleThumbs,
   formOptions,
   onInsertPdf = null,
+  onWrite = null,
   splitOpen = false,
   onToggleSplit,
   numbersOpen = false,
@@ -202,6 +205,8 @@ export function MobileBar({
                   onToggleThumbs,
                   thumbsOpen,
                 )}
+                {onWrite &&
+                  item("write", "write", t("writer.writePages"), onWrite)}
                 {onInsertPdf &&
                   item("insert", "insert", t("organize.insert"), onInsertPdf)}
                 {onScan && item("scan", "scan", t("mobile.scanPages"), onScan)}
