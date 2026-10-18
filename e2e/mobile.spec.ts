@@ -60,13 +60,13 @@ for (const size of SIZES) {
       // The overflow menu holds the header actions and the language.
       await page.getByRole("button", { name: "Menú" }).click();
       const menu = page.locator("#app-menu");
-      await expect(menu.getByText("Documento en blanco")).toBeVisible();
+      await expect(menu.getByText("Escribir documento")).toBeVisible();
       await expect(menu.getByRole("button", { name: "English" })).toBeVisible();
       await touchTargets(page);
       await shot(page, size, "menu");
       // The language changes in place; the menu stays open until closed.
       await menu.getByRole("button", { name: "English" }).click();
-      await expect(menu.getByText("Blank document")).toBeVisible();
+      await expect(menu.getByText("Write a document")).toBeVisible();
       await page.keyboard.press("Escape");
       await expect(menu).toBeHidden();
       await expect(

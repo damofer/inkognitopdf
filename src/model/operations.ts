@@ -1,7 +1,7 @@
 import { t } from "../i18n";
 import type { Box, Rotation } from "./geometry";
 import { normalizeRotation } from "./geometry";
-import type { EditorState, Item, PageEntry } from "./document";
+import type { EditorState, Item, PageEntry, WrittenSource } from "./document";
 import type { Numbering } from "./numbering";
 
 /**
@@ -22,6 +22,8 @@ export type Operation =
       pages: PageEntry[];
       /** Items of the new pages, e.g. their OCR text (spec 009). */
       items?: Item[];
+      /** Spec 033: the text the new pages were written from. */
+      written?: { id: string; source: WrittenSource };
     }
   /** Page numbers, headers and footers (spec 022); null removes them. */
   | { kind: "setNumbering"; numbering: Numbering | null };
@@ -118,7 +120,14 @@ export function applyOperation(state: EditorState, op: Operation): EditorState {
       const at = Math.max(0, Math.min(state.pages.length, op.atIndex));
       const pages = [...state.pages];
       pages.splice(at, 0, ...op.pages);
-      return { ...state, pages, items: [...state.items, ...(op.items ?? [])] };
+      const next = {
+        ...state,
+        pages,
+        items: [...state.items, ...(op.items ?? [])],
+      };
+      if (op.written)
+        next.written = { ...state.written, [op.written.id]: op.written.source };
+      return next;
     }
     case "setNumbering": {
       const { numbering: _, ...rest } = state;

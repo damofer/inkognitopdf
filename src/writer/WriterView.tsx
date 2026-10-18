@@ -17,6 +17,7 @@ import {
   type ReactNode,
 } from "react";
 import { track } from "../analytics/analytics";
+import type { WrittenSource } from "../model/document";
 import { pagesBucket } from "../analytics/events";
 import { downloadPdf, loadFont } from "../editor/save";
 import { loadImageFile } from "../editor/imageInput";
@@ -71,17 +72,37 @@ import {
 import {
   clearWriterDraft,
   readWriterDraft,
+  WRITER_KEY,
   writeWriterDraft,
   type WriterDraft,
 } from "./store";
 import "./writer.css";
 
+/** The text to start from: the one being written again, or an empty one. */
+function startDoc(source: WrittenSource | undefined): Node | undefined {
+  if (!source) return undefined;
+  try {
+    return schema.nodeFromJSON(source.doc);
+  } catch {
+    return undefined;
+  }
+}
+
 interface Props {
   onClose: () => void;
-  /** Opens the PDF in the editor (from the start screen). */
-  onOpen?: (file: File) => void;
-  /** Adds the pages to the open document (from the editor). */
-  onInsert?: (bytes: Uint8Array, fileName: string) => Promise<void>;
+  /** Opens the PDF in the editor (from the start screen), with its text. */
+  onOpen?: (file: File, source: WrittenSource) => void;
+  /** Adds the pages to the open document (from the editor), with their text. */
+  onInsert?: (
+    bytes: Uint8Array,
+    fileName: string,
+    source: WrittenSource,
+  ) => Promise<void>;
+  /**
+   * Spec 033: writing again the text of pages of the open document. Changes
+   * not applied yet are kept on the device under `key`.
+   */
+  continuing?: { source: WrittenSource; key: string; notice: string | null };
 }
 
 const TEXT_COLORS = [
@@ -215,7 +236,7 @@ function ToolButton({
   );
 }
 
-export function WriterView({ onClose, onOpen, onInsert }: Props) {
+export function WriterView({ onClose, onOpen, onInsert, continuing }: Props) {
   const t = useT();
   const mobile = useMobile();
   const mountRef = useRef<HTMLDivElement>(null);
@@ -223,10 +244,14 @@ export function WriterView({ onClose, onOpen, onInsert }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<PMView | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const [settings, setSettings] = useState<WriterSettings>(() => ({
-    paper: defaultPaper(),
-    family: DEFAULT_FAMILY,
-  }));
+  const draftKey = continuing?.key ?? WRITER_KEY;
+  const [settings, setSettings] = useState<WriterSettings>(
+    () =>
+      continuing?.source.settings ?? {
+        paper: defaultPaper(),
+        family: DEFAULT_FAMILY,
+      },
+  );
   const settingsRef = useRef(settings);
   /** Counts editor updates: the toolbar re-reads the selection. */
   const [, setTick] = useState(0);
@@ -237,7 +262,9 @@ export function WriterView({ onClose, onOpen, onInsert }: Props) {
     anchor: DOMRect | null;
   } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(
+    continuing?.notice ?? null,
+  );
   const [preview, setPreview] = useState<string[] | null>(null);
   const [markers, setMarkers] = useState<{ page: number; top: number }[]>([]);
   const [pageCount, setPageCount] = useState(1);
@@ -255,7 +282,7 @@ export function WriterView({ onClose, onOpen, onInsert }: Props) {
     const mount = mountRef.current;
     if (!mount) return;
     const view: PMView = new PMView(mount, {
-      state: createState(),
+      state: createState(startDoc(continuing?.source)),
       attributes: (state) => ({
         class: `writer-editor${isEmptyDoc(state.doc) ? " is-empty" : ""}`,
         "aria-label": t("writer.editorLabel"),
@@ -292,23 +319,21 @@ export function WriterView({ onClose, onOpen, onInsert }: Props) {
     settingsRef.current = settings;
   }, [settings]);
 
-  // An unfinished document is offered first (RF-032-12).
+  // An unfinished document is offered first (RF-032-12). Writing again
+  // (spec 033), the changes not applied yet come back as they were.
   useEffect(() => {
     let live = true;
-    readWriterDraft()
+    readWriterDraft(Date.now(), draftKey)
       .then((draft) => {
-        if (
-          live &&
-          draft &&
-          viewRef.current &&
-          isEmptyDoc(viewRef.current.state.doc)
-        )
-          setOffer(draft);
+        if (!live || !draft || !viewRef.current) return;
+        if (continuing) resume(draft);
+        else if (isEmptyDoc(viewRef.current.state.doc)) setOffer(draft);
       })
       .catch(() => {});
     return () => {
       live = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once
   }, []);
 
   const resume = (draft: WriterDraft) => {
@@ -340,18 +365,21 @@ export function WriterView({ onClose, onOpen, onInsert }: Props) {
     if (!view) return;
     const doc = view.state.doc;
     if (isEmptyDoc(doc)) {
-      if (savedHere.current) void clearWriterDraft().catch(() => {});
+      if (savedHere.current) void clearWriterDraft(draftKey).catch(() => {});
       savedHere.current = false;
       return;
     }
     savedHere.current = true;
-    void writeWriterDraft({
-      savedAt: Date.now(),
-      settings: settingsRef.current,
-      doc: doc.toJSON(),
-      title: titleOf(doc),
-    }).catch(() => {});
-  }, []);
+    void writeWriterDraft(
+      {
+        savedAt: Date.now(),
+        settings: settingsRef.current,
+        doc: doc.toJSON(),
+        title: titleOf(doc),
+      },
+      draftKey,
+    ).catch(() => {});
+  }, [draftKey]);
   useEffect(() => {
     if (docVersion === 0 && !savedHere.current) return;
     const timer = setTimeout(save, 800);
@@ -526,14 +554,21 @@ export function WriterView({ onClose, onOpen, onInsert }: Props) {
         downloadPdf(bytes, fileName);
         return;
       }
-      await clearWriterDraft().catch(() => {});
+      await clearWriterDraft(draftKey).catch(() => {});
       savedHere.current = false;
-      if (output === "insert" && onInsert) await onInsert(bytes, fileName);
+      const source: WrittenSource = {
+        doc: v.state.doc.toJSON(),
+        settings: settingsRef.current,
+        title,
+      };
+      if (output === "insert" && onInsert)
+        await onInsert(bytes, fileName, source);
       else
         onOpen?.(
           new File([bytes as Uint8Array<ArrayBuffer>], fileName, {
             type: "application/pdf",
           }),
+          source,
         );
       onClose();
     } catch (cause) {
@@ -911,11 +946,13 @@ export function WriterView({ onClose, onOpen, onInsert }: Props) {
           type="button"
           className="primary"
           disabled={busy || empty}
-          title={t("writer.insertInDocHint")}
+          title={t(
+            continuing ? "writer.updateDocHint" : "writer.insertInDocHint",
+          )}
           onClick={() => void finishWith("insert")}
         >
           <Icon name="insert" />
-          {t("writer.insertInDoc")}
+          {t(continuing ? "writer.updateDoc" : "writer.insertInDoc")}
         </button>
       )}
       {!onInsert && onOpen && (

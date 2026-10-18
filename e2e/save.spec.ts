@@ -51,18 +51,3 @@ test("CA10: no network request carries document content", async ({ page }) => {
   });
   expect(offending.map((r) => `${r.method()} ${r.url()}`)).toEqual([]);
 });
-
-test("a blank document can be created and saved", async ({ page }) => {
-  await page.goto("/app/");
-  await page
-    .getByRole("button", { name: "Documento en blanco" })
-    .first()
-    .click();
-  await expect(page.locator('.page[data-page-number="1"]')).toHaveAttribute(
-    "data-rendered",
-    "true",
-  );
-  const { name, bytes } = await saveAndRead(page);
-  expect(name).toBe("documento.pdf");
-  expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
-});

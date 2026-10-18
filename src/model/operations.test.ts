@@ -108,6 +108,30 @@ describe("applyOperation", () => {
     expect(s.pages[1]!.source.kind).toBe("blank");
   });
 
+  it("keeps the text written pages come from (spec 033)", () => {
+    const source = {
+      doc: { type: "doc" },
+      settings: { paper: "a4" as const, family: "Arimo" as const },
+      title: "Carta",
+    };
+    const page = { ...threePages().pages[0]!, id: "w1", writtenId: "t1" };
+    const s = applyOperation(threePages(), {
+      kind: "insertPages",
+      atIndex: 3,
+      pages: [page],
+      written: { id: "t1", source },
+    });
+    expect(s.pages.at(-1)!.writtenId).toBe("t1");
+    expect(s.written).toEqual({ t1: source });
+    // Pages added without a text leave the texts as they are.
+    const more = applyOperation(s, {
+      kind: "insertPages",
+      atIndex: 0,
+      pages: [{ ...page, id: "x1", writtenId: undefined }],
+    });
+    expect(more.written).toBe(s.written);
+  });
+
   it("generates unique ids", () => {
     expect(newId("x")).not.toBe(newId("x"));
   });

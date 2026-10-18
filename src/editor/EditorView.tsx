@@ -20,13 +20,14 @@ import {
   type PageEntry,
   type TextItem,
   type TextStyle,
+  type WrittenSource,
 } from "../model/document";
 import type { PagePixels } from "./scanTextEdit";
 import { existingItemId } from "../engine/annotRead";
 import { EMPTY_DOC_INFO, type DocInfo } from "./docInfo";
 import type { PageWidget } from "./FormLayer";
 import { normalizeRotation, type PageGeometry } from "../model/geometry";
-import { newId } from "../model/operations";
+import { newId, type Operation } from "../model/operations";
 import { OcrPanel, pageIsScanned } from "../ocr/OcrPanel";
 import { createPdfFile, openPdfFile, type PdfFile } from "../storage/pdfFile";
 import type { PDFDocumentProxy } from "../viewer/pdfjs";
@@ -137,6 +138,11 @@ const FONTS: { value: FontFamily; label: string }[] = [
   { value: "Courier", label: "Courier" },
 ];
 const STROKE_WIDTHS = [1, 2, 4, 8];
+/**
+ * Edits that change what the written text says on the page (spec 033): after
+ * them the text in the writer is no longer the page's.
+ */
+const CHANGES_TEXT: Item["kind"][] = ["textEdit", "redaction", "whiteout"];
 const FIELD_TYPES: { value: FormFieldType; label: MessageKey }[] = [
   { value: "text", label: "editor.fieldText" },
   { value: "multiline", label: "editor.fieldMultiline" },
@@ -941,12 +947,9 @@ export function EditorView({
   // Spec 013: other PDFs go at the end, as one undoable step.
   const insertInputRef = useRef<HTMLInputElement>(null);
   const [inserting, setInserting] = useState(false);
-  /**
-   * Adds the pages of `others` at the end. A document that is only an empty
-   * blank page has it replaced (spec 032): the new pages are the document.
-   */
-  const appendFiles = async (others: PdfFile[]): Promise<number> => {
-    if (!onReplaceBase) return 0;
+  /** The pages of `others`, added to the file; the caller places them. */
+  const appendedPages = async (others: PdfFile[]): Promise<PageEntry[]> => {
+    if (!onReplaceBase) return [];
     const { appendPdfs } = await import("../engine/organize");
     const { bytes, added } = await appendPdfs(
       file?.copyBytes() ?? new Uint8Array(),
@@ -967,17 +970,7 @@ export function EditorView({
           extraRotation: 0,
         });
       }
-    const lone = state.pages.length === 1 ? state.pages[0]! : null;
-    const replace =
-      lone?.source.kind === "blank" &&
-      lone.extraRotation === 0 &&
-      !state.items.some((i) => i.pageId === lone.id) &&
-      !state.numbering;
-    dispatch([
-      { kind: "insertPages", atIndex: Number.MAX_SAFE_INTEGER, pages },
-      ...(replace ? [{ kind: "deletePage" as const, pageId: lone.id }] : []),
-    ]);
-    return pages.length;
+    return pages;
   };
 
   const insertPdfs = async (chosen: File[]) => {
@@ -991,7 +984,13 @@ export function EditorView({
         if (opened.password !== null) track("unlock_pdf");
         others.push(opened.file);
       }
-      const count = await appendFiles(others);
+      const pages = await appendedPages(others);
+      dispatch({
+        kind: "insertPages",
+        atIndex: Number.MAX_SAFE_INTEGER,
+        pages,
+      });
+      const count = pages.length;
       setToast(t("organize.inserted", count));
       track("merge_pdf", {
         files: filesBucket(chosen.length + 1),
@@ -1010,16 +1009,92 @@ export function EditorView({
   };
 
   // Spec 032: pages written with formatting, added to the document.
+  // Spec 033: written pages keep their text while the document is open, and
+  // writing it again replaces them in place, as one undoable step.
   const [writing, setWriting] = useState(false);
-  const insertWritten = async (bytes: Uint8Array, name: string) => {
-    const count = await appendFiles([createPdfFile(name, bytes)]);
-    setToast(t("organize.inserted", count));
+  const [continuingId, setContinuingId] = useState<string | null>(null);
+  const writtenPages = (id: string) =>
+    state.pages.filter((p) => p.writtenId === id);
+  const together = (pages: PageEntry[]) => {
+    const at = state.pages.indexOf(pages[0]!);
+    return pages.every((p, k) => state.pages[at + k] === p);
   };
-  const lonelyBlank =
-    state.pages.length === 1 &&
-    state.pages[0]!.source.kind === "blank" &&
-    state.items.length === 0 &&
-    !!onReplaceBase;
+  const insertWritten = async (
+    bytes: Uint8Array,
+    name: string,
+    source: WrittenSource,
+  ) => {
+    const id = newId("written");
+    const pages = (await appendedPages([createPdfFile(name, bytes)])).map(
+      (p) => ({ ...p, writtenId: id }),
+    );
+    const old = continuingId ? writtenPages(continuingId) : [];
+    if (old.length === 0 || !together(old)) {
+      dispatch({
+        kind: "insertPages",
+        atIndex: Number.MAX_SAFE_INTEGER,
+        pages,
+        written: { id, source },
+      });
+      setToast(t("organize.inserted", pages.length));
+      return;
+    }
+    // What was added on the old pages stays on the same page number.
+    const moved: Operation[] = state.items.flatMap((item) => {
+      const k = old.findIndex((p) => p.id === item.pageId);
+      if (k < 0) return [];
+      const page = pages[Math.min(k, pages.length - 1)]!;
+      return [{ kind: "updateItem", item: { ...item, pageId: page.id } }];
+    });
+    dispatch([
+      {
+        kind: "insertPages",
+        atIndex: state.pages.indexOf(old[0]!),
+        pages,
+        written: { id, source },
+      },
+      ...moved,
+      ...old.map((p) => ({ kind: "deletePage" as const, pageId: p.id })),
+    ]);
+    setToast(t("writer.updated"));
+  };
+  /** First pages of the written texts that can be written again. */
+  const continuable = useMemo(() => {
+    const changed = new Set(
+      state.items
+        .filter((i) => CHANGES_TEXT.includes(i.kind))
+        .map((i) => i.pageId),
+    );
+    const blocked = new Set(
+      state.pages
+        .filter((p) => p.writtenId && changed.has(p.id))
+        .map((p) => p.writtenId),
+    );
+    const first = new Map<string, string>();
+    for (const p of state.pages)
+      if (
+        p.writtenId &&
+        state.written?.[p.writtenId] &&
+        !first.has(p.writtenId)
+      )
+        first.set(p.writtenId, p.id);
+    return new Set(
+      [...first].filter(([id]) => !blocked.has(id)).map(([, pageId]) => pageId),
+    );
+  }, [state.pages, state.items, state.written]);
+  const continuing = (() => {
+    const source = continuingId ? state.written?.[continuingId] : undefined;
+    if (!continuingId || !source) return undefined;
+    const pages = writtenPages(continuingId);
+    const items = state.items.some((i) => pages.some((p) => p.id === i.pageId));
+    const notice = [
+      !together(pages) && t("writer.notTogether"),
+      items && t("writer.itemsStay"),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return { source, key: `written-${continuingId}`, notice: notice || null };
+  })();
   const chooseInsert = () => insertInputRef.current?.click();
 
   // Spec 018: another version of the PDF, compared with the document as it
@@ -1714,26 +1789,25 @@ export function EditorView({
               </div>
             );
           })}
-        {lonelyBlank && tool === "select" && (
-          <div
-            className="write-here"
+        {continuable.has(entry.id) && tool === "select" && (
+          <button
+            type="button"
+            className="continue-writing"
+            title={t("writer.continueHint")}
             onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => {
+              setContinuingId(entry.writtenId!);
+              setWriting(true);
+            }}
           >
-            <button
-              type="button"
-              className="primary"
-              onClick={() => setWriting(true)}
-            >
-              <Icon name="write" />
-              {t("writer.writeHere")}
-            </button>
-            <small>{t("writer.writeHereHint")}</small>
-          </div>
+            <Icon name="write" />
+            {t("writer.continue")}
+          </button>
         )}
       </EditLayer>
     ),
     [
-      lonelyBlank,
+      continuable,
       t,
       tool,
       selectedId,
@@ -2786,8 +2860,12 @@ export function EditorView({
       {writing && (
         <Suspense fallback={<div className="scan-view" />}>
           <WriterView
-            onClose={() => setWriting(false)}
+            onClose={() => {
+              setWriting(false);
+              setContinuingId(null);
+            }}
             onInsert={insertWritten}
+            continuing={continuing}
           />
         </Suspense>
       )}

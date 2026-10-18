@@ -125,16 +125,3 @@ test("CA-4: deshacer todos los cambios lo borra", async ({ page, context }) => {
   const again = await reopen(page, context);
   await expect(offer(again)).toHaveCount(0);
 });
-
-test("CA-5: un documento en blanco se retoma", async ({ page, context }) => {
-  await page.goto("/app/");
-  await page.getByRole("button", { name: "Documento en blanco" }).click();
-  await expect(firstPage(page)).toBeVisible();
-  await addText(page, false, "En blanco");
-  const again = await reopen(page, context);
-  await expect(offer(again)).toContainText("Documento nuevo");
-  await again.getByRole("button", { name: "Retomar" }).click();
-  await expect(firstPage(again).locator(".item-text")).toContainText(
-    "En blanco",
-  );
-});

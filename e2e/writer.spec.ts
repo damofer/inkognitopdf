@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { createCanvas } from "@napi-rs/canvas";
-import { firstPage, openFixture, openPdf } from "./helpers";
+import { firstPage, openFixture, openPdf, openTask } from "./helpers";
 
 const writer = (page: Page) =>
   page.getByRole("dialog", { name: "Escribir documento" });
@@ -182,29 +182,6 @@ test("CA-3: written pages go at the end of the open PDF in one undoable step", a
   await expect(thumbs).toHaveCount(before);
 });
 
-test("CA-4: in an empty blank document the written pages replace the blank page", async ({
-  page,
-}) => {
-  await page.goto("/app/");
-  await page
-    .locator(".start-actions")
-    .getByRole("button", { name: "Documento en blanco" })
-    .click();
-  await firstPage(page)
-    .getByRole("button", { name: "Escribir con formato" })
-    .click();
-  await editor(page).click();
-  await page.keyboard.type("Carta de presentación");
-  await writer(page)
-    .getByRole("button", { name: "Insertar en el documento" })
-    .click();
-  await expect(page.locator(".page")).toHaveCount(1);
-  await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
-  await expect(firstPage(page).locator(".textLayer")).toContainText(
-    "Carta de presentación",
-  );
-});
-
 test("CA-6: an unfinished document is offered after closing the app", async ({
   page,
 }) => {
@@ -299,4 +276,181 @@ test("an image is inserted and goes into the PDF", async ({ page }) => {
     .node.Resources()!
     .lookup(PDFName.of("XObject"), PDFDict);
   expect(xobjects.keys()).toHaveLength(1);
+});
+
+// Spec 033: «Escribir documento» instead of a blank document, and writing the
+// text of written pages again while the document is open.
+const pageN = (page: Page, n: number) =>
+  page.locator(`.page[data-page-number="${n}"]`);
+const keepWriting = (page: Page, n: number) =>
+  pageN(page, n).getByRole("button", { name: "Seguir escribiendo" });
+
+async function addTextOn(page: Page, n: number, text: string) {
+  await openTask(page, "Editar");
+  await page
+    .getByRole("group", { name: /^Herramientas de/ })
+    .getByRole("button", { name: "Texto", exact: true })
+    .click();
+  await pageN(page, n).click({ position: { x: 80, y: 500 } });
+  await page.locator(".text-draft").fill(text);
+  await page.locator(".text-draft").press("Control+Enter");
+  await expect(pageN(page, n).locator(".item-text")).toHaveCount(1);
+  await page
+    .getByRole("group", { name: /^Herramientas de/ })
+    .getByRole("button", { name: "Seleccionar", exact: true })
+    .click();
+}
+
+test("033 CA-1: the start screen and the menu write documents, not blank ones", async ({
+  page,
+}) => {
+  await page.goto("/app/");
+  const start = page.locator(".start-actions");
+  await expect(
+    start.getByRole("button", { name: "Escribir documento" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Documento en blanco" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Menú" }).click();
+  const menu = page.locator("#app-menu");
+  await expect(
+    menu.getByRole("button", { name: "Escribir documento" }),
+  ).toBeVisible();
+  await expect(menu.getByText("Documento en blanco")).toHaveCount(0);
+});
+
+test("033 CA-2: a written document opened in the editor is written again in place, in one undoable step", async ({
+  page,
+}) => {
+  await openWriter(page);
+  await page.keyboard.type("Primera versión");
+  await writer(page)
+    .getByRole("button", { name: "Abrir en el editor" })
+    .click();
+  await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
+  await keepWriting(page, 1).click();
+  await expect(editor(page)).toHaveText("Primera versión");
+  await editor(page).click();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.type("Segunda versión");
+  await writer(page)
+    .getByRole("button", { name: "Actualizar el documento" })
+    .click();
+  await expect(writer(page)).toHaveCount(0);
+  await expect(page.locator(".page")).toHaveCount(1);
+  await expect(firstPage(page).locator(".textLayer")).toContainText(
+    "Segunda versión",
+  );
+  await page.getByRole("button", { name: "Deshacer" }).first().click();
+  await expect(firstPage(page).locator(".textLayer")).toContainText(
+    "Primera versión",
+  );
+});
+
+test("033 CA-3: inserted pages too, and what was added on them stays on its page", async ({
+  page,
+}) => {
+  await openFixture(page, "two-pages.pdf");
+  await page.getByRole("button", { name: "Páginas", exact: true }).click();
+  await page.getByRole("button", { name: "Escribir páginas" }).click();
+  await editor(page).click();
+  await page.keyboard.type("Anexo uno");
+  await writer(page)
+    .getByRole("button", { name: "Insertar en el documento" })
+    .click();
+  await expect(page.locator(".page")).toHaveCount(3);
+  // Only the written page offers it.
+  await expect(keepWriting(page, 1)).toHaveCount(0);
+  await addTextOn(page, 3, "Visto bueno");
+  await keepWriting(page, 3).click();
+  await expect(writer(page).locator(".writer-notice")).toContainText(
+    "se quedan en su número de página",
+  );
+  await editor(page).click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.type(" y dos");
+  await writer(page)
+    .getByRole("button", { name: "Actualizar el documento" })
+    .click();
+  await expect(page.locator(".page")).toHaveCount(3);
+  await expect(pageN(page, 3).locator(".textLayer")).toContainText(
+    "Anexo uno y dos",
+  );
+  await expect(pageN(page, 3).locator(".item-text")).toContainText(
+    "Visto bueno",
+  );
+});
+
+test("033 CA-4: closing the writer keeps the changes for the next time", async ({
+  page,
+}) => {
+  await openWriter(page);
+  await page.keyboard.type("Texto base");
+  await writer(page)
+    .getByRole("button", { name: "Abrir en el editor" })
+    .click();
+  await keepWriting(page, 1).click();
+  await editor(page).click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.type(" cambiado");
+  await writer(page).getByRole("button", { name: "Cerrar" }).click();
+  await expect(writer(page)).toHaveCount(0);
+  // The page is as it was until the document is updated.
+  await expect(firstPage(page).locator(".textLayer")).not.toContainText(
+    "cambiado",
+  );
+  await keepWriting(page, 1).click();
+  await expect(editor(page)).toHaveText("Texto base cambiado");
+});
+
+test("033 CA-5: after a whiteout on a written page it is no longer offered", async ({
+  page,
+}) => {
+  await openWriter(page);
+  await page.keyboard.type("Texto que se tapa");
+  await writer(page)
+    .getByRole("button", { name: "Abrir en el editor" })
+    .click();
+  await expect(keepWriting(page, 1)).toBeVisible();
+  await page
+    .getByRole("group", { name: "Herramientas de edición" })
+    .getByRole("button", { name: "Blanqueo", exact: true })
+    .click();
+  const box = (await firstPage(page).boundingBox())!;
+  await page.mouse.move(box.x + 40, box.y + 40);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 200, box.y + 120, { steps: 4 });
+  await page.mouse.up();
+  await expect(firstPage(page).locator(".item-whiteout")).toHaveCount(1);
+  await page
+    .getByRole("group", { name: /^Herramientas de/ })
+    .getByRole("button", { name: "Seleccionar", exact: true })
+    .click();
+  await expect(keepWriting(page, 1)).toHaveCount(0);
+});
+
+test.describe("phone, spec 033", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  test("a written page offers «Seguir escribiendo» on a phone too", async ({
+    page,
+  }) => {
+    await openWriter(page);
+    await page.keyboard.type("Desde el móvil");
+    await writer(page).getByRole("button", { name: "Listo" }).click();
+    await page
+      .getByRole("group", { name: "¿Qué quieres hacer con el documento?" })
+      .getByRole("button", { name: "Abrir en el editor" })
+      .click();
+    await keepWriting(page, 1).tap();
+    await expect(editor(page)).toHaveText("Desde el móvil");
+    await expect(
+      writer(page).getByRole("button", { name: "Listo" }),
+    ).toBeVisible();
+  });
 });

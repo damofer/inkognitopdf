@@ -65,7 +65,6 @@ type Param = keyof typeof VALUES;
 const EVENTS = {
   page_view: ["page_path", "page_title"],
   open_document: ["pages", "size"],
-  new_blank: [],
   scan_document: ["pages", "mode", "capture", "card"],
   ocr_run: ["pages"],
   edit_text: [],

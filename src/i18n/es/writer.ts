@@ -5,9 +5,6 @@ export const writer = {
   "writer.writePages": "Escribir páginas",
   "writer.writePagesHint":
     "Escribe páginas nuevas con formato, como en Word, y añádelas al documento",
-  "writer.writeHere": "Escribir con formato",
-  "writer.writeHereHint":
-    "Escribe de corrido, con títulos, listas y negrita, como en Word",
   "writer.close": "Cerrar",
   "writer.closeHint":
     "Cerrar. Lo que escribiste queda guardado en este dispositivo.",
@@ -62,6 +59,17 @@ export const writer = {
   "writer.openInEditorHint": "Para firmarlo, anotarlo o añadirle páginas",
   "writer.insertInDoc": "Insertar en el documento",
   "writer.insertInDocHint": "Añade estas páginas al final del PDF abierto",
+  "writer.updateDoc": "Actualizar el documento",
+  "writer.updateDocHint":
+    "Cambia las páginas escritas del PDF abierto por este texto",
+  "writer.continue": "Seguir escribiendo",
+  "writer.continueHint":
+    "Vuelve al texto con formato de estas páginas para cambiarlo",
+  "writer.itemsStay":
+    "Las firmas, notas y dibujos de estas páginas se quedan en su número de página. Revísalos después de actualizar.",
+  "writer.notTogether":
+    "Esas páginas ya no están juntas y en orden: el texto irá como páginas nuevas al final.",
+  "writer.updated": "Páginas escritas actualizadas",
   "writer.working": "Generando el PDF…",
   "writer.failed": (message: string) => `No se pudo generar el PDF: ${message}`,
   "writer.resumeTitle": "Tienes un documento sin terminar",

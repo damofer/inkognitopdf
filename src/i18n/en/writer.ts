@@ -7,9 +7,6 @@ export const writer: typeof es = {
   "writer.writePages": "Write pages",
   "writer.writePagesHint":
     "Write new formatted pages, as in Word, and add them to the document",
-  "writer.writeHere": "Write with formatting",
-  "writer.writeHereHint":
-    "Type freely, with headings, lists and bold, as in Word",
   "writer.close": "Close",
   "writer.closeHint": "Close. What you wrote stays saved on this device.",
   "writer.placeholder": "Start writing…",
@@ -63,6 +60,17 @@ export const writer: typeof es = {
   "writer.openInEditorHint": "To sign it, annotate it or add pages",
   "writer.insertInDoc": "Insert into the document",
   "writer.insertInDocHint": "Adds these pages at the end of the open PDF",
+  "writer.updateDoc": "Update the document",
+  "writer.updateDocHint":
+    "Replaces the written pages of the open PDF with this text",
+  "writer.continue": "Keep writing",
+  "writer.continueHint":
+    "Back to the formatted text of these pages to change it",
+  "writer.itemsStay":
+    "Signatures, notes and drawings on these pages stay on their page number. Check them after updating.",
+  "writer.notTogether":
+    "Those pages are no longer together and in order: the text will go as new pages at the end.",
+  "writer.updated": "Written pages updated",
   "writer.working": "Creating the PDF…",
   "writer.failed": (message: string) =>
     `The PDF could not be created: ${message}`,

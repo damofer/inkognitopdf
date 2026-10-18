@@ -308,24 +308,6 @@ test("CA8: at least 50 steps can be undone and redone", async ({ page }) => {
   await expect.poll(isLandscape).toBe(true);
 });
 
-test("T018: a blank document can be written on and saved", async ({ page }) => {
-  await page.goto("/app/");
-  await page
-    .getByRole("button", { name: "Documento en blanco" })
-    .first()
-    .click();
-  await expect(firstPage(page)).toHaveAttribute("data-rendered", "true");
-  await tool(page, "Texto").click();
-  await firstPage(page).click({ position: { x: 60, y: 60 } });
-  await page.keyboard.type("Documento nuevo");
-  await page.keyboard.press("Control+Enter");
-  const { name, bytes } = await saveAndRead(page);
-  expect(name).toBe("documento.pdf");
-  expect((await textRuns(bytes)).map((r) => r.str)).toContain(
-    "Documento nuevo",
-  );
-});
-
 test("CA3: existing text is replaced through the edit-text tool", async ({
   page,
 }) => {

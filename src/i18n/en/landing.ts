@@ -71,12 +71,12 @@ export const landing: typeof es = {
     "Fill in forms, create new fields and annotate with highlights, notes, drawings, arrows and shapes.",
   "landing.fPagesTitle": "Pages your way",
   "landing.fPagesText":
-    "Start a blank document, add scanned pages to an open PDF, and reorder, rotate or delete pages.",
+    "Write a document from scratch, add scanned pages to an open PDF, and reorder, rotate or delete pages.",
 
   "landing.stepsTitle": "As simple as it gets",
   "landing.step1Title": "Open or scan",
   "landing.step1Text":
-    "Drop in a PDF, start a blank one or take photos of paper with your camera.",
+    "Drop in a PDF, write one from scratch or take photos of paper with your camera.",
   "landing.step2Title": "Edit, fill in and sign",
   "landing.step2Text":
     "Change text, complete fields, annotate and sign, all on the same screen.",

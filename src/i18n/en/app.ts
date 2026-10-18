@@ -4,12 +4,11 @@ import type { app as es } from "../es/app";
 export const app: typeof es = {
   "app.version": "App version",
   "app.openPdf": "Open PDF",
-  "app.blankDocument": "Blank document",
   "app.blankShort": "Blank",
   "app.scan": "Scan",
   "app.newDocument": "New document",
   "app.emptyHint":
-    "Open or drop a PDF, or start with a blank document. Your documents are processed only on this device.",
+    "Open or drop a PDF, or write one from scratch. Your documents are processed only on this device.",
   "app.merging": (files: number) => `Merging ${files} PDFs…`,
   "app.opening": (name: string) => `Opening “${name}”…`,
   "app.home": "Go to the InkognitoPDF home page",

@@ -40,8 +40,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
+  gap: 2px;
+  padding: 6px 8px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
@@ -64,9 +64,9 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-width: 34px;
+  min-width: 32px;
   height: 34px;
-  padding: 0 6px;
+  padding: 0 5px;
   border-color: transparent;
   background: transparent;
   position: relative;

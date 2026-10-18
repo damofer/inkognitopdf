@@ -3425,30 +3425,18 @@ button.danger {
   }
 }
 
-/* Spec 032, inside the editor: the way into the writer on an empty blank page. */
-.write-here {
+/* Spec 033, on the first written page: back to the writer with its text. */
+.continue-writing {
   position: absolute;
-  left: 50%;
-  top: 30%;
-  transform: translateX(-50%);
+  top: 8px;
+  right: 8px;
   z-index: 5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  max-width: 80%;
-  text-align: center;
-  pointer-events: auto;
-}
-
-.write-here button {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  font-size: 1rem;
-}
-
-.write-here small {
-  color: var(--muted);
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--panel-shadow);
+  pointer-events: auto;
 }

@@ -150,7 +150,8 @@
     border-radius: 12px;
   }
 
-  .start-actions button:first-child {
+  .start-actions button:first-child,
+  .start-actions button:last-child:nth-child(even) {
     grid-column: 1 / -1;
   }
 

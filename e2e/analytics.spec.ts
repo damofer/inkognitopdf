@@ -200,11 +200,11 @@ test("screenshots of the notice and the landing section", async ({
     // The notice leaves the start actions free.
     if (mobile) {
       const box = (await notice.boundingBox())!;
-      const blank = (await page
-        .getByRole("button", { name: "Documento en blanco" })
+      const last = (await page
+        .locator(".start-actions button")
         .last()
         .boundingBox())!;
-      expect(blank.y + blank.height).toBeLessThanOrEqual(box.y);
+      expect(last.y + last.height).toBeLessThanOrEqual(box.y);
       expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
     }
     await page.screenshot({ path: `${dir}/app-${name}.png` });

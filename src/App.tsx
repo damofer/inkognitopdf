@@ -19,9 +19,10 @@ import { ThemeSwitch } from "./ThemeSwitch";
 import { Icon } from "./icons";
 import { useDark } from "./theme";
 import { useMobile } from "./useMobile";
-import type { Item, PageEntry } from "./model/document";
+import type { Item, PageEntry, WrittenSource } from "./model/document";
 import { ScanView } from "./scan/ScanView";
-import { A4, initialState, type EditorState } from "./model/document";
+import { initialState, type EditorState } from "./model/document";
+import { newId } from "./model/operations";
 import { normalizeRotation } from "./model/geometry";
 import { createPdfFile, openPdfFile, type PdfFile } from "./storage/pdfFile";
 import { loadDocument, type PDFDocumentProxy } from "./viewer/pdfjs";
@@ -197,7 +198,8 @@ export function App() {
 
   /** Opens one file, or several merged into one in that order (spec 013). */
   const open = useCallback(
-    async (files: File[]) => {
+    /** `written`: the text a written PDF comes from (spec 033). */
+    async (files: File[], written?: WrittenSource) => {
       const file = files[0];
       if (!file) return;
       setState({
@@ -227,7 +229,15 @@ export function App() {
           pdf = createPdfFile(file.name, bytes);
         }
         const doc = await loadDocument(pdf);
-        const initial = await initialStateFor(doc);
+        let initial = await initialStateFor(doc);
+        if (written) {
+          const id = newId("written");
+          initial = {
+            ...initial,
+            pages: initial.pages.map((p) => ({ ...p, writtenId: id })),
+            written: { [id]: written },
+          };
+        }
         track("open_document", {
           pages: pagesBucket(doc.numPages),
           size: sizeBucket(pdf.size),
@@ -271,31 +281,6 @@ export function App() {
       file: null,
       doc: null,
       initial: { pages, items },
-      openId: nextOpenId++,
-      password: null,
-      restricted: false,
-    });
-  };
-
-  const startBlank = () => {
-    performance.mark("pdfcraft:open-start");
-    track("new_blank");
-    setState({
-      status: "ready",
-      file: null,
-      doc: null,
-      initial: {
-        pages: [
-          {
-            id: "blank-1",
-            source: { kind: "blank" },
-            box: A4,
-            baseRotation: 0,
-            extraRotation: 0,
-          },
-        ],
-        items: [],
-      },
       openId: nextOpenId++,
       password: null,
       restricted: false,
@@ -426,10 +411,6 @@ export function App() {
             <Icon name="write" />
             {t("writer.button")}
           </button>
-          <button type="button" className="menu-item" onClick={startBlank}>
-            <Icon name="blank" />
-            {t("app.blankDocument")}
-          </button>
           <button
             type="button"
             className="menu-item"
@@ -540,9 +521,6 @@ export function App() {
               <button type="button" onClick={() => setTemplating(true)}>
                 {t("templates.button")}
               </button>
-              <button type="button" onClick={startBlank}>
-                {t("app.blankDocument")}
-              </button>
             </div>
           </div>
         )}
@@ -587,7 +565,7 @@ export function App() {
           <Suspense fallback={<div className="scan-view" />}>
             <WriterView
               onClose={() => setWriting(false)}
-              onOpen={(file) => void open([file])}
+              onOpen={(file, source) => void open([file], source)}
             />
           </Suspense>
         )}

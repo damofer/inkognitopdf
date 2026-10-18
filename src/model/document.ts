@@ -1,6 +1,7 @@
 import type { Box, Point, Rect, Rotation } from "./geometry";
 import type { Numbering } from "./numbering";
 import type { SignatureAsset, SignatureRole, SignFieldType } from "./signature";
+import type { WriterSettings } from "../writer/render";
 
 /**
  * In-memory edit state of a document. It never contains PDF bytes; the engine
@@ -33,6 +34,19 @@ export interface PageEntry {
   baseRotation: Rotation;
   /** Rotation added by the user, in degrees. */
   extraRotation: Rotation;
+  /** Spec 033: the text these pages were written from, in `written`. */
+  writtenId?: string;
+}
+
+/**
+ * Spec 033: what some pages were written from in the writer (spec 032), so it
+ * can be written again while the document is open. Never saved in the PDF.
+ */
+export interface WrittenSource {
+  /** ProseMirror document as JSON. */
+  doc: unknown;
+  settings: WriterSettings;
+  title: string;
 }
 
 export type FontFamily = "Helvetica" | "Times" | "Courier";
@@ -299,6 +313,8 @@ export interface EditorState {
    * document, so the count follows the order of the pages.
    */
   numbering?: Numbering;
+  /** Spec 033: the texts written pages come from, by `PageEntry.writtenId`. */
+  written?: Record<string, WrittenSource>;
 }
 
 export interface OriginalPageInfo {

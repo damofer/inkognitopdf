@@ -69,12 +69,12 @@ export const landing = {
     "Rellena formularios, crea campos nuevos y anota con resaltado, notas, dibujos, flechas y formas.",
   "landing.fPagesTitle": "Páginas a tu medida",
   "landing.fPagesText":
-    "Empieza un documento en blanco, añade páginas escaneadas a un PDF abierto, reordénalas, gíralas o elimínalas.",
+    "Escribe un documento desde cero, añade páginas escaneadas a un PDF abierto, reordénalas, gíralas o elimínalas.",
 
   "landing.stepsTitle": "Así de simple",
   "landing.step1Title": "Abre o escanea",
   "landing.step1Text":
-    "Arrastra un PDF, empieza uno en blanco o fotografía papeles con la cámara.",
+    "Arrastra un PDF, escribe uno desde cero o fotografía papeles con la cámara.",
   "landing.step2Title": "Edita, rellena y firma",
   "landing.step2Text":
     "Cambia el texto, completa campos, anota y firma, todo en la misma pantalla.",
