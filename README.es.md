@@ -21,12 +21,39 @@
 </p>
 
 <p align="center">
-  <a href="https://inkognitopdf.com/app/"><b>Abrir la app →</b></a>
-  ·
-  <a href="https://inkognitopdf.com/">Sitio web</a>
-  ·
-  <a href="LICENSE">Apache-2.0</a>
+  <a href="https://inkognitopdf.com/app/"><img src="https://img.shields.io/badge/Abrir_la_app-inkognitopdf.com-2ea44f?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Abrir la app en inkognitopdf.com" /></a>
+  <a href="https://github.com/damofer/inkognitopdf"><img src="https://img.shields.io/github/package-json/v/damofer/inkognitopdf?style=for-the-badge&label=versi%C3%B3n&color=555" alt="Versión" /></a>
 </p>
+
+<h2 align="center">❤️ Apoya el desarrollo</h2>
+
+<p align="center">
+  InkognitoPDF es gratis, sin anuncios y sin cuentas. Si te resulta útil, tu apoyo me ayuda a mantenerlo así y a seguir añadiendo funciones.
+</p>
+
+<p align="center">
+  El apoyo es totalmente opcional: usar la app, compartirla y reportar problemas ya ayuda mucho al proyecto.
+</p>
+
+<p align="center">
+  <a href="https://link.mercadopago.com.co/damofer"><img src="https://img.shields.io/badge/Mercado_Pago-Desde_Colombia-00B1EA?style=for-the-badge&logo=mercadopago&logoColor=white" alt="Apoya desde Colombia con Mercado Pago" /></a>
+  <a href="https://ko-fi.com/damofer"><img src="https://img.shields.io/badge/Ko--fi-Fuera_de_Colombia-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" alt="Apoya desde fuera de Colombia con Ko-fi" /></a>
+</p>
+
+<p align="center">
+  Con Mercado Pago, en pesos: <a href="https://mpago.li/1Kyib9Q">$10.000</a> · <a href="https://mpago.li/1sVMAt1">$20.000</a> · <a href="https://mpago.li/2s9ot7Z">$50.000</a> · <a href="https://link.mercadopago.com.co/damofer">otro monto</a>
+</p>
+
+<p align="center">Gracias por apoyar el proyecto. ❤️</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Plataforma-Web_%7C_PWA-555" alt="Plataforma: web y PWA" />
+  <img src="https://img.shields.io/badge/Framework-React_%7C_pdf.js-8A2BE2" alt="Framework: React y pdf.js" />
+  <img src="https://img.shields.io/badge/Lenguaje-TypeScript-3178C6" alt="Lenguaje: TypeScript" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Licencia-Apache--2.0-D22128" alt="Licencia: Apache-2.0" /></a>
+</p>
+
+---
 
 ![El editor con un formulario abierto](docs/images/es/editor.png)
 
@@ -166,12 +193,3 @@ Los issues y los pull requests son bienvenidos. Unas pocas reglas mantienen el p
 ## Licencia
 
 Copyright 2026 David Mogollon. Publicado bajo la [Apache License 2.0](LICENSE). Ver también [`NOTICE`](NOTICE).
-
-## Apoya el proyecto
-
-InkognitoPDF es gratis. Si te resulta útil, puedes apoyar su desarrollo:
-
-- **Desde Colombia, con Mercado Pago** (pesos colombianos): [$10.000](https://mpago.li/1Kyib9Q) · [$20.000](https://mpago.li/1sVMAt1) · [$50.000](https://mpago.li/2s9ot7Z) · [otro monto](https://link.mercadopago.com.co/damofer)
-- **Fuera de Colombia, con [Ko-fi](https://ko-fi.com/damofer)** (dólares estadounidenses)
-
-¡Gracias!
