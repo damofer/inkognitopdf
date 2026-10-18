@@ -190,7 +190,7 @@ export async function applyEdits(
 
   if (fonts.usedFallback) warnings.push(t("engine.fallbackFonts"));
 
-  await fonts.embedSubstitutes();
+  await fonts.embedAll();
 
   // Spec 012: secure redaction runs on the final content of each page.
   const pending = redactions.length - applied.length;

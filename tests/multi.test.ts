@@ -1,5 +1,6 @@
 // Spec 004, F012/F014: several signers in order, parallel signers and the
 // audit page (CA9, CA10).
+import { PDFArray, PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { applyEdits } from "../src/engine/applyEdits";
 import type { EditorState, PageEntry, TextItem } from "../src/model/document";
@@ -143,6 +144,36 @@ const common = {
   date: new Date("2026-10-14T09:00:00Z"),
 };
 
+/**
+ * Fonts used by the annotations' appearances that point to nothing. pdf.js
+ * draws such text anyway; other viewers (Android, Chrome, Acrobat, poppler)
+ * leave it out, so the audit rows and dates did not show there.
+ */
+async function missingFonts(pdf: Uint8Array): Promise<string[]> {
+  const doc = await PDFDocument.load(pdf, { updateMetadata: false });
+  const missing: string[] = [];
+  for (const [i, page] of doc.getPages().entries()) {
+    const annots = page.node.lookup(PDFName.of("Annots"));
+    if (!(annots instanceof PDFArray)) continue;
+    for (let j = 0; j < annots.size(); j++) {
+      const annot = annots.lookup(j, PDFDict);
+      const ap = annot.lookup(PDFName.of("AP"));
+      const normal = ap instanceof PDFDict ? ap.lookup(PDFName.of("N")) : null;
+      const dict = normal && "dict" in normal ? (normal.dict as PDFDict) : null;
+      const resources = dict?.lookup(PDFName.of("Resources"));
+      const fonts =
+        resources instanceof PDFDict
+          ? resources.lookup(PDFName.of("Font"))
+          : null;
+      if (!(fonts instanceof PDFDict)) continue;
+      for (const [name, ref] of fonts.entries())
+        if (!(doc.context.lookup(ref) instanceof PDFDict))
+          missing.push(`page ${i + 1}, annotation ${j + 1}, ${name}`);
+    }
+  }
+  return missing;
+}
+
 const canSign = async (pdf: Uint8Array, plan: SigningPlan) =>
   (await planStatus(pdf, plan))
     .filter((s) => s.canSign)
@@ -223,6 +254,7 @@ describe("several signers, PAdES", () => {
         expect(await qpdfCheck(pdf)).toMatch(
           /No syntax or stream encoding errors/,
         );
+      expect(await missingFonts(pdf)).toEqual([]);
 
       // Filled fields and audit rows are annotations, in signing order.
       const doc = await openPdf(pdf);
@@ -287,6 +319,7 @@ describe("several signers, visual only", () => {
     );
     expect(rows[0]).toMatch(/solo visual/);
     await doc.loadingTask.destroy();
+    expect(await missingFonts(pdf)).toEqual([]);
     if (qpdfPath)
       expect(await qpdfCheck(pdf)).toMatch(
         /No syntax or stream encoding errors/,

@@ -134,7 +134,7 @@ export class FontCache {
     return this.substitute(SUBSTITUTE_OF[family], variant);
   }
 
-  /** A bundled open font, embedded (subset) by `embedSubstitutes`. */
+  /** A bundled open font, embedded (subset) by `embedAll`. */
   substitute(
     family: SubstituteFamily,
     variant: FontVariant,
@@ -150,8 +150,14 @@ export class FontCache {
     return font;
   }
 
-  /** Writes the substitute fonts used; call once, before saving. */
-  async embedSubstitutes(): Promise<void> {
+  /**
+   * Writes the fonts used; call once, before saving. `PDFDocument.save` would
+   * write the standard ones, but an incremental update (spec 004) does not
+   * call it: without this, its text points to a font object that is never
+   * written, and only pdf.js draws it.
+   */
+  async embedAll(): Promise<void> {
+    for (const font of this.cache.values()) await (await font).embed();
     for (const font of this.substitutes.values()) (await font).embed(this.doc);
   }
 }

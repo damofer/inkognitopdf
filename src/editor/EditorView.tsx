@@ -113,6 +113,18 @@ interface EditorViewProps {
   resumed?: Resumed | null;
   /** The name given in the header (spec 034), with ".pdf". */
   name?: string | null;
+  /** Message shown when the document opens. */
+  openNotice?: string | null;
+  /**
+   * Opens a file this editor produced (prepared or signed for several
+   * signers, spec 004) in its place, showing `notice`: the pages then show
+   * the signatures, and sharing sends that file.
+   */
+  onOpenResult?: (
+    bytes: Uint8Array,
+    name: string,
+    notice: string,
+  ) => Promise<void>;
 }
 
 /** What a resumed document brings besides its edit state (spec 028). */
@@ -448,6 +460,8 @@ export function EditorView({
   askPassword = async () => null,
   resumed = null,
   name = null,
+  openNotice = null,
+  onOpenResult,
 }: EditorViewProps) {
   const t = useT();
   // Spec 034: what the saved files are called, renamed or not.
@@ -612,11 +626,13 @@ export function EditorView({
     return out;
   }, [state.items]);
   const [notice, setNotice] = useState<string | null>(() =>
-    password !== null
-      ? t("protect.opened")
-      : restricted
-        ? t("protect.permissionsOnly")
-        : null,
+    openNotice !== null
+      ? openNotice
+      : password !== null
+        ? t("protect.opened")
+        : restricted
+          ? t("protect.permissionsOnly")
+          : null,
   );
   const [tool, setTool] = useState<Tool>("select");
   const [task, setTask] = useState<Task>("edit");
@@ -1334,7 +1350,24 @@ export function EditorView({
     }
   };
 
+  // Spec 004: a signed file, or one prepared for signing, goes out as it is
+  // while nothing changed: rebuilding it would break its signatures and drop
+  // the signing plan, so the next signer would not be asked to sign.
+  const untouched =
+    file &&
+    state === initial &&
+    !protection &&
+    (signatures.length > 0 || filePlan)
+      ? file
+      : null;
+
   const save = async (overwrite = false) => {
+    if (untouched) {
+      const { downloadPdf } = await import("./save");
+      downloadPdf(untouched.copyBytes(), name ?? untouched.name);
+      setToast(t("editor.saved"));
+      return;
+    }
     // CA12: rewriting the file breaks its digital signatures.
     if (signatures.length > 0 && !overwrite) {
       setConfirmOverwrite("save");
@@ -1388,6 +1421,13 @@ export function EditorView({
     }
   };
   const share = async (overwrite = false) => {
+    if (untouched) {
+      await shareBuilt({
+        bytes: untouched.copyBytes(),
+        name: name ?? untouched.name,
+      });
+      return;
+    }
     if (signatures.length > 0 && !overwrite) {
       setConfirmOverwrite("share");
       return;
@@ -1601,21 +1641,25 @@ export function EditorView({
         audit?.state ?? withoutFields,
       );
       const prepared = await multi.preparePlan(bytes, plan);
-      downloadPdf(prepared, preparedFileName(docName));
+      const preparedName = preparedFileName(docName);
+      downloadPdf(prepared, preparedName);
       trackSave();
       const first = Math.min(...plan.signers.map((s) => s.order));
-      setNotice(
-        [
-          t(
-            "editor.preparedSendTo",
-            plan.signers
-              .filter((s) => s.order === first)
-              .map((s) => s.name)
-              .join(t("editor.namesAnd")),
-          ),
-          ...warnings,
-        ].join(" "),
-      );
+      const message = [
+        t(
+          "editor.preparedSendTo",
+          plan.signers
+            .filter((s) => s.order === first)
+            .map((s) => s.name)
+            .join(t("editor.namesAnd")),
+        ),
+        ...warnings,
+      ].join(" ");
+      // The prepared file takes the place of the draft: whoever signs first
+      // can sign it here, and sharing sends it with its plan.
+      markSaved(state);
+      if (onOpenResult) await onOpenResult(prepared, preparedName, message);
+      else setNotice(message);
     } catch (cause) {
       setNotice(
         t(
@@ -1659,18 +1703,25 @@ export function EditorView({
         formatDate: (d) => formatDate(d, "dmy"),
         loadFont,
       });
-      downloadPdf(signed, signedFileName(docName));
+      const signedName = signedFileName(docName);
+      downloadPdf(signed, signedName);
       trackSave();
       const status = await multi.planStatus(signed, filePlan.plan);
+      const next = status.filter((s) => s.canSign).map((s) => s.signer.name);
+      const message =
+        next.length > 0
+          ? t("editor.signedSendTo", next.join(t("editor.namesAnd")))
+          : t("editor.signedAllDone");
+      // The signed file takes the place of the one opened: its pages show
+      // the new signature and audit row, and sharing sends it.
+      if (onOpenResult) {
+        await onOpenResult(signed, signedName, message);
+        return;
+      }
       setFilePlan({ plan: filePlan.plan, status, bytes: signed });
       setSignAsOpen(false);
       setSignAsId(null);
-      const next = status.filter((s) => s.canSign).map((s) => s.signer.name);
-      setNotice(
-        next.length > 0
-          ? t("editor.signedSendTo", next.join(t("editor.namesAnd")))
-          : t("editor.signedAllDone"),
-      );
+      setNotice(message);
     } catch (cause) {
       setNotice(
         t(
@@ -2782,6 +2833,15 @@ export function EditorView({
                     .join(", "),
                 )}
           </span>
+          {canShare && untouched && (
+            <button
+              type="button"
+              onClick={() => void share()}
+              disabled={sharing}
+            >
+              {t("share.button")}
+            </button>
+          )}
           {filePlan.status.some((s) => s.canSign) && (
             <button
               type="button"

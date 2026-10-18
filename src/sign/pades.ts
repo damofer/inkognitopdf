@@ -360,7 +360,7 @@ export async function signPdf(
   }
 
   await options.prepare?.(update);
-  await fonts.embedSubstitutes();
+  await fonts.embedAll();
 
   // The signature dictionary, written by hand to know where /Contents is.
   const sigRef = update.reserve();

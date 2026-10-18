@@ -63,6 +63,8 @@ type State =
       resumed?: Resumed;
       /** The name given in the header (spec 034), with ".pdf". */
       name?: string | null;
+      /** Message shown when the document opens. */
+      notice?: string;
     }
   | { status: "error"; message: string };
 
@@ -280,6 +282,26 @@ export function App() {
     setState((s) => (s.status === "ready" ? { ...s, file: pdf, doc } : s));
     return doc;
   }, []);
+
+  /** A file the editor prepared or signed, opened in place (spec 004). */
+  const openResult = useCallback(
+    async (bytes: Uint8Array, name: string, notice: string) => {
+      const pdf = createPdfFile(name, bytes);
+      const doc = await loadDocument(pdf);
+      const initial = await initialStateFor(doc);
+      setState({
+        status: "ready",
+        file: pdf,
+        doc,
+        initial,
+        openId: nextOpenId++,
+        password: null,
+        restricted: false,
+        notice,
+      });
+    },
+    [],
+  );
 
   /** A new document made of scanned pages (spec 002). */
   const openScanned = (pages: PageEntry[], items: Item[]) => {
@@ -577,6 +599,8 @@ export function App() {
             askPassword={askPassword}
             resumed={state.resumed ?? null}
             name={state.name ?? null}
+            openNotice={state.notice ?? null}
+            onOpenResult={openResult}
           />
         )}
         {scanning && (

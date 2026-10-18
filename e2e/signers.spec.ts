@@ -54,6 +54,46 @@ async function download(page: Page, click: () => Promise<void>) {
   };
 }
 
+/** navigator.share as a phone has it, keeping what is shared. */
+async function fakeShare(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __shared: number[][] };
+    w.__shared = [];
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      value: () => true,
+    });
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async (data: { files: File[] }) => {
+        w.__shared.push([
+          ...new Uint8Array(await data.files[0]!.arrayBuffer()),
+        ]);
+      },
+    });
+  });
+}
+
+/** The last file shared, after tapping «Compartir» in the plan notice. */
+async function sharePlan(page: Page) {
+  await page
+    .getByTestId("plan-notice")
+    .getByRole("button", { name: "Compartir" })
+    .click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { __shared: number[][] }).__shared.length,
+      ),
+    )
+    .toBeGreaterThan(0);
+  return new Uint8Array(
+    await page.evaluate(() =>
+      (window as unknown as { __shared: number[][] }).__shared.pop()!,
+    ),
+  );
+}
+
 /** Signs the opened plan as `name`, with a new self-signed certificate. */
 async function signAs(page: Page, name: string, wave: number) {
   const notice = page.getByTestId("plan-notice");
@@ -97,6 +137,7 @@ test("CA9, CA10, CA13: two signers in order, each signature valid, audit page", 
     outside.push(url);
     return route.abort();
   });
+  await fakeShare(page);
 
   // The sender prepares the document.
   await openFixture(page, "simple-text.pdf");
@@ -142,6 +183,12 @@ test("CA9, CA10, CA13: two signers in order, each signature valid, audit page", 
   expect((await textRuns(prepared.bytes, 2)).map((r) => r.str)).toContain(
     "Registro de firmas",
   );
+  // The prepared file is now the one open: it asks for the first signer,
+  // and «Compartir» sends it as saved, with its plan.
+  await expect(page.getByTestId("plan-notice")).toContainText(
+    "Le toca a: Ana Uno",
+  );
+  expect(await sharePlan(page)).toEqual(prepared.bytes);
 
   // Beto cannot sign before Ana.
   await openBytes(page, prepared.name, prepared.bytes);
@@ -163,6 +210,15 @@ test("CA9, CA10, CA13: two signers in order, each signature valid, audit page", 
 
   const first = await signAs(page, "Ana Uno", 3);
   expect(first.name).toBe("simple-text (firmado).pdf");
+  // The signed file replaces the one opened: the page shows Ana's
+  // signature, and it is Beto's turn.
+  await expect(page.getByTestId("signed-notice")).toContainText(
+    "una firma digital",
+  );
+  await expect(page.getByTestId("plan-notice")).toContainText(
+    "Le toca a: Beto Dos",
+  );
+  expect(await sharePlan(page)).toEqual(first.bytes);
 
   await openBytes(page, first.name, first.bytes);
   await expect(page.getByTestId("signed-notice")).toContainText(

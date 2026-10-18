@@ -488,7 +488,7 @@ export async function signAsSigner(
       prepare: async (update) => {
         const fonts = new FontCache(update.doc, options.loadFont);
         await fill(update, fonts);
-        await fonts.embedSubstitutes();
+        await fonts.embedAll();
       },
     });
   }
@@ -496,7 +496,7 @@ export async function signAsSigner(
   const update = await IncrementalUpdate.load(bytes);
   const fonts = new FontCache(update.doc, options.loadFont);
   await fill(update, fonts);
-  await fonts.embedSubstitutes();
+  await fonts.embedAll();
   const current = planOf(update) ?? plan;
   setPlan(update, {
     ...current,
@@ -519,7 +519,7 @@ export function auditRowStep(
   return async (update: IncrementalUpdate) => {
     const fonts = new FontCache(update.doc, loadFont);
     await addAuditRow(update, page, entry, fonts);
-    await fonts.embedSubstitutes();
+    await fonts.embedAll();
   };
 }
 

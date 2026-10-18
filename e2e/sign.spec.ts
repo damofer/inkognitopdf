@@ -278,7 +278,13 @@ test("CA7, CA8, CA11, CA12, CA13: sign digitally, verify in the app and with Ope
   );
   await expect(report.getByTestId("sig-trust")).toContainText("autofirmado");
 
-  // CA12: saving from the editor warns that the signature will break.
+  // Unchanged, the file is saved as it is: the signature stays intact.
+  expect((await saveAndRead(page)).bytes).toEqual(bytes);
+  // CA12: after a change, saving from the editor warns that the signature
+  // will break.
+  await page
+    .getByRole("button", { name: "Girar a la derecha la página 1" })
+    .click();
   await page.getByRole("button", { name: "Guardar PDF" }).click();
   await expect(page.getByRole("alertdialog", { name: "Firmas" })).toBeVisible();
   await page.getByRole("button", { name: "Cancelar" }).click();
