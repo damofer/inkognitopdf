@@ -22,6 +22,7 @@ import { useDark } from "./theme";
 import { useMobile } from "./useMobile";
 import type { Item, PageEntry, WrittenSource } from "./model/document";
 import { ScanView } from "./scan/ScanView";
+import { cacheOcrFilesLater, isInstalled } from "./ocr/offline";
 import { initialState, type EditorState } from "./model/document";
 import { newId } from "./model/operations";
 import { normalizeRotation } from "./model/geometry";
@@ -329,6 +330,20 @@ export function App() {
     window.addEventListener("appinstalled", installed);
     return () => {
       stop();
+      window.removeEventListener("appinstalled", installed);
+    };
+  }, []);
+
+  // Spec 037: an installed app gets the OCR files ahead, for offline use.
+  useEffect(() => {
+    let cancel = isInstalled() ? cacheOcrFilesLater() : () => undefined;
+    const installed = () => {
+      cancel();
+      cancel = cacheOcrFilesLater();
+    };
+    window.addEventListener("appinstalled", installed);
+    return () => {
+      cancel();
       window.removeEventListener("appinstalled", installed);
     };
   }, []);
